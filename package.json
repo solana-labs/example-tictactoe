@@ -26,6 +26,7 @@
     "eslint": "^5.3.0",
     "eslint-plugin-import": "^2.13.0",
     "event-emitter": "^0.3.5",
+    "mz": "^2.7.0",
     "readline-promise": "^1.0.3"
   }
 }

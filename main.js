@@ -3,9 +3,11 @@
  */
 import readline from 'readline-promise';
 import {Account, Connection} from '@solana/web3.js';
+import fs from 'mz/fs';
 
 import {sleep} from './sleep';
 import {TicTacToe} from './tic-tac-toe';
+import {TicTacToeDashboard} from './tic-tac-toe-dashboard';
 
 async function promptRegEx(rl, promptMessage, allowedResponse) {
   for (;;) {
@@ -22,6 +24,23 @@ function promptPublicKey(rl, promptMessage) {
 }
 
 
+async function loadDashboard(connection, myAccount) {
+  let dashboard;
+  try {
+    const dashboardPublicKey = JSON.parse(await fs.readFile('dashboard.json'));
+    dashboard = new TicTacToeDashboard(connection, dashboardPublicKey);
+    console.log(`Synchronizing dashboard ${dashboardPublicKey}`);
+    await dashboard.sync(myAccount);
+  } catch (err) {
+    console.log(`Unable to load dashboard: ${err.message}`);
+    console.log('Creating new dashboard');
+    dashboard = await TicTacToeDashboard.create(connection);
+
+    await fs.writeFile('dashboard.json', JSON.stringify(dashboard.publicKey));
+  }
+  return dashboard;
+}
+
 export async function main(url) {
   const rl = readline.createInterface({
     input: process.stdin,
@@ -36,7 +55,7 @@ export async function main(url) {
   const connection = new Connection(url);
   const myAccount = new Account();
   try {
-    const signature = await connection.requestAirdrop(myAccount.publicKey, 2);
+    const signature = await connection.requestAirdrop(myAccount.publicKey, 100);
     const status = await connection.getSignatureStatus(signature);
     if (status !== 'Confirmed') {
       throw new Error(`Transaction ${signature} was not confirmed (${status})`);
@@ -46,6 +65,10 @@ export async function main(url) {
     return;
   }
   rl.write('ok\n\n');
+
+
+  const dashboard = await loadDashboard(connection, myAccount);
+  rl.write(`Total games played: ${dashboard.state.total}\n\n`);
 
   //
   // X or O?
@@ -62,6 +85,9 @@ export async function main(url) {
     //    const player2Pubkey = await promptPublicKey(rl, 'O identifier: ');
     //
     ttt = await TicTacToe.create(connection, myAccount);
+
+    // Register the game with the dashboard
+    await dashboard.submitGameState(myAccount, ttt.gamePublicKey);
 
     rl.write(`\nGame created.  Share the game code with O:\n\n`);
     rl.write(`    ${ttt.gamePublicKey}\n\n`);
