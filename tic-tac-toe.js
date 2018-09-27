@@ -17,12 +17,15 @@ async function sendAndConfirmTransaction(connection, from, transaction) {
   const signature = await connection.sendTransaction(from, transaction);
 
   // Wait up to a couple seconds for a confirmation
-  for (let _ in [1, 2, 3, 4]) { //eslint-disable-line no-unused-vars
-    const confirmation = await connection.confirmTransaction(signature);
-    if (confirmation) return;
+  let i = 4;
+  for (;;) {
+    const status = await connection.getSignatureStatus(signature);
+    if (status == 'Confirmed') return;
     await sleep(500);
+    if (--i < 0) {
+      throw new Error(`Transaction '${signature}' was not confirmed (${status})`);
+    }
   }
-  throw new Error(`Transaction '${signature}' was not confirmed`);
 }
 
 export class TicTacToe {

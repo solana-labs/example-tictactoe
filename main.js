@@ -37,9 +37,9 @@ export async function main(url) {
   const myAccount = new Account();
   try {
     const signature = await connection.requestAirdrop(myAccount.publicKey, 2);
-    const confirmation = await connection.confirmTransaction(signature);
-    if (!confirmation) {
-      throw new Error(`Transaction ${signature} was not confirmed`);
+    const status = await connection.getSignatureStatus(signature);
+    if (status !== 'Confirmed') {
+      throw new Error(`Transaction ${signature} was not confirmed (${status})`);
     }
   } catch (err) {
     rl.write(`failed\n${err.message}\n`);
