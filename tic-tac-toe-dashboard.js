@@ -6,30 +6,46 @@
 
 import cbor from 'cbor';
 import bs58 from 'bs58';
-import {Account, SystemProgram, Transaction} from '@solana/web3.js';
+import {
+  Account,
+  SystemProgram,
+  Transaction,
+} from '@solana/web3.js';
+import type {
+  Connection,
+  PublicKey,
+} from '@solana/web3.js';
 
+import {createNewAccount} from './create-new-account';
 import {sendAndConfirmTransaction} from './send-and-confirm-transaction';
 
 export class TicTacToeDashboard {
+
   /**
    * @private
    */
-  constructor(connection, publicKey) {
+  constructor(connection: Connection, publicKey: PublicKey, clientAccount: Account) {
     Object.assign(
       this,
       {
+        clientAccount,
         connection,
         publicKey,
       }
     );
   }
 
-  static get programId() {
+  static get programId(): PublicKey {
     return 'GcdayuLaLyrdmUu324nahyv33G5poQdLUEZ1nEytDeP';
   }
 
-  static async connect(connection, dashboardPublicKey) {
-    const dashboard = new TicTacToeDashboard(connection, dashboardPublicKey);
+
+  /**
+   * Connect to an existing dashboard by its public key
+   */
+  static async connect(connection, dashboardPublicKey): Promise<TicTacToeDashboard> {
+    const clientAccount = await createNewAccount(connection);
+    const dashboard = new TicTacToeDashboard(connection, dashboardPublicKey, clientAccount);
     await dashboard.update();
     return dashboard;
   }
@@ -37,7 +53,7 @@ export class TicTacToeDashboard {
   /**
    * Creates a new dashboard
    */
-  static async create(connection) {
+  static async create(connection): Promise<TicTacToeDashboard> {
     const tempAccount = new Account();
     {
       const signature = await connection.requestAirdrop(tempAccount.publicKey, 1);
@@ -65,22 +81,22 @@ export class TicTacToeDashboard {
   }
 
   /**
-   * Request the dashboard to recompute its state from the provided games.
+   * Request the dashboard to recompute its state from the provided game
    */
-  async submitGameState(playerAccount, ...gamePublicKeys) {
+  async submitGameState(gamePublicKey: PublicKey): Promise<void> {
     const transaction = new Transaction({
       fee: 0,
-      keys: [playerAccount.publicKey, this.publicKey, ...gamePublicKeys],
+      keys: [this.clientAccount.publicKey, this.publicKey, gamePublicKey],
       programId: TicTacToeDashboard.programId,
       userdata: cbor.encode('FIXME-this-cannot-be-null'), // TODO! This is a bug.  A transaction with no userdata should be accepted...
     });
-    await sendAndConfirmTransaction(this.connection, playerAccount, transaction);
+    await sendAndConfirmTransaction(this.connection, this.clientAccount, transaction);
   }
 
   /**
    * Update the `state` field with the latest dashboard contents
    */
-  async update() {
+  async update(): Promise<void> {
     const accountInfo = await this.connection.getAccountInfo(this.publicKey);
 
     const {userdata} = accountInfo;
@@ -90,18 +106,17 @@ export class TicTacToeDashboard {
     }
 
     this.state = {
-      pending: [],
-      active: [],
+      pending: '.',
       completed: [],
       total: 0
     };
     if (length > 0) {
       // TODO: Use joi or superstruct to validate input
       const rawState = cbor.decode(userdata.slice(2));
+      //console.log(JSON.stringify(rawState));
 
       // Map public keys byte public keys into base58
-      this.state.pending = rawState.pending.map(bs58.encode);
-      this.state.active = rawState.active.map(bs58.encode);
+      this.state.pending = bs58.encode(rawState.pending);
       this.state.completed = rawState.completed.map(bs58.encode);
       this.state.total = rawState.total;
     }
@@ -110,6 +125,7 @@ export class TicTacToeDashboard {
   /**
    * Synchronize the dashboard
    */
+  /*
   async sync(playerAccount) {
     // Fetch the current state
     await this.update();
@@ -125,5 +141,6 @@ export class TicTacToeDashboard {
     // Update to (potentially) new state
     await this.update();
   }
+  */
 }
 

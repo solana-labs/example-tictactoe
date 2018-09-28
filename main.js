@@ -2,14 +2,16 @@
  * Implements the command-line based game interface
  */
 import readline from 'readline-promise';
-import {Account, Connection} from '@solana/web3.js';
+import {Connection} from '@solana/web3.js';
 import fs from 'mz/fs';
 
 import {sleep} from './sleep';
 import {TicTacToe} from './tic-tac-toe';
 import {TicTacToeDashboard} from './tic-tac-toe-dashboard';
+import {createNewAccount} from './create-new-account';
+import type {TicTacToeBoard} from './tic-tac-toe';
 
-async function promptRegEx(rl, promptMessage, allowedResponse) {
+async function promptRegEx(rl, promptMessage: string, allowedResponse: RegExp): string {
   for (;;) {
     const response = await rl.questionAsync(promptMessage);
     if (allowedResponse.test(response)) {
@@ -19,12 +21,7 @@ async function promptRegEx(rl, promptMessage, allowedResponse) {
   }
 }
 
-function promptPublicKey(rl, promptMessage) {
-  return promptRegEx(rl, promptMessage, /^[1-9A-Za-z]{43,44}$/);
-}
-
-
-async function loadDashboard(connection, myAccount) {
+async function loadDashboard(connection: Connection): TicTacToeDashboard {
   let dashboard;
   try {
     const dashboardPublicKey = JSON.parse(await fs.readFile('dashboard.json'));
@@ -36,12 +33,69 @@ async function loadDashboard(connection, myAccount) {
 
     await fs.writeFile('dashboard.json', JSON.stringify(dashboard.publicKey));
   }
-  console.log(`Synchronizing dashboard...`);
-  await dashboard.sync(myAccount);
   return dashboard;
 }
 
-export async function main(url) {
+function renderBoard(board: TicTacToeBoard): string {
+  return [
+    board.slice(0,3).join('|'),
+    '-+-+-',
+    board.slice(3,6).join('|'),
+    '-+-+-',
+    board.slice(6,9).join('|'),
+  ].join('\n');
+}
+
+async function startGame(
+  connection: Connection,
+  dashboard: TicTacToeDashboard
+): Promise<TicTacToe> {
+
+  const myAccount = await createNewAccount(connection);
+  const myGame = await TicTacToe.create(connection, myAccount);
+
+  // Look for pending games from others, while trying to advertise our game.
+  for (;;) {
+    await Promise.all([myGame.updateGameState(), dashboard.update()]);
+
+    if (myGame.state.inProgress) {
+      // Another player joined our game
+      console.log(`Another player accepted our game (${myGame.gamePublicKey})`);
+      return myGame;
+    }
+
+    const pendingGamePublicKey = dashboard.state.pending;
+    if (pendingGamePublicKey !== myGame.gamePublicKey) {
+      try {
+        console.log(`Trying to join ${pendingGamePublicKey}`);
+        const theirGame = await TicTacToe.join(
+          connection,
+          myAccount,
+          dashboard.state.pending
+        );
+        if (theirGame.state.inProgress) {
+          if (theirGame.state.playerO === myAccount.publicKey) {
+            console.log(`Joined game ${pendingGamePublicKey}`);
+            myGame.abandonGame();
+            return theirGame;
+          }
+        }
+      } catch (err) {
+        console.log(err.message);
+      }
+
+      // Advertise myGame as the pending game for others to see and hopefully
+      // join
+      console.log(`Advertising our game (${myGame.gamePublicKey})`);
+      await dashboard.submitGameState(myGame.gamePublicKey);
+    }
+
+    // Wait for a bite
+    await sleep(500);
+  }
+}
+
+export async function main(url: string) {
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
@@ -53,106 +107,28 @@ export async function main(url) {
   //
   rl.write(`Connecting to network: ${url}...`);
   const connection = new Connection(url);
-  const myAccount = new Account();
-  try {
-    const signature = await connection.requestAirdrop(myAccount.publicKey, 100);
-    const status = await connection.getSignatureStatus(signature);
-    if (status !== 'Confirmed') {
-      throw new Error(`Transaction ${signature} was not confirmed (${status})`);
-    }
-  } catch (err) {
-    rl.write(`failed\n${err.message}\n`);
-    return;
-  }
-  rl.write('ok\n\n');
 
-
-  const dashboard = await loadDashboard(connection, myAccount);
+  const dashboard = await loadDashboard(connection);
   rl.write(`Total games played: ${dashboard.state.total}\n\n`);
 
-  //
-  // X or O?
-  //
-  const xOrO = await promptRegEx(rl, 'Do you want to be X or O? ', /^[oOxX]$/);
-
-  let ttt;
-  if (xOrO.toLowerCase() === 'x') {
-    //
-    // X initiates the game with the public key from O
-    //
-    //    rl.write('\nYou are X.  Ask O for their identifier.\n\n');
-    //
-    //    const player2Pubkey = await promptPublicKey(rl, 'O identifier: ');
-    //
-    ttt = await TicTacToe.create(connection, myAccount);
-
-    // Register the game with the dashboard
-    await dashboard.submitGameState(myAccount, ttt.gamePublicKey);
-
-    rl.write(`\nGame created.  Share the game code with O:\n\n`);
-    rl.write(`    ${ttt.gamePublicKey}\n\n`);
-    rl.write(`Waiting for O to join`);
-    try {
-      for (;;) {
-        await ttt.updateGameState();
-
-        if (ttt.state.gameState === 'Waiting') {
-          rl.write('.');
-        } else {
-          break; // Game accepted by X
-        }
-
-        // For now it's necessary to poll the network for state changes, check
-        // twice a second.
-        await sleep(500);
-      }
-
-    } catch (err) {
-      rl.write(`\nUnable to locate player O: ${err}\n`);
-      return;
-    }
-    rl.write(`\nGame started with ${ttt.state.playerO}\n`);
-
-  } else {
-    rl.write('\nYou are O.  Ask X for the game code:\n\n');
-    const gamePubkey = await promptPublicKey(rl, 'Game code: ');
-
-    rl.write(`Requesting to join game`);
-    try {
-      ttt = await TicTacToe.join(connection, myAccount, gamePubkey);
-
-      for (;;) {
-        await ttt.updateGameState();
-        if (ttt.state.inProgress) {
-          break; // Game accepted by X
-        }
-
-        if (ttt.state.gameState !== 'ORequestPending') {
-          throw new Error(`Improper game state: ${ttt.state.gameState}`);
-        }
-
-        rl.write('.');
-        // For now it's necessary to poll the network for state changes, check
-        // twice a second.
-        await sleep(500);
-      }
-
-    } catch (err) {
-      rl.write(`Unable to join game: ${err}\n`);
-      return;
-    }
-    rl.write(`\nGame started with ${ttt.state.playerX}\n`);
+  rl.write(`Recently completed games: ${dashboard.state.completed.length}\n`);
+  for (const [i, gamePublicKey] of dashboard.state.completed.entries()) {
+    const state = await TicTacToe.getGameState(connection, gamePublicKey);
+    rl.write(`Game #${i}: ${state.gameState}\n${renderBoard(state.board)}\n\n`);
   }
+
+  console.log('Looking for another player');
+  const ttt = await startGame(connection, dashboard);
 
   //
   // Main game loop
   //
-  rl.write('The game has started.\n');
+  rl.write(`\nThe game has started. You are ${ttt.isX ? 'X' : 'O'}\n`);
   let showBoard = false;
   for (;;) {
     await ttt.updateGameState();
     if (showBoard) {
-      rl.write(`\n${ttt.state.board}\n`);
+      rl.write(`\n${renderBoard(ttt.state.board)}\n`);
     }
     showBoard = false;
 
@@ -166,7 +142,7 @@ export async function main(url) {
       await sleep(500);
       continue;
     }
-    rl.write(`\nYour turn.\n${ttt.state.board}\n`);
+    rl.write(`\nYour turn.\n${renderBoard(ttt.state.board)}\n`);
     const coords = await promptRegEx(
       rl,
       'Enter row and column (eg. 1x3): ',
@@ -181,13 +157,16 @@ export async function main(url) {
   //
   // Display result
   //
-  if (ttt.state.abandoned) {
-    rl.write('\nOther player abandoned the game\n');
+  if (ttt.abandoned) {
+    rl.write('\nGame has been abandoned\n');
     return;
   }
-  rl.write(`\nGame Over\n=========\n\n${ttt.state.board}\n\n`);
+  rl.write(`\nGame Over\n=========\n\n${renderBoard(ttt.state.board)}\n\n`);
   if (ttt.state.winner) {
     rl.write('You won!\n');
+
+    // Inform the dashboard of the victory
+    await dashboard.submitGameState(ttt.gamePublicKey);
   } else if (ttt.state.draw) {
     rl.write('Draw.\n');
   } else {

@@ -1,9 +1,20 @@
+import {
+  Connection,
+  PublicKey,
+  Transaction,
+} from '@solana/web3.js';
+
 import {sleep} from './sleep';
 
 /**
  * Sign, send and confirm a transaction
  */
-export async function sendAndConfirmTransaction(connection, from, transaction, runtimeErrorOk = false) {
+export async function sendAndConfirmTransaction(
+  connection: Connection,
+  from: PublicKey,
+  transaction: Transaction,
+  runtimeErrorOk: boolean = false
+): Promise<void> {
   const signature = await connection.sendTransaction(from, transaction);
 
   // Wait up to a couple seconds for a confirmation

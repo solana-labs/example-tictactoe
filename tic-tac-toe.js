@@ -7,25 +7,49 @@
 import cbor from 'cbor';
 import bs58 from 'bs58';
 import {Account, SystemProgram, Transaction} from '@solana/web3.js';
+import type {Connection, PublicKey} from '@solana/web3.js';
 
 import {sendAndConfirmTransaction} from './send-and-confirm-transaction';
 
+export type TicTacToeBoard = Array<'F'|'X'|'O'>;
+
+type TicTacToeGameState = {
+  gameState: 'Waiting' | 'XMove' | 'OMove' | 'Draw' | 'XWin' | 'OWin';
+  inProgress: boolean,
+  myTurn: boolean,
+  draw: boolean,
+  winnder: boolean,
+  board: TicTacToeBoard,
+  playerX: PublicKey,
+  playerO: PublicKey,
+};
+
 export class TicTacToe {
+  state: TicTacToeGameState;
+  abandoned: boolean;
+
   /**
    * @private
    */
-  constructor(connection, gamePublicKey, isX, playerAccount) {
+  constructor(
+    connection: Connection,
+    gamePublicKey: PublicKey,
+    isX: boolean,
+    playerAccount: Account
+  ) {
     const state = {
+      gameState: 'Waiting',
       inProgress: false,
       myTurn: false,
       draw: false,
       winner: false,
-      board: '?',
+      board: [],
     };
 
     Object.assign(
       this,
       {
+        abandoned: false,
         connection,
         isX,
         playerAccount,
@@ -41,6 +65,14 @@ export class TicTacToe {
   scheduleNextKeepAlive() {
     setTimeout(
       async () => {
+        if (this.abandoned) {
+          //console.log(`\nKeepalive exit, Game abandoned: ${this.gamePublicKey}\n`);
+          return;
+        }
+        if (['XWon', 'OWin', 'Draw'].includes(this.state.gameState)) {
+          //console.log(`\nKeepalive exit, Game over: ${this.gamePublicKey}\n`);
+          return;
+        }
         try {
           await this.keepAlive();
         } catch (err) {
@@ -55,14 +87,14 @@ export class TicTacToe {
   /**
    * Base-58 encoded program id
    */
-  static get programId() {
+  static get programId(): PublicKey {
     return 'CiDwVBFgWV9E5MvXWoLgnEgn2hK7rJikbvfWavzAQz3';
   }
 
   /**
    * Creates a new game, costing playerX 1 token
    */
-  static async create(connection, playerXAccount) {
+  static async create(connection: Connection, playerXAccount: PublicKey): Promise<TicTacToe> {
     const gameAccount = new Account();
     const ttt = new TicTacToe(connection, gameAccount.publicKey, true, playerXAccount);
 
@@ -96,8 +128,16 @@ export class TicTacToe {
   /**
    * Join an existing game as player O
    */
-  static async join(connection, playerOAccount, gamePublicKey) {
+  static async join(
+    connection: Connection,
+    playerOAccount: Account,
+    gamePublicKey: PublicKey
+  ): Promise<TicTacToe> {
     const ttt = new TicTacToe(connection, gamePublicKey, false, playerOAccount);
+    await ttt.updateGameState();
+    if (!ttt.isPeerAlive()) {
+      throw new Error('Game appears abandoned');
+    }
 
     const userdata = cbor.encode(['Join', Date.now()]);
     {
@@ -109,6 +149,8 @@ export class TicTacToe {
       });
       await sendAndConfirmTransaction(connection, playerOAccount, transaction);
     }
+
+    await ttt.updateGameState();
     ttt.scheduleNextKeepAlive();
     return ttt;
   }
@@ -116,10 +158,10 @@ export class TicTacToe {
   /**
    * Send a keep-alive message to inform the other player that we're still alive
    */
-  async keepAlive() {
+  async keepAlive(when: ?number = undefined): Promise<void> {
     const cmd = [
       'KeepAlive',
-      Date.now(),
+      when === undefined ? Date.now() : when,
     ];
     const userdata = cbor.encode(cmd);
 
@@ -132,12 +174,20 @@ export class TicTacToe {
     await sendAndConfirmTransaction(this.connection, this.playerAccount, transaction, true);
   }
 
+  /**
+   * Signal to the other player that we're leaving
+   */
+  async abandonGame(): Promise<void> {
+    this.abandoned = true;
+    await this.keepAlive(0);
+  }
+
 
   /**
    * Attempt to make a move.
    * Once this method returns, use `updateGameState()` to fetch the result
    */
-  async move(x, y) {
+  async move(x: number, y: number): Promise<void> {
     const cmd = [
       'Move',
       x,
@@ -155,10 +205,13 @@ export class TicTacToe {
   }
 
   /**
-   * Update the `state` field with the latest state
+   * Fetch the latest state of the specified game
    */
-  async updateGameState() {
-    const accountInfo = await this.connection.getAccountInfo(this.gamePublicKey);
+  static async getGameState(
+    connection: Connection,
+    gamePublicKey: PublicKey
+  ): Promise<TicTacToeGameState> {
+    const accountInfo = await connection.getAccountInfo(gamePublicKey);
 
     const {userdata} = accountInfo;
     const length = userdata.readUInt8(0);
@@ -176,44 +229,57 @@ export class TicTacToe {
     // Map rawGameState into `this.state`
     const {game} = rawGameState;
 
-    // Render the board
-    const boardItems = game.grid.map(i => i === 'F' ? ' ' : i);
-    const board = [
-      boardItems.slice(0,3).join('|'),
-      '-+-+-',
-      boardItems.slice(3,6).join('|'),
-      '-+-+-',
-      boardItems.slice(6,9).join('|'),
-    ].join('\n');
-
     const playerX = bs58.encode(game.player_x);
     const playerO = game.player_o ? bs58.encode(game.player_o) : null;
 
-    this.state = {
+    const state = {
       gameState: game.state,
       inProgress: false,
       myTurn: false,
       draw: false,
       winner: false,
-      abandoned: false,
       playerX,
       playerO,
-      board,
+      board: game.board.map(i => i === 'F' ? ' ' : i),
+      keep_alive: game.keep_alive,
     };
 
-    switch (game.state) {
+    switch (state.gameState) {
     case 'Waiting':
       break;
     case 'XMove':
-      this.state.inProgress = true;
+    case 'OMove':
+      state.inProgress = true;
+      break;
+    case 'Draw':
+      state.draw = true;
+      break;
+    case 'XWon':
+    case 'OWon':
+      break;
+    default:
+      throw new Error(`Unhandled game state: ${game.state}`);
+    }
+
+    return state;
+  }
+
+  /**
+   * Update the `state` field with the latest state
+   */
+  async updateGameState(): Promise<void> {
+    this.state = await TicTacToe.getGameState(this.connection, this.gamePublicKey);
+
+    switch (this.state.gameState) {
+    case 'Waiting':
+      break;
+    case 'XMove':
       this.state.myTurn = this.isX;
       break;
     case 'OMove':
-      this.state.inProgress = true;
       this.state.myTurn = !this.isX;
       break;
     case 'Draw':
-      this.state.draw = true;
       break;
     case 'XWon':
       this.state.winner = this.isX;
@@ -222,17 +288,19 @@ export class TicTacToe {
       this.state.winner = !this.isX;
       break;
     default:
-      throw new Error(`Unhandled game state: ${game.state}`);
+      throw new Error(`Unhandled game state: ${this.state.gameState}`);
     }
 
-    if (this.state.inProgress) {
-      const peerKeepAlive = game.keep_alive[this.isX ? 1 : 0];
-      // Check if the peer has abandoned the game
-      if (Date.now() - peerKeepAlive  > 10000 /* 10 seconds*/) {
-        this.state.inProgress = false;
-        this.state.abandoned = true;
-      }
+    if (this.state.inProgress && !this.isPeerAlive()) {
+      this.state.inProgress = false;
+      this.abandoned = true;
     }
+  }
+
+  isPeerAlive(): boolean {
+    const peerKeepAlive = this.state.keep_alive[this.isX ? 1 : 0];
+    // Check if the peer has abandoned the game
+    return Date.now() - peerKeepAlive < 10000; /* 10 seconds*/
   }
 }
 
