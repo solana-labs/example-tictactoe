@@ -28,9 +28,7 @@ async function loadDashboard(connection, myAccount) {
   let dashboard;
   try {
     const dashboardPublicKey = JSON.parse(await fs.readFile('dashboard.json'));
-    dashboard = new TicTacToeDashboard(connection, dashboardPublicKey);
-    console.log(`Synchronizing dashboard ${dashboardPublicKey}`);
-    await dashboard.sync(myAccount);
+    dashboard = await TicTacToeDashboard.connect(connection, dashboardPublicKey);
   } catch (err) {
     console.log(`Unable to load dashboard: ${err.message}`);
     console.log('Creating new dashboard');
@@ -38,6 +36,8 @@ async function loadDashboard(connection, myAccount) {
 
     await fs.writeFile('dashboard.json', JSON.stringify(dashboard.publicKey));
   }
+  console.log(`Synchronizing dashboard...`);
+  await dashboard.sync(myAccount);
   return dashboard;
 }
 
@@ -98,9 +98,6 @@ export async function main(url) {
 
         if (ttt.state.gameState === 'WaitingForO') {
           rl.write('.');
-        } else if (ttt.state.gameState === 'ORequestPending') {
-          rl.write(`\nAccepting game request from ${ttt.state.playerO}\n`);
-          await ttt.accept();
         } else {
           break; // Game accepted by X
         }
@@ -111,9 +108,10 @@ export async function main(url) {
       }
 
     } catch (err) {
-      rl.write(`Unable to locate player O: ${err}\n`);
+      rl.write(`\nUnable to locate player O: ${err}\n`);
       return;
     }
+    rl.write(`\nGame started with ${ttt.state.playerO}\n`);
 
   } else {
     rl.write('\nYou are O.  Ask X for the game code:\n\n');

@@ -11,6 +11,9 @@ import {Account, SystemProgram, Transaction} from '@solana/web3.js';
 import {sendAndConfirmTransaction} from './send-and-confirm-transaction';
 
 export class TicTacToeDashboard {
+  /**
+   * @private
+   */
   constructor(connection, publicKey) {
     Object.assign(
       this,
@@ -23,6 +26,12 @@ export class TicTacToeDashboard {
 
   static get programId() {
     return 'GcdayuLaLyrdmUu324nahyv33G5poQdLUEZ1nEytDeP';
+  }
+
+  static async connect(connection, dashboardPublicKey) {
+    const dashboard = new TicTacToeDashboard(connection, dashboardPublicKey);
+    await dashboard.update();
+    return dashboard;
   }
 
   /**
@@ -52,8 +61,7 @@ export class TicTacToeDashboard {
       await sendAndConfirmTransaction(connection, tempAccount, transaction);
     }
 
-    const dashboard = new TicTacToeDashboard(connection, dashboardAccount.publicKey);
-    return dashboard;
+    return TicTacToeDashboard.connect(connect, dashboardAccount.publicKey);
   }
 
   /**

@@ -75,7 +75,7 @@ export class TicTacToe {
   }
 
   /**
-   * Join an existing game as O, X must confirm
+   * Join an existing game as player O
    */
   static async join(connection, playerOAccount, gamePublicKey) {
     const ttt = new TicTacToe(connection, gamePublicKey, false, playerOAccount);
@@ -91,34 +91,6 @@ export class TicTacToe {
       await sendAndConfirmTransaction(connection, playerOAccount, transaction);
     }
     return ttt;
-  }
-
-  /**
-   * Accept a game request from O
-   */
-  async accept() {
-    const userdata = cbor.encode('Accept');
-    const transaction = new Transaction({
-      fee: 0,
-      keys: [this.playerAccount.publicKey, this.gamePublicKey],
-      programId: TicTacToe.programId,
-      userdata,
-    });
-    await sendAndConfirmTransaction(this.connection, this.playerAccount, transaction);
-  }
-
-  /**
-   * Reject a game request from O
-   */
-  async reject() {
-    const userdata = cbor.encode('Reject');
-    const transaction = new Transaction({
-      fee: 0,
-      keys: [this.playerAccount.publicKey, this.gamePublicKey],
-      programId: TicTacToe.programId,
-      userdata,
-    });
-    await sendAndConfirmTransaction(this.connection, this.playerAccount, transaction);
   }
 
   /**
