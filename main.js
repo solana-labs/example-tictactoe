@@ -96,7 +96,7 @@ export async function main(url) {
       for (;;) {
         await ttt.updateGameState();
 
-        if (ttt.state.gameState === 'WaitingForO') {
+        if (ttt.state.gameState === 'Waiting') {
           rl.write('.');
         } else {
           break; // Game accepted by X
@@ -177,9 +177,14 @@ export async function main(url) {
     showBoard = true;
   }
 
+
   //
   // Display result
   //
+  if (ttt.state.abandoned) {
+    rl.write('\nOther player abandoned the game\n');
+    return;
+  }
   rl.write(`\nGame Over\n=========\n\n${ttt.state.board}\n\n`);
   if (ttt.state.winner) {
     rl.write('You won!\n');

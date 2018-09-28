@@ -61,7 +61,7 @@ export class TicTacToeDashboard {
       await sendAndConfirmTransaction(connection, tempAccount, transaction);
     }
 
-    return TicTacToeDashboard.connect(connect, dashboardAccount.publicKey);
+    return TicTacToeDashboard.connect(connection, dashboardAccount.publicKey);
   }
 
   /**

@@ -36,6 +36,23 @@ export class TicTacToe {
   }
 
   /**
+   * @private
+   */
+  scheduleNextKeepAlive() {
+    setTimeout(
+      async () => {
+        try {
+          await this.keepAlive();
+        } catch (err) {
+          console.error(`keepAlive() failed: ${err}`);
+        }
+        this.scheduleNextKeepAlive();
+      },
+      1000
+    );
+  }
+
+  /**
    * Base-58 encoded program id
    */
   static get programId() {
@@ -71,6 +88,8 @@ export class TicTacToe {
       });
       await sendAndConfirmTransaction(connection, gameAccount, transaction);
     }
+
+    ttt.scheduleNextKeepAlive();
     return ttt;
   }
 
@@ -80,7 +99,7 @@ export class TicTacToe {
   static async join(connection, playerOAccount, gamePublicKey) {
     const ttt = new TicTacToe(connection, gamePublicKey, false, playerOAccount);
 
-    const userdata = cbor.encode('Join');
+    const userdata = cbor.encode(['Join', Date.now()]);
     {
       const transaction = new Transaction({
         fee: 0,
@@ -90,8 +109,29 @@ export class TicTacToe {
       });
       await sendAndConfirmTransaction(connection, playerOAccount, transaction);
     }
+    ttt.scheduleNextKeepAlive();
     return ttt;
   }
+
+  /**
+   * Send a keep-alive message to inform the other player that we're still alive
+   */
+  async keepAlive() {
+    const cmd = [
+      'KeepAlive',
+      Date.now(),
+    ];
+    const userdata = cbor.encode(cmd);
+
+    const transaction = new Transaction({
+      fee: 0,
+      keys: [this.playerAccount.publicKey, this.gamePublicKey],
+      programId: TicTacToe.programId,
+      userdata,
+    });
+    await sendAndConfirmTransaction(this.connection, this.playerAccount, transaction, true);
+  }
+
 
   /**
    * Attempt to make a move.
@@ -137,7 +177,7 @@ export class TicTacToe {
     const {game} = rawGameState;
 
     // Render the board
-    const boardItems = game.grid.map(i => i === 'Free' ? ' ' : i);
+    const boardItems = game.grid.map(i => i === 'F' ? ' ' : i);
     const board = [
       boardItems.slice(0,3).join('|'),
       '-+-+-',
@@ -155,15 +195,14 @@ export class TicTacToe {
       myTurn: false,
       draw: false,
       winner: false,
+      abandoned: false,
       playerX,
       playerO,
       board,
     };
 
     switch (game.state) {
-    case 'WaitingForO':
-      break;
-    case 'ORequestPending':
+    case 'Waiting':
       break;
     case 'XMove':
       this.state.inProgress = true;
@@ -184,6 +223,15 @@ export class TicTacToe {
       break;
     default:
       throw new Error(`Unhandled game state: ${game.state}`);
+    }
+
+    if (this.state.inProgress) {
+      const peerKeepAlive = game.keep_alive[this.isX ? 1 : 0];
+      // Check if the peer has abandoned the game
+      if (Date.now() - peerKeepAlive  > 10000 /* 10 seconds*/) {
+        this.state.inProgress = false;
+        this.state.abandoned = true;
+      }
     }
   }
 }
