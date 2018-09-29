@@ -6,12 +6,12 @@
 import readline from 'readline-promise';
 import {Connection} from '@solana/web3.js';
 
-import {url} from './url';
-import {sleep} from './sleep';
-import {TicTacToe} from './tic-tac-toe';
-import {TicTacToeDashboard} from './tic-tac-toe-dashboard';
-import {createNewAccount} from './create-new-account';
-import type {TicTacToeBoard} from './tic-tac-toe';
+import {url} from '../../url';
+import {sleep} from '../util/sleep';
+import {TicTacToe} from '../program/tic-tac-toe';
+import {TicTacToeDashboard} from '../program/tic-tac-toe-dashboard';
+import {createNewAccount} from '../util/create-new-account';
+import type {TicTacToeBoard} from '../program/tic-tac-toe';
 
 function renderBoard(board: TicTacToeBoard): string {
   return [
@@ -23,55 +23,6 @@ function renderBoard(board: TicTacToeBoard): string {
   ].join('\n');
 }
 
-async function startGame(
-  connection: Connection,
-  dashboard: TicTacToeDashboard
-): Promise<TicTacToe> {
-
-  const myAccount = await createNewAccount(connection);
-  const myGame = await TicTacToe.create(connection, myAccount);
-
-  // Look for pending games from others, while trying to advertise our game.
-  for (;;) {
-    await Promise.all([myGame.updateGameState(), dashboard.update()]);
-
-    if (myGame.state.inProgress) {
-      // Another player joined our game
-      console.log(`Another player accepted our game (${myGame.gamePublicKey})`);
-      break;
-    }
-
-    const pendingGamePublicKey = dashboard.state.pending;
-    if (pendingGamePublicKey !== myGame.gamePublicKey) {
-      try {
-        console.log(`Trying to join ${pendingGamePublicKey}`);
-        const theirGame = await TicTacToe.join(
-          connection,
-          myAccount,
-          dashboard.state.pending
-        );
-        if (theirGame.state.inProgress) {
-          if (theirGame.state.playerO === myAccount.publicKey) {
-            console.log(`Joined game ${pendingGamePublicKey}`);
-            myGame.abandonGame();
-            return theirGame;
-          }
-        }
-      } catch (err) {
-        console.log(err.message);
-      }
-
-      // Advertise myGame as the pending game for others to see and hopefully
-      // join
-      console.log(`Advertising our game (${myGame.gamePublicKey})`);
-      await dashboard.submitGameState(myGame.gamePublicKey);
-    }
-
-    // Wait for a bite
-    await sleep(500);
-  }
-  return myGame;
-}
 
 async function main(url: string) {
   const rl = readline.createInterface({
@@ -83,7 +34,7 @@ async function main(url: string) {
   //
   // Connect to the network with a new account, and airdrop a minimal amount of tokens
   //
-  rl.write(`Connecting to network: ${url}...`);
+  rl.write(`Connecting to network: ${url}...\n`);
   const connection = new Connection(url);
 
 
@@ -100,8 +51,8 @@ async function main(url: string) {
   }
 
   // Find opponent
-  console.log('Looking for another player');
-  const ttt = await startGame(connection, dashboard);
+  rl.write('Looking for another player\n');
+  const ttt = await dashboard.startGame();
 
   //
   // Main game loop

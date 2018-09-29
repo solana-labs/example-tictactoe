@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "description": "",
   "scripts": {
-    "start": "babel-node main.js",
+    "start": "babel-node src/cli/main.js",
     "lint": "eslint .",
     "lint:fix": "npm run lint -- --fix",
     "flow": "flow",

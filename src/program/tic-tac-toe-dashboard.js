@@ -18,8 +18,10 @@ import type {
   PublicKey,
 } from '@solana/web3.js';
 
-import {createNewAccount} from './create-new-account';
-import {sendAndConfirmTransaction} from './send-and-confirm-transaction';
+import {sleep} from '../util/sleep';
+import {createNewAccount} from '../util/create-new-account';
+import {sendAndConfirmTransaction} from '../util/send-and-confirm-transaction';
+import {TicTacToe} from './tic-tac-toe';
 
 export class TicTacToeDashboard {
 
@@ -137,6 +139,56 @@ export class TicTacToeDashboard {
       this.state.completed = rawState.completed.map(bs58.encode);
       this.state.total = rawState.total;
     }
+  }
+
+  /**
+   * Finds another player and starts a game
+   */
+  async startGame(): Promise<TicTacToe> {
+
+    const myAccount = await createNewAccount(this.connection);
+    const myGame = await TicTacToe.create(this.connection, myAccount);
+
+    // Look for pending games from others, while trying to advertise our game.
+    for (;;) {
+      await Promise.all([myGame.updateGameState(), this.update()]);
+
+      if (myGame.state.inProgress) {
+        // Another player joined our game
+        console.log(`Another player accepted our game (${myGame.gamePublicKey})`);
+        break;
+      }
+
+      const pendingGamePublicKey = this.state.pending;
+      if (pendingGamePublicKey !== myGame.gamePublicKey) {
+        try {
+          console.log(`Trying to join ${pendingGamePublicKey}`);
+          const theirGame = await TicTacToe.join(
+            this.connection,
+            myAccount,
+            this.state.pending
+          );
+          if (theirGame.state.inProgress) {
+            if (theirGame.state.playerO === myAccount.publicKey) {
+              console.log(`Joined game ${pendingGamePublicKey}`);
+              myGame.abandonGame();
+              return theirGame;
+            }
+          }
+        } catch (err) {
+          console.log(err.message);
+        }
+
+        // Advertise myGame as the pending game for others to see and hopefully
+        // join
+        console.log(`Advertising our game (${myGame.gamePublicKey})`);
+        await this.submitGameState(myGame.gamePublicKey);
+      }
+
+      // Wait for a bite
+      await sleep(500);
+    }
+    return myGame;
   }
 }
 

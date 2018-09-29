@@ -11,7 +11,7 @@ import bs58 from 'bs58';
 import {Account, SystemProgram, Transaction} from '@solana/web3.js';
 import type {Connection, PublicKey} from '@solana/web3.js';
 
-import {sendAndConfirmTransaction} from './send-and-confirm-transaction';
+import {sendAndConfirmTransaction} from '../util/send-and-confirm-transaction';
 
 export type TicTacToeBoard = Array<'F'|'X'|'O'>;
 

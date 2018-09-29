@@ -1,4 +1,2 @@
 /node_modules
 *.sw[po]
-/dashboard.json
-/flow-typed/
