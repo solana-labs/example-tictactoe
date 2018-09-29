@@ -45,7 +45,11 @@ async function main(url: string) {
   rl.write(`Recently completed games: ${dashboard.state.completed.length}\n`);
   for (const [i, gamePublicKey] of dashboard.state.completed.entries()) {
     const state = await TicTacToe.getGameState(connection, gamePublicKey);
-    rl.write(`Game #${i}: ${state.gameState}\n${renderBoard(state.board)}\n\n`);
+    const lastMove = new Date(Math.max(...state.keep_alive));
+
+    rl.write(`Game #${i}: ${state.gameState}\n`);
+    rl.write(`${renderBoard(state.board)}\n`);
+    rl.write(`${lastMove.getSeconds() === 0 ? '?' : lastMove.toLocaleString()}\n\n`);
   }
 
   // Find opponent

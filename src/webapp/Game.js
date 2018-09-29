@@ -177,7 +177,7 @@ export class Game extends React.Component {
                       onClick={() => undefined}
                     />
                     <br/>
-                    {lastMove.toLocaleString()}
+                    {lastMove.getSeconds() === 0 ? '' : lastMove.toLocaleString()}
                   </div>
                 </Carousel.Item>;
               })
