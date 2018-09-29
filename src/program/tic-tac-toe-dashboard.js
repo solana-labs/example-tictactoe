@@ -66,7 +66,10 @@ export class TicTacToeDashboard {
   /**
    * Connects to the dashboard
    */
-  static async connect(connection: Connection, dashboardPublicKey: PublicKey): Promise<TicTacToeDashboard> {
+  static async connect(
+    connection: Connection,
+    dashboardPublicKey: PublicKey = 'GriTuZr9NTaSbTcPR38VDDyLkcPt8mTEut8cspgBjjQZ'
+  ): Promise<TicTacToeDashboard> {
 
     try {
       const tttd = await TicTacToeDashboard._connect(connection, dashboardPublicKey);

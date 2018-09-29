@@ -39,8 +39,7 @@ async function main(url: string) {
 
 
   // Create/load the game dashboard
-  const dashboardPublicKey = 'GriTuZr9NTaSbTcPR38VDDyLkcPt8mTEut8cspgBjjQZ';
-  const dashboard = await TicTacToeDashboard.connect(connection, dashboardPublicKey);
+  const dashboard = await TicTacToeDashboard.connect(connection);
 
   rl.write(`Total games played: ${dashboard.state.total}\n\n`);
 
