@@ -7,15 +7,27 @@ The Solana tic-tac-toe program itself consists of two on-chain programs:
 * A single tig-tac-toe game between two players: https://github.com/solana-labs/solana/tree/v0.9/src/tictactoe_program.rs
 * Dashboard used by players to find an opponent and view recent game results: https://github.com/solana-labs/solana/tree/v0.9/src/tictactoe_dashboard_program.rs
 
-## Interactive Command-line Usage
+## Getting Started
 
+Go to https://solana-example-tictactoe.herokuapp.com/ and wait for another player to join.
+
+### Local Repository
+
+#### Web App
+```sh
+$ npm install
+$ npm start:webapp
+```
+
+Then open your browser to http://localhost:8080/ and wait for another player to join.
+
+#### Command-line
 ```sh
 $ npm install
 $ npm start
 ```
 
-Now wait for another player to join or run `npm start` again in a different
-terminal to simulate a second player.
+Now wait for another player to join.
 
 ## Network Selection
 
