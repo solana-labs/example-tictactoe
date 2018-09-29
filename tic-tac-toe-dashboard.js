@@ -52,9 +52,9 @@ export class TicTacToeDashboard {
 
 
   /**
-   * Connect to an existing dashboard by its public key
+   * @private
    */
-  static async connect(connection: Connection, dashboardPublicKey: PublicKey): Promise<TicTacToeDashboard> {
+  static async _connect(connection: Connection, dashboardPublicKey: PublicKey): Promise<TicTacToeDashboard> {
     const clientAccount = await createNewAccount(connection);
     const dashboard = new TicTacToeDashboard(connection, dashboardPublicKey, clientAccount);
     await dashboard.update();
@@ -62,9 +62,17 @@ export class TicTacToeDashboard {
   }
 
   /**
-   * Creates a new dashboard
+   * Connects to the dashboard
    */
-  static async create(connection: Connection): Promise<TicTacToeDashboard> {
+  static async connect(connection: Connection, dashboardPublicKey: PublicKey): Promise<TicTacToeDashboard> {
+
+    try {
+      const tttd = await TicTacToeDashboard._connect(connection, dashboardPublicKey);
+      return tttd;
+    } catch (err) {
+      console.log(err.message);
+    }
+
     const tempAccount = new Account();
     {
       const signature = await connection.requestAirdrop(tempAccount.publicKey, 1);
@@ -74,13 +82,11 @@ export class TicTacToeDashboard {
       }
     }
 
-    const dashboardAccount = new Account();
-
     // Allocate memory for the game.
     {
       const transaction = SystemProgram.createAccount(
         tempAccount.publicKey,
-        dashboardAccount.publicKey,
+        dashboardPublicKey,
         1,
         1024, // userdata space
         TicTacToeDashboard.programId,
@@ -88,7 +94,7 @@ export class TicTacToeDashboard {
       await sendAndConfirmTransaction(connection, tempAccount, transaction);
     }
 
-    return TicTacToeDashboard.connect(connection, dashboardAccount.publicKey);
+    return TicTacToeDashboard._connect(connection, dashboardPublicKey);
   }
 
   /**

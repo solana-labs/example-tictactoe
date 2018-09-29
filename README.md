@@ -10,7 +10,7 @@ The Solana tic-tac-toe program itself consists of two on-chain programs:
 ## Interactive Command-line Usage
 
 This example connects to a local instance of Solana by default. Edit the `url`
-in `index.js` if this is not desired.
+variable in `url.js` if this is not desired.
 
 First setup a local instance of Solana:
 ```bash

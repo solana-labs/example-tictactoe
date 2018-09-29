@@ -2,9 +2,8 @@
   "name": "tictactoe",
   "version": "0.0.1",
   "description": "",
-  "main": "index.js",
   "scripts": {
-    "start": "babel-node .",
+    "start": "babel-node main.js",
     "lint": "eslint .",
     "lint:fix": "npm run lint -- --fix",
     "flow": "flow",

@@ -5,8 +5,8 @@
  */
 import readline from 'readline-promise';
 import {Connection} from '@solana/web3.js';
-import fs from 'mz/fs';
 
+import {url} from './url';
 import {sleep} from './sleep';
 import {TicTacToe} from './tic-tac-toe';
 import {TicTacToeDashboard} from './tic-tac-toe-dashboard';
@@ -73,7 +73,7 @@ async function startGame(
   return myGame;
 }
 
-export async function main(url: string) {
+async function main(url: string) {
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
@@ -88,17 +88,8 @@ export async function main(url: string) {
 
 
   // Create/load the game dashboard
-  let dashboard;
-  try {
-    const dashboardPublicKey = JSON.parse(await fs.readFile('dashboard.json'));
-    dashboard = await TicTacToeDashboard.connect(connection, dashboardPublicKey);
-  } catch (err) {
-    console.log(`Unable to load dashboard: ${err.message}`);
-    console.log('Creating new dashboard');
-    dashboard = await TicTacToeDashboard.create(connection);
-
-    await fs.writeFile('dashboard.json', JSON.stringify(dashboard.publicKey));
-  }
+  const dashboardPublicKey = 'GriTuZr9NTaSbTcPR38VDDyLkcPt8mTEut8cspgBjjQZ';
+  const dashboard = await TicTacToeDashboard.connect(connection, dashboardPublicKey);
 
   rl.write(`Total games played: ${dashboard.state.total}\n\n`);
 
@@ -169,3 +160,10 @@ export async function main(url: string) {
     rl.write('You lost.\n');
   }
 }
+
+main(url)
+.catch((err) => {
+  console.error(err);
+})
+.then(() => process.exit());
+
