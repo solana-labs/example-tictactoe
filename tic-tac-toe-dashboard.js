@@ -2,6 +2,8 @@
  *
  * The TicTacToe Dashboard class exported by this file is used to interact with the
  * on-chain tic-tac-toe dashboard program.
+ *
+ * @flow
  */
 
 import cbor from 'cbor';
@@ -20,6 +22,15 @@ import {createNewAccount} from './create-new-account';
 import {sendAndConfirmTransaction} from './send-and-confirm-transaction';
 
 export class TicTacToeDashboard {
+
+  state: {
+    pending: PublicKey,
+    completed: Array<PublicKey>,
+    total: number,
+  };
+  connection: Connection;
+  clientAccount: Account;
+  publicKey: PublicKey;
 
   /**
    * @private
@@ -43,7 +54,7 @@ export class TicTacToeDashboard {
   /**
    * Connect to an existing dashboard by its public key
    */
-  static async connect(connection, dashboardPublicKey): Promise<TicTacToeDashboard> {
+  static async connect(connection: Connection, dashboardPublicKey: PublicKey): Promise<TicTacToeDashboard> {
     const clientAccount = await createNewAccount(connection);
     const dashboard = new TicTacToeDashboard(connection, dashboardPublicKey, clientAccount);
     await dashboard.update();
@@ -53,7 +64,7 @@ export class TicTacToeDashboard {
   /**
    * Creates a new dashboard
    */
-  static async create(connection): Promise<TicTacToeDashboard> {
+  static async create(connection: Connection): Promise<TicTacToeDashboard> {
     const tempAccount = new Account();
     {
       const signature = await connection.requestAirdrop(tempAccount.publicKey, 1);
@@ -97,6 +108,8 @@ export class TicTacToeDashboard {
    * Update the `state` field with the latest dashboard contents
    */
   async update(): Promise<void> {
+
+    // $FlowFixMe: Flow has a problem with the `await`, unclear why...
     const accountInfo = await this.connection.getAccountInfo(this.publicKey);
 
     const {userdata} = accountInfo;
@@ -121,26 +134,5 @@ export class TicTacToeDashboard {
       this.state.total = rawState.total;
     }
   }
-
-  /**
-   * Synchronize the dashboard
-   */
-  /*
-  async sync(playerAccount) {
-    // Fetch the current state
-    await this.update();
-
-    // Provide the dashboard read-only access to all the pending/active games,
-    // so that it may update itself.
-    const gamePublicKeys = this.state.pending.concat(this.state.active);
-    if (gamePublicKeys.length === 0) {
-      return;
-    }
-    await this.submitGameState(playerAccount, ...gamePublicKeys);
-
-    // Update to (potentially) new state
-    await this.update();
-  }
-  */
 }
 

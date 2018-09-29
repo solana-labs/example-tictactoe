@@ -1,8 +1,14 @@
+// @flow
+
 import {
   Connection,
-  PublicKey,
   Transaction,
 } from '@solana/web3.js';
+
+import type {
+  Account,
+} from '@solana/web3.js';
+
 
 import {sleep} from './sleep';
 
@@ -11,7 +17,7 @@ import {sleep} from './sleep';
  */
 export async function sendAndConfirmTransaction(
   connection: Connection,
-  from: PublicKey,
+  from: Account,
   transaction: Transaction,
   runtimeErrorOk: boolean = false
 ): Promise<void> {

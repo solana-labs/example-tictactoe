@@ -1,3 +1,5 @@
+// @flow
+
 import {main} from './main';
 
 let url = 'http://localhost:8899';
