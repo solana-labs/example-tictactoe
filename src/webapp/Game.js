@@ -3,7 +3,6 @@ import {
   Button,
   Carousel,
   Panel,
-  Well,
 } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 
@@ -149,9 +148,10 @@ export class Game extends React.Component {
     const gameHistory = completedGames.length === 0 ? <i>None</i> : (
       <Panel>
         <Panel.Heading>
-          <Panel.Title>Total Games Played: {totalGames}</Panel.Title>
+          <Panel.Title>Game History</Panel.Title>
         </Panel.Heading>
         <Panel.Body>
+          Total Games Played: {totalGames}
           <Carousel indicators={false} controls={false} interval={2000}>
             {
               completedGames.map((game, i) => {
@@ -172,6 +172,7 @@ export class Game extends React.Component {
                     <h3>{gameState}</h3>
                     <br/>
                     <Board
+                      disabled="true"
                       bsSize="xsmall"
                       squares={game.board}
                       onClick={() => undefined}
@@ -210,19 +211,24 @@ export class Game extends React.Component {
 
     return (
       <div>
-        <Well>
-          <div align="center">
-            <h2>{currentGameStatusMessage}</h2>
-            <Board
-              disabled={!(currentGame && currentGame.state.myTurn)}
-              bsSize="large"
-              squares={currentGame ? currentGame.state.board : Array(9).fill(' ')}
-              onClick={i => this.handleClick(i)}
-            />
-            <br/>
-          </div>
-          {playAgain}
-        </Well>
+        <Panel>
+          <Panel.Heading>
+            <Panel.Title>Current Game</Panel.Title>
+          </Panel.Heading>
+          <Panel.Body>
+            <div align="center">
+              <h2>{currentGameStatusMessage}</h2>
+              <Board
+                disabled={!(currentGame && currentGame.state.myTurn)}
+                bsSize="large"
+                squares={currentGame ? currentGame.state.board : Array(9).fill(' ')}
+                onClick={i => this.handleClick(i)}
+              />
+              <br/>
+            </div>
+            {playAgain}
+          </Panel.Body>
+        </Panel>
         {gameHistory}
       </div>
     );
