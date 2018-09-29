@@ -132,6 +132,7 @@ export class Game extends React.Component {
     } = this.state;
     try {
       await currentGame.move(x, y);
+      await currentGame.updateGameState();
     } catch (err) {
       console.log(`Unable to move to ${x}x${y}: ${err.message}`);
     }
