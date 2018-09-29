@@ -1,11 +1,13 @@
 {
   "presets": [
     "env",
+    "flow",
+    "react",
     "stage-2",
-    "flow"
   ],
   "plugins": [
     "transform-class-properties",
     "transform-function-bind",
+    "transform-runtime",
   ]
 }

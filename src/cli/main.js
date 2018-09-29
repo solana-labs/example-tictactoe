@@ -10,7 +10,6 @@ import {url} from '../../url';
 import {sleep} from '../util/sleep';
 import {TicTacToe} from '../program/tic-tac-toe';
 import {TicTacToeDashboard} from '../program/tic-tac-toe-dashboard';
-import {createNewAccount} from '../util/create-new-account';
 import type {TicTacToeBoard} from '../program/tic-tac-toe';
 
 function renderBoard(board: TicTacToeBoard): string {
