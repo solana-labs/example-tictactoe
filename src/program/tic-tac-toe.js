@@ -188,7 +188,7 @@ export class TicTacToe {
   /**
    * Signal to the other player that we're leaving
    */
-  async abandonGame(): Promise<void> {
+  async abandon(): Promise<void> {
     this.abandoned = true;
     await this.keepAlive(0);
   }

@@ -174,7 +174,7 @@ export class TicTacToeDashboard {
           if (theirGame.state.inProgress) {
             if (theirGame.state.playerO === myAccount.publicKey) {
               console.log(`Joined game ${pendingGamePublicKey}`);
-              myGame.abandonGame();
+              myGame.abandon();
               return theirGame;
             }
           }

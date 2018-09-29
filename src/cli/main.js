@@ -97,12 +97,13 @@ async function main(url: string) {
     rl.write('\nGame has been abandoned\n');
     return;
   }
+
+  // Notify the dashboard that the game has completed.
+  await dashboard.submitGameState(ttt.gamePublicKey);
+
   rl.write(`\nGame Over\n=========\n\n${renderBoard(ttt.state.board)}\n\n`);
   if (ttt.state.winner) {
     rl.write('You won!\n');
-
-    // Inform the dashboard of the victory
-    await dashboard.submitGameState(ttt.gamePublicKey);
   } else if (ttt.state.draw) {
     rl.write('Draw.\n');
   } else {

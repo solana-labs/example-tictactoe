@@ -4,7 +4,6 @@
   "description": "",
   "scripts": {
     "start": "babel-node src/cli/main.js",
-    "start:webapp": "http-server",
     "lint": "eslint .",
     "lint:fix": "npm run lint -- --fix",
     "flow": "flow",
