@@ -37,7 +37,7 @@ Edit the file `url.js` if this is not desired.  For example to use a local
 instance of Solana, set
 set `url = 'http://localhost:8899'` then:
 ```bash
-$ git clone https://github.com/solana-labs/solana.git
+$ git clone https://github.com/solana-labs/solana.git -bv0.9
 $ cd solana/
 $ ./multinode-demo/setup.sh
 $ ./multinode-demo/drone.sh &
