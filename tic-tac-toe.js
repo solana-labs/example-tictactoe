@@ -2,6 +2,8 @@
  *
  * The TicTacToe class exported by this file is used to interact with the
  * on-chain tic-tac-toe program.
+ *
+ * @flow
  */
 
 import cbor from 'cbor';
@@ -18,15 +20,21 @@ type TicTacToeGameState = {
   inProgress: boolean,
   myTurn: boolean,
   draw: boolean,
-  winnder: boolean,
+  winner: boolean,
   board: TicTacToeBoard,
-  playerX: PublicKey,
-  playerO: PublicKey,
+  playerX: PublicKey | null,
+  playerO: PublicKey | null,
+  keep_alive: [number, number],
 };
 
 export class TicTacToe {
-  state: TicTacToeGameState;
   abandoned: boolean;
+  connection: Connection;
+  gamePublicKey: PublicKey;
+  isX: boolean;
+  playerAccount: Account;
+  state: TicTacToeGameState;
+
 
   /**
    * @private
@@ -43,7 +51,10 @@ export class TicTacToe {
       myTurn: false,
       draw: false,
       winner: false,
+      playerX: null,
+      playerO: null,
       board: [],
+      keep_alive: [0, 0],
     };
 
     Object.assign(
@@ -94,7 +105,7 @@ export class TicTacToe {
   /**
    * Creates a new game, costing playerX 1 token
    */
-  static async create(connection: Connection, playerXAccount: PublicKey): Promise<TicTacToe> {
+  static async create(connection: Connection, playerXAccount: Account): Promise<TicTacToe> {
     const gameAccount = new Account();
     const ttt = new TicTacToe(connection, gameAccount.publicKey, true, playerXAccount);
 
@@ -232,7 +243,7 @@ export class TicTacToe {
     const playerX = bs58.encode(game.player_x);
     const playerO = game.player_o ? bs58.encode(game.player_o) : null;
 
-    const state = {
+    const state: TicTacToeGameState = {
       gameState: game.state,
       inProgress: false,
       myTurn: false,

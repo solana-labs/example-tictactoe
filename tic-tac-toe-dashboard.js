@@ -108,8 +108,6 @@ export class TicTacToeDashboard {
    * Update the `state` field with the latest dashboard contents
    */
   async update(): Promise<void> {
-
-    // $FlowFixMe: Flow has a problem with the `await`, unclear why...
     const accountInfo = await this.connection.getAccountInfo(this.publicKey);
 
     const {userdata} = accountInfo;

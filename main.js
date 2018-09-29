@@ -1,5 +1,7 @@
 /**
  * Implements the command-line based game interface
+ *
+ * @flow
  */
 import readline from 'readline-promise';
 import {Connection} from '@solana/web3.js';
@@ -10,31 +12,6 @@ import {TicTacToe} from './tic-tac-toe';
 import {TicTacToeDashboard} from './tic-tac-toe-dashboard';
 import {createNewAccount} from './create-new-account';
 import type {TicTacToeBoard} from './tic-tac-toe';
-
-async function promptRegEx(rl, promptMessage: string, allowedResponse: RegExp): string {
-  for (;;) {
-    const response = await rl.questionAsync(promptMessage);
-    if (allowedResponse.test(response)) {
-      return response;
-    }
-    rl.write(`Invalid response: ${response}\n`);
-  }
-}
-
-async function loadDashboard(connection: Connection): TicTacToeDashboard {
-  let dashboard;
-  try {
-    const dashboardPublicKey = JSON.parse(await fs.readFile('dashboard.json'));
-    dashboard = await TicTacToeDashboard.connect(connection, dashboardPublicKey);
-  } catch (err) {
-    console.log(`Unable to load dashboard: ${err.message}`);
-    console.log('Creating new dashboard');
-    dashboard = await TicTacToeDashboard.create(connection);
-
-    await fs.writeFile('dashboard.json', JSON.stringify(dashboard.publicKey));
-  }
-  return dashboard;
-}
 
 function renderBoard(board: TicTacToeBoard): string {
   return [
@@ -61,7 +38,7 @@ async function startGame(
     if (myGame.state.inProgress) {
       // Another player joined our game
       console.log(`Another player accepted our game (${myGame.gamePublicKey})`);
-      return myGame;
+      break;
     }
 
     const pendingGamePublicKey = dashboard.state.pending;
@@ -93,6 +70,7 @@ async function startGame(
     // Wait for a bite
     await sleep(500);
   }
+  return myGame;
 }
 
 export async function main(url: string) {
@@ -108,7 +86,20 @@ export async function main(url: string) {
   rl.write(`Connecting to network: ${url}...`);
   const connection = new Connection(url);
 
-  const dashboard = await loadDashboard(connection);
+
+  // Create/load the game dashboard
+  let dashboard;
+  try {
+    const dashboardPublicKey = JSON.parse(await fs.readFile('dashboard.json'));
+    dashboard = await TicTacToeDashboard.connect(connection, dashboardPublicKey);
+  } catch (err) {
+    console.log(`Unable to load dashboard: ${err.message}`);
+    console.log('Creating new dashboard');
+    dashboard = await TicTacToeDashboard.create(connection);
+
+    await fs.writeFile('dashboard.json', JSON.stringify(dashboard.publicKey));
+  }
+
   rl.write(`Total games played: ${dashboard.state.total}\n\n`);
 
   rl.write(`Recently completed games: ${dashboard.state.completed.length}\n`);
@@ -117,6 +108,7 @@ export async function main(url: string) {
     rl.write(`Game #${i}: ${state.gameState}\n${renderBoard(state.board)}\n\n`);
   }
 
+  // Find opponent
   console.log('Looking for another player');
   const ttt = await startGame(connection, dashboard);
 
@@ -143,11 +135,15 @@ export async function main(url: string) {
       continue;
     }
     rl.write(`\nYour turn.\n${renderBoard(ttt.state.board)}\n`);
-    const coords = await promptRegEx(
-      rl,
-      'Enter row and column (eg. 1x3): ',
-      /^[123]x[123]$/
-    );
+
+    let coords = '?x?';
+    for (;;) {
+      coords = await rl.questionAsync('Enter row and column (eg. 1x3): ');
+      if (/^[123]x[123]$/.test(coords)) {
+        break;
+      }
+      rl.write(`Invalid response: ${coords}\n`);
+    }
 
     await ttt.move(Number(coords[0]) - 1, Number(coords[2]) - 1);
     showBoard = true;

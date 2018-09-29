@@ -4,7 +4,6 @@ import {
   Connection,
   Transaction,
 } from '@solana/web3.js';
-
 import type {
   Account,
 } from '@solana/web3.js';
