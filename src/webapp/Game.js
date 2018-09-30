@@ -1,3 +1,4 @@
+import moment from 'moment';
 import React from 'react';
 import {
   Button,
@@ -152,11 +153,10 @@ export class Game extends React.Component {
     const gameHistory = completedGames.length === 0 ? <i>None</i> : (
       <Panel>
         <Panel.Heading>
-          <Panel.Title>Game History</Panel.Title>
+          <Panel.Title>Total Games Played: {totalGames}</Panel.Title>
         </Panel.Heading>
         <Panel.Body>
-          Total Games Played: {totalGames}
-          <Carousel pauseOnHover={false} indicators={false} controls={false}>
+          <Carousel pauseOnHover={false} interval={3000} indicators={false}>
             {
               completedGames.map((game, i) => {
                 let {gameState} = game;
@@ -174,15 +174,13 @@ export class Game extends React.Component {
                 return <Carousel.Item key={i}>
                   <div align="center">
                     <h3>{gameState}</h3>
-                    <br/>
+                    <p><i>{lastMove.getSeconds() === 0 ? '' : moment(lastMove).fromNow()}</i></p>
                     <Board
                       disabled="true"
                       bsSize="xsmall"
                       squares={game.board}
                       onClick={() => undefined}
                     />
-                    <br/>
-                    {lastMove.getSeconds() === 0 ? '' : lastMove.toLocaleString()}
                   </div>
                 </Carousel.Item>;
               })

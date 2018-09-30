@@ -14,7 +14,7 @@ function Square(props) {
   };
   return (
     <Button style={style} disabled={props.disabled} onClick={props.onClick}>
-      {props.value === ' ' ? '-' : props.value}
+      <b>{props.value === ' ' ? '-' : props.value}</b>
     </Button>
   );
 }
