@@ -37,6 +37,7 @@ export class Game extends React.Component {
   }
 
   async refreshGame() {
+    clearTimeout(this.refreshGameTimeout);
     if (this.stopRefresh) {
       return;
     }
@@ -79,6 +80,7 @@ export class Game extends React.Component {
         if (!this.dashboardNotifiedOfCompletedGame) {
           this.dashboardNotifiedOfCompletedGame = true;
           await dashboard.submitGameState(currentGame.gamePublicKey);
+          this.refreshDashboard();
         }
 
         currentGameStatusMessage = 'Game Over.  ';
@@ -98,10 +100,11 @@ export class Game extends React.Component {
         currentGameStatusMessage,
       });
     }
-    setTimeout(::this.refreshGame, 500);
+    this.refreshGameTimeout = setTimeout(::this.refreshGame, 500);
   }
 
   async refreshDashboard() {
+    clearTimeout(this.refreshDashboardTimeout);
     if (this.stopRefresh) {
       return;
     }
@@ -119,7 +122,7 @@ export class Game extends React.Component {
       completedGames: dashboard.state.completed.map((key) => this.recentGameState[key]),
     });
 
-    setTimeout(::this.refreshDashboard, 5000);
+    this.refreshDashboardTimeout = setTimeout(::this.refreshDashboard, 5000);
   }
 
   async handleClick(i) {
@@ -153,7 +156,7 @@ export class Game extends React.Component {
         </Panel.Heading>
         <Panel.Body>
           Total Games Played: {totalGames}
-          <Carousel indicators={false} controls={false} interval={2000}>
+          <Carousel pauseOnHover={false} indicators={false} controls={false} interval={2000}>
             {
               completedGames.map((game, i) => {
                 let {gameState} = game;
