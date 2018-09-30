@@ -93,7 +93,7 @@ export class TicTacToeDashboard {
         tempAccount.publicKey,
         dashboardPublicKey,
         1,
-        1024, // userdata space
+        512, // userdata space
         TicTacToeDashboard.programId,
       );
       await sendAndConfirmTransaction(connection, tempAccount, transaction);
