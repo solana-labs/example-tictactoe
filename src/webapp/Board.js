@@ -1,4 +1,3 @@
-// /* eslint react/prop-types: 0 */
 import React from 'react';
 import {
   Button,
@@ -6,8 +5,15 @@ import {
 import PropTypes from 'prop-types';
 
 function Square(props) {
+  const style = props.bsSize === 'large' ? {
+    width: '70px',
+    height: '70px',
+  } : {
+    width: '35px',
+    height: '35px',
+  };
   return (
-    <Button disabled={props.disabled} bsSize={props.bsSize} onClick={props.onClick}>
+    <Button style={style} disabled={props.disabled} onClick={props.onClick}>
       {props.value === ' ' ? '-' : props.value}
     </Button>
   );
