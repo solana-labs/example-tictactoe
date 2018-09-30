@@ -156,7 +156,7 @@ export class Game extends React.Component {
         </Panel.Heading>
         <Panel.Body>
           Total Games Played: {totalGames}
-          <Carousel pauseOnHover={false} indicators={false} controls={false} interval={2000}>
+          <Carousel pauseOnHover={false} indicators={false} controls={false}>
             {
               completedGames.map((game, i) => {
                 let {gameState} = game;
