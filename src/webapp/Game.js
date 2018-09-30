@@ -125,7 +125,7 @@ export class Game extends React.Component {
     this.refreshDashboardTimeout = setTimeout(::this.refreshDashboard, 5000);
   }
 
-  async handleClick(i) {
+  async handleClick(i: number) {
     const x = Math.floor(i % 3);
     const y = Math.floor(i / 3);
     console.log('Move', x, y);

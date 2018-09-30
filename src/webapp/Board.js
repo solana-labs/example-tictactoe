@@ -26,7 +26,7 @@ Square.propTypes = {
 };
 
 export class Board extends React.Component {
-  renderSquare(i) {
+  renderSquare(i: number) {
     return (
       <Square
         disabled={this.props.disabled}
