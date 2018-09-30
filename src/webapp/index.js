@@ -17,13 +17,28 @@ class App extends React.Component {
   }
 
   async componentDidMount() {
+    await sleep(0); // Exit the `componentDidMount` stack frame
+
+    let connection = null;
+    let errorMessage = null;
+    let attempt = 0;
+    while (connection === null) {
+      const initMessage = `Connecting to ${url}... ` +
+        (attempt === 0 ? '' : `(#${attempt}: ${errorMessage})`);
+      this.setState({initMessage});
+      try {
+        connection = new Connection(url);
+        await connection.getLastId();
+      } catch (err) {
+        console.log(err);
+        errorMessage = err.message;
+        connection = null;
+        await sleep(1000);
+      }
+      attempt++;
+    }
+
     try {
-      await sleep(0); // Exit the `componentDidMount` stack frame
-
-      this.setState({initMessage: `Connecting to ${url}...`});
-      const connection = new Connection(url);
-      await connection.getLastId();
-
       this.setState({initMessage: `Loading game state...`});
       const dashboard = await TicTacToeDashboard.connect(connection);
 
