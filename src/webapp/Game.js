@@ -205,7 +205,7 @@ export class Game extends React.Component {
               }
             }
           >
-            Play again...
+            Play again
           </Button>
         </div>
       );
