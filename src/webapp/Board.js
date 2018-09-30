@@ -8,6 +8,7 @@ function Square(props) {
   const style = props.bsSize === 'large' ? {
     width: '70px',
     height: '70px',
+    fontSize: '32px',
   } : {
     width: '35px',
     height: '35px',
