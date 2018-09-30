@@ -100,6 +100,10 @@ export class Game extends React.Component {
         currentGame,
         currentGameStatusMessage,
       });
+
+      if (currentGame.state.myTurn) {
+        return; // Suspend refreshGame() until the local player makes a move
+      }
     }
     this.refreshGameTimeout = setTimeout(::this.refreshGame, 500);
   }
@@ -135,11 +139,17 @@ export class Game extends React.Component {
       currentGame,
     } = this.state;
     try {
+      // Update the UI immediately with the move for better user feedback, but
+      // also send the move to the on-chain program for a final decision
+      currentGame.state.board[i] = currentGame.isX ? 'X' : 'O';
+      this.setState({currentGame});
       await currentGame.move(x, y);
-      await currentGame.updateGameState();
     } catch (err) {
       console.log(`Unable to move to ${x}x${y}: ${err.message}`);
     }
+
+    // Resume polling for remote activity
+    this.refreshGame();
   }
 
   render() {
