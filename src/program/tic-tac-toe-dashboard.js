@@ -7,16 +7,13 @@
  */
 
 import cbor from 'cbor';
-import bs58 from 'bs58';
 import {
   Account,
+  PublicKey,
   SystemProgram,
   Transaction,
 } from '@solana/web3.js';
-import type {
-  Connection,
-  PublicKey,
-} from '@solana/web3.js';
+import type {Connection} from '@solana/web3.js';
 
 import {sleep} from '../util/sleep';
 import {createNewAccount} from '../util/create-new-account';
@@ -26,7 +23,7 @@ import {TicTacToe} from './tic-tac-toe';
 export class TicTacToeDashboard {
 
   state: {
-    pending: PublicKey,
+    pending: PublicKey | null,
     completed: Array<PublicKey>,
     total: number,
   };
@@ -49,7 +46,7 @@ export class TicTacToeDashboard {
   }
 
   static get programId(): PublicKey {
-    return 'GcdayuLaLyrdmUu324nahyv33G5poQdLUEZ1nEytDeP';
+    return new PublicKey('0x400000000000000000000000000000000000000000000000000000000000000');
   }
 
 
@@ -66,10 +63,8 @@ export class TicTacToeDashboard {
   /**
    * Connects to the dashboard
    */
-  static async connect(
-    connection: Connection,
-    dashboardPublicKey: PublicKey = 'GriTuZr9NTaSbTcPR38VDDyLkcPt8mTEut8cspgBjjQZ'
-  ): Promise<TicTacToeDashboard> {
+  static async connect(connection: Connection): Promise<TicTacToeDashboard> {
+    const dashboardPublicKey = new PublicKey('0x123456789');
 
     try {
       const tttd = await TicTacToeDashboard._connect(connection, dashboardPublicKey);
@@ -128,7 +123,7 @@ export class TicTacToeDashboard {
     }
 
     this.state = {
-      pending: '.',
+      pending: null,
       completed: [],
       total: 0
     };
@@ -138,8 +133,8 @@ export class TicTacToeDashboard {
       //console.log(JSON.stringify(rawState));
 
       // Map public keys byte public keys into base58
-      this.state.pending = bs58.encode(rawState.pending);
-      this.state.completed = rawState.completed.map(bs58.encode);
+      this.state.pending = new PublicKey(rawState.pending);
+      this.state.completed = rawState.completed.map((a) => new PublicKey(a));
       this.state.total = rawState.total;
     }
   }
@@ -149,7 +144,7 @@ export class TicTacToeDashboard {
    */
   async startGame(): Promise<TicTacToe> {
 
-    const myAccount = await createNewAccount(this.connection);
+    const myAccount: Account = await createNewAccount(this.connection);
     const myGame = await TicTacToe.create(this.connection, myAccount);
 
     // Look for pending games from others, while trying to advertise our game.
@@ -158,33 +153,35 @@ export class TicTacToeDashboard {
 
       if (myGame.state.inProgress) {
         // Another player joined our game
-        console.log(`Another player accepted our game (${myGame.gamePublicKey})`);
+        console.log(`Another player accepted our game (${myGame.gamePublicKey.toString()})`);
         break;
       }
 
       const pendingGamePublicKey = this.state.pending;
-      if (pendingGamePublicKey !== myGame.gamePublicKey) {
-        try {
-          console.log(`Trying to join ${pendingGamePublicKey}`);
-          const theirGame = await TicTacToe.join(
-            this.connection,
-            myAccount,
-            this.state.pending
-          );
-          if (theirGame.state.inProgress) {
-            if (theirGame.state.playerO === myAccount.publicKey) {
-              console.log(`Joined game ${pendingGamePublicKey}`);
-              myGame.abandon();
-              return theirGame;
+      if (pendingGamePublicKey === null || !myGame.gamePublicKey.equals(pendingGamePublicKey)) {
+        if (pendingGamePublicKey !== null) {
+          try {
+            console.log(`Trying to join ${pendingGamePublicKey.toString()}`);
+            const theirGame = await TicTacToe.join(
+              this.connection,
+              myAccount,
+              pendingGamePublicKey,
+            );
+            if (theirGame.state.inProgress && theirGame.state.playerO !== null) {
+              if (myAccount.publicKey.equals(theirGame.state.playerO)) {
+                console.log(`Joined game ${pendingGamePublicKey.toString()}`);
+                myGame.abandon();
+                return theirGame;
+              }
             }
+          } catch (err) {
+            console.log(err.message);
           }
-        } catch (err) {
-          console.log(err.message);
         }
 
         // Advertise myGame as the pending game for others to see and hopefully
         // join
-        console.log(`Advertising our game (${myGame.gamePublicKey})`);
+        console.log(`Advertising our game (${myGame.gamePublicKey.toString()})`);
         await this.submitGameState(myGame.gamePublicKey);
       }
 

@@ -7,9 +7,13 @@
  */
 
 import cbor from 'cbor';
-import bs58 from 'bs58';
-import {Account, SystemProgram, Transaction} from '@solana/web3.js';
-import type {Connection, PublicKey} from '@solana/web3.js';
+import {
+  Account,
+  PublicKey,
+  SystemProgram,
+  Transaction,
+} from '@solana/web3.js';
+import type {Connection} from '@solana/web3.js';
 
 import {sendAndConfirmTransaction} from '../util/send-and-confirm-transaction';
 
@@ -99,7 +103,7 @@ export class TicTacToe {
    * Base-58 encoded program id
    */
   static get programId(): PublicKey {
-    return 'CiDwVBFgWV9E5MvXWoLgnEgn2hK7rJikbvfWavzAQz3';
+    return new PublicKey('0x300000000000000000000000000000000000000000000000000000000000000');
   }
 
   /**
@@ -240,8 +244,8 @@ export class TicTacToe {
     // Map rawGameState into `this.state`
     const {game} = rawGameState;
 
-    const playerX = bs58.encode(game.player_x);
-    const playerO = game.player_o ? bs58.encode(game.player_o) : null;
+    const playerX = new PublicKey(game.player_x);
+    const playerO = game.player_o ? new PublicKey(game.player_o) : null;
 
     const state: TicTacToeGameState = {
       gameState: game.state,
