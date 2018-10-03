@@ -33,12 +33,10 @@ The example connects to the Solana public testnet by default.
 
 Edit the file `url.js` if this is not desired.  For example to use a local
 instance of Solana, set
-set `url = 'http://localhost:8899'` then:
+set `url = 'http://localhost:8899'` then run
 ```bash
-$ git clone https://github.com/solana-labs/solana.git -bv0.9
-$ cd solana/
-$ ./multinode-demo/setup.sh
-$ ./multinode-demo/drone.sh &
-$ ./multinode-demo/leader.sh
+$ npx solana-localnet update
+$ npx solana-localnet up
 ```
-For more details see the full [instructions](https://github.com/solana-labs/solana/#testnet-demos).
+For more details see the [full instructions](https://github.com/solana-labs/solana-web3.js#local-network)
+for working with a local network.
