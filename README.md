@@ -15,7 +15,7 @@ Go to https://solana-example-tictactoe.herokuapp.com/ and wait for another playe
 #### Web App
 ```sh
 $ npm install
-$ npm start:webapp
+$ npm run dev
 ```
 
 Then open your browser to http://localhost:8080/ and wait for another player to join.
@@ -23,7 +23,7 @@ Then open your browser to http://localhost:8080/ and wait for another player to 
 #### Command-line
 ```sh
 $ npm install
-$ npm start
+$ npm run start
 ```
 
 Now wait for another player to join.
