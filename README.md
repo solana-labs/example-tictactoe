@@ -33,7 +33,7 @@ The example connects to the Solana public testnet by default.
 
 Edit the file `url.js` if this is not desired.  For example to use a local
 instance of Solana, set
-set `url = 'http://localhost:8899'` then run
+`url = 'http://localhost:8899'` then run
 ```bash
 $ npx solana-localnet update
 $ npx solana-localnet up
