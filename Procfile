@@ -1,1 +1,1 @@
-web: npx http-server dist/
+web: npm run start-server

@@ -9,8 +9,8 @@ import {Connection} from '@solana/web3.js';
 import {url} from '../../url';
 import {sleep} from '../util/sleep';
 import {TicTacToe} from '../program/tic-tac-toe';
-import {TicTacToeDashboard} from '../program/tic-tac-toe-dashboard';
 import type {TicTacToeBoard} from '../program/tic-tac-toe';
+import {findDashboard} from '../server/config';
 
 function renderBoard(board: TicTacToeBoard): string {
   return [
@@ -38,7 +38,7 @@ async function main(url: string) {
 
 
   // Create/load the game dashboard
-  const dashboard = await TicTacToeDashboard.connect(connection);
+  const dashboard = await findDashboard(connection);
 
   rl.write(`Total games played: ${dashboard.state.total}\n\n`);
 

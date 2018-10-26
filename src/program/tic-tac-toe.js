@@ -10,16 +10,19 @@ import cbor from 'cbor';
 import {
   Account,
   PublicKey,
-  SystemProgram,
   Transaction,
   sendAndConfirmTransaction
 } from '@solana/web3.js';
 import type {Connection} from '@solana/web3.js';
 
+import {
+  newProgramAccount,
+} from '../util';
+
 export type TicTacToeBoard = Array<'F'|'X'|'O'>;
 
 type TicTacToeGameState = {
-  gameState: 'Waiting' | 'XMove' | 'OMove' | 'Draw' | 'XWin' | 'OWin';
+  gameState: 'Waiting' | 'XMove' | 'OMove' | 'Draw' | 'XWon' | 'OWon';
   inProgress: boolean,
   myTurn: boolean,
   draw: boolean,
@@ -33,17 +36,18 @@ type TicTacToeGameState = {
 export class TicTacToe {
   abandoned: boolean;
   connection: Connection;
+  programId: PublicKey;
   gamePublicKey: PublicKey;
   isX: boolean;
   playerAccount: Account;
   state: TicTacToeGameState;
-
 
   /**
    * @private
    */
   constructor(
     connection: Connection,
+    programId: PublicKey,
     gamePublicKey: PublicKey,
     isX: boolean,
     playerAccount: Account
@@ -67,6 +71,7 @@ export class TicTacToe {
         connection,
         isX,
         playerAccount,
+        programId,
         gamePublicKey,
         state,
       }
@@ -99,41 +104,26 @@ export class TicTacToe {
   }
 
   /**
-   * Base-58 encoded program id
-   */
-  static get programId(): PublicKey {
-    return new PublicKey('0x300000000000000000000000000000000000000000000000000000000000000');
-  }
-
-  /**
    * Creates a new game, costing playerX 1 token
    */
-  static async create(connection: Connection, playerXAccount: Account): Promise<TicTacToe> {
-    const gameAccount = new Account();
-    const ttt = new TicTacToe(connection, gameAccount.publicKey, true, playerXAccount);
+  static async create(connection: Connection, programId: PublicKey, playerXAccount: Account): Promise<TicTacToe> {
+    const gameAccount = await newProgramAccount(
+      connection,
+      playerXAccount,
+      programId,
+      256, // userdata space
+    );
 
-    // Allocate memory for the game.
-    {
-      const transaction = SystemProgram.createAccount(
-        playerXAccount.publicKey,
-        gameAccount.publicKey,
-        1,
-        256, // userdata space
-        TicTacToe.programId,
-      );
-      await sendAndConfirmTransaction(connection, playerXAccount, transaction);
-    }
-
-    const userdata = cbor.encode('Init');
     {
       const transaction = new Transaction().add({
         keys: [gameAccount.publicKey, gameAccount.publicKey, playerXAccount.publicKey],
-        programId: TicTacToe.programId,
-        userdata,
+        programId,
+        userdata: cbor.encode('InitGame'),
       });
       await sendAndConfirmTransaction(connection, gameAccount, transaction);
     }
 
+    const ttt = new TicTacToe(connection, programId, gameAccount.publicKey, true, playerXAccount);
     ttt.scheduleNextKeepAlive();
     return ttt;
   }
@@ -143,21 +133,21 @@ export class TicTacToe {
    */
   static async join(
     connection: Connection,
+    programId: PublicKey,
     playerOAccount: Account,
     gamePublicKey: PublicKey
   ): Promise<TicTacToe> {
-    const ttt = new TicTacToe(connection, gamePublicKey, false, playerOAccount);
+    const ttt = new TicTacToe(connection, programId, gamePublicKey, false, playerOAccount);
     await ttt.updateGameState();
     if (!ttt.isPeerAlive()) {
       throw new Error('Game appears abandoned');
     }
 
-    const userdata = cbor.encode(['Join', Date.now()]);
     {
       const transaction = new Transaction().add({
         keys: [playerOAccount.publicKey, gamePublicKey],
-        programId: TicTacToe.programId,
-        userdata,
+        programId,
+        userdata: cbor.encode(['Join', Date.now()]),
       });
       await sendAndConfirmTransaction(connection, playerOAccount, transaction);
     }
@@ -179,7 +169,7 @@ export class TicTacToe {
 
     const transaction = new Transaction().add({
       keys: [this.playerAccount.publicKey, this.gamePublicKey],
-      programId: TicTacToe.programId,
+      programId: this.programId,
       userdata,
     });
     await sendAndConfirmTransaction(this.connection, this.playerAccount, transaction, true);
@@ -208,7 +198,7 @@ export class TicTacToe {
 
     const transaction = new Transaction().add({
       keys: [this.playerAccount.publicKey, this.gamePublicKey],
-      programId: TicTacToe.programId,
+      programId: this.programId,
       userdata,
     });
     await sendAndConfirmTransaction(this.connection, this.playerAccount, transaction, true);
@@ -224,21 +214,18 @@ export class TicTacToe {
     const accountInfo = await connection.getAccountInfo(gamePublicKey);
 
     const {userdata} = accountInfo;
-    const length = userdata.readUInt8(0);
-    if (length + 1 >= userdata.length) {
-      throw new Error(`Invalid game state`);
-    }
-    const rawGameState = cbor.decode(userdata.slice(1));
-
-    // TODO: Use joi or superstruct for better input validation
-    if (typeof rawGameState.game !== 'object') {
-      console.log(`Invalid game state: JSON.stringify(rawGameState)`);
-      throw new Error('Invalid game state');
+    const length = userdata.readUInt32LE(0);
+    if (length + 4 >= userdata.length) {
+      throw new Error(`Invalid game state length`);
     }
 
-    // Map rawGameState into `this.state`
-    const {game} = rawGameState;
+    const tttAccount = cbor.decode(userdata.slice(4));
+    //console.log(JSON.stringify(tttAccount));
+    if (tttAccount[0] !== 'Game') {
+      throw new Error(`Invalid game state type: ${tttAccount[0]}`);
+    }
 
+    const game = tttAccount[1];
     const playerX = new PublicKey(game.player_x);
     const playerO = game.player_o ? new PublicKey(game.player_o) : null;
 

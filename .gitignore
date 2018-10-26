@@ -2,3 +2,5 @@
 *.sw[po]
 /dist/*bundle.js
 /dist/*worker.js
+/dist/config.json
+/.cargo

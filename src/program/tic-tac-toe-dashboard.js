@@ -10,14 +10,17 @@ import cbor from 'cbor';
 import {
   Account,
   PublicKey,
-  SystemProgram,
   Transaction,
   sendAndConfirmTransaction
 } from '@solana/web3.js';
 import type {Connection} from '@solana/web3.js';
 
-import {sleep} from '../util/sleep';
-import {createNewAccount} from '../util/create-new-account';
+import {
+  loadNativeProgram,
+  newProgramAccount,
+  newSystemAccountWithAirdrop,
+  sleep,
+} from '../util';
 import {TicTacToe} from './tic-tac-toe';
 
 export class TicTacToeDashboard {
@@ -29,72 +32,78 @@ export class TicTacToeDashboard {
   };
   connection: Connection;
   clientAccount: Account;
+  programId: PublicKey;
   publicKey: PublicKey;
 
   /**
    * @private
    */
-  constructor(connection: Connection, publicKey: PublicKey, clientAccount: Account) {
+  constructor(connection: Connection, programId: PublicKey, publicKey: PublicKey, clientAccount: Account) {
     Object.assign(
       this,
       {
         clientAccount,
         connection,
+        programId,
         publicKey,
       }
     );
   }
 
-  static get programId(): PublicKey {
-    return new PublicKey('0x400000000000000000000000000000000000000000000000000000000000000');
-  }
-
-
   /**
-   * @private
+   * Creates a new dashboard
    */
-  static async _connect(connection: Connection, dashboardPublicKey: PublicKey): Promise<TicTacToeDashboard> {
-    const clientAccount = await createNewAccount(connection);
-    const dashboard = new TicTacToeDashboard(connection, dashboardPublicKey, clientAccount);
+  static async create(connection: Connection): Promise<TicTacToeDashboard> {
+    const tempAccount = await newSystemAccountWithAirdrop(connection, 123);
+
+    console.log('dashboard load');
+    const programId = await loadNativeProgram(connection, tempAccount, 'tictactoe');
+    console.log('dashboard load: programId', programId.toString());
+    const dashboardAccount = await newProgramAccount(
+      connection,
+      tempAccount,
+      programId,
+      512, // userdata space
+    );
+
+    {
+      const transaction = new Transaction().add({
+        keys: [dashboardAccount.publicKey, dashboardAccount.publicKey],
+        programId,
+        userdata: cbor.encode('InitDashboard'),
+      });
+      await sendAndConfirmTransaction(connection, dashboardAccount, transaction);
+    }
+
+    const dashboard = new TicTacToeDashboard(
+      connection,
+      programId,
+      dashboardAccount.publicKey,
+      tempAccount
+    );
     await dashboard.update();
     return dashboard;
   }
 
+
   /**
-   * Connects to the dashboard
+   * Connects to an existing dashboard
    */
-  static async connect(connection: Connection): Promise<TicTacToeDashboard> {
-    const dashboardPublicKey = new PublicKey('0x123456789000000000000000000000000000000000000000000000000000000');
+  static async connect(connection: Connection, dashboardPublicKey: PublicKey): Promise<TicTacToeDashboard> {
 
-    try {
-      const tttd = await TicTacToeDashboard._connect(connection, dashboardPublicKey);
-      return tttd;
-    } catch (err) {
-      console.log(err.message);
-    }
+    const accountInfo = await connection.getAccountInfo(dashboardPublicKey);
+    const {programId} = accountInfo;
 
-    const tempAccount = new Account();
-    {
-      const signature = await connection.requestAirdrop(tempAccount.publicKey, 1);
-      const status = await connection.getSignatureStatus(signature);
-      if (status !== 'Confirmed') {
-        throw new Error(`Transaction ${signature} was not confirmed (${status})`);
-      }
-    }
+    const tempAccount = await newSystemAccountWithAirdrop(connection, 123);
 
-    // Allocate memory for the game.
-    {
-      const transaction = SystemProgram.createAccount(
-        tempAccount.publicKey,
-        dashboardPublicKey,
-        1,
-        512, // userdata space
-        TicTacToeDashboard.programId,
-      );
-      await sendAndConfirmTransaction(connection, tempAccount, transaction);
-    }
-
-    return TicTacToeDashboard._connect(connection, dashboardPublicKey);
+    const dashboard = new TicTacToeDashboard(
+      connection,
+      programId,
+      dashboardPublicKey,
+      tempAccount
+    );
+    await dashboard.update();
+    return dashboard;
   }
 
   /**
@@ -103,7 +112,7 @@ export class TicTacToeDashboard {
   async submitGameState(gamePublicKey: PublicKey): Promise<void> {
     const transaction = new Transaction().add({
       keys: [this.clientAccount.publicKey, this.publicKey, gamePublicKey],
-      programId: TicTacToeDashboard.programId,
+      programId: this.programId,
     });
     await sendAndConfirmTransaction(this.connection, this.clientAccount, transaction);
   }
@@ -115,9 +124,9 @@ export class TicTacToeDashboard {
     const accountInfo = await this.connection.getAccountInfo(this.publicKey);
 
     const {userdata} = accountInfo;
-    const length = userdata.readUInt16LE(0);
-    if (length + 2 >= userdata.length) {
-      throw new Error(`Invalid game state`);
+    const length = userdata.readUInt32LE(0);
+    if (length + 4 >= userdata.length) {
+      throw new Error(`Invalid dashboard state length`);
     }
 
     this.state = {
@@ -126,14 +135,17 @@ export class TicTacToeDashboard {
       total: 0
     };
     if (length > 0) {
-      // TODO: Use joi or superstruct to validate input
-      const rawState = cbor.decode(userdata.slice(2));
-      //console.log(JSON.stringify(rawState));
+      const tttAccount = cbor.decode(userdata.slice(4));
+      //console.log(JSON.stringify(tttAccount));
+      if (tttAccount[0] !== 'Dashboard') {
+        throw new Error(`Invalid dashboard state type: ${tttAccount[0]}`);
+      }
+      const dashboardState = tttAccount[1];
 
       // Map public keys byte public keys into base58
-      this.state.pending = new PublicKey(rawState.pending);
-      this.state.completed = rawState.completed.map((a) => new PublicKey(a));
-      this.state.total = rawState.total;
+      this.state.pending = new PublicKey(dashboardState.pending);
+      this.state.completed = dashboardState.completed.map((a) => new PublicKey(a));
+      this.state.total = dashboardState.total;
     }
   }
 
@@ -141,9 +153,8 @@ export class TicTacToeDashboard {
    * Finds another player and starts a game
    */
   async startGame(): Promise<TicTacToe> {
-
-    const myAccount: Account = await createNewAccount(this.connection);
-    const myGame = await TicTacToe.create(this.connection, myAccount);
+    const myAccount: Account = await newSystemAccountWithAirdrop(this.connection, 123);
+    const myGame = await TicTacToe.create(this.connection, this.programId, myAccount);
 
     // Look for pending games from others, while trying to advertise our game.
     for (;;) {
@@ -162,6 +173,7 @@ export class TicTacToeDashboard {
             console.log(`Trying to join ${pendingGamePublicKey.toString()}`);
             const theirGame = await TicTacToe.join(
               this.connection,
+              this.programId,
               myAccount,
               pendingGamePublicKey,
             );
