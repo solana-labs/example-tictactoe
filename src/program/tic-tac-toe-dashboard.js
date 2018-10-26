@@ -12,12 +12,12 @@ import {
   PublicKey,
   SystemProgram,
   Transaction,
+  sendAndConfirmTransaction
 } from '@solana/web3.js';
 import type {Connection} from '@solana/web3.js';
 
 import {sleep} from '../util/sleep';
 import {createNewAccount} from '../util/create-new-account';
-import {sendAndConfirmTransaction} from '../util/send-and-confirm-transaction';
 import {TicTacToe} from './tic-tac-toe';
 
 export class TicTacToeDashboard {
@@ -64,7 +64,7 @@ export class TicTacToeDashboard {
    * Connects to the dashboard
    */
   static async connect(connection: Connection): Promise<TicTacToeDashboard> {
-    const dashboardPublicKey = new PublicKey('0x123456789');
+    const dashboardPublicKey = new PublicKey('0x123456789000000000000000000000000000000000000000000000000000000');
 
     try {
       const tttd = await TicTacToeDashboard._connect(connection, dashboardPublicKey);
@@ -101,11 +101,9 @@ export class TicTacToeDashboard {
    * Request the dashboard to recompute its state from the provided game
    */
   async submitGameState(gamePublicKey: PublicKey): Promise<void> {
-    const transaction = new Transaction({
-      fee: 0,
+    const transaction = new Transaction().add({
       keys: [this.clientAccount.publicKey, this.publicKey, gamePublicKey],
       programId: TicTacToeDashboard.programId,
-      userdata: cbor.encode('FIXME-this-cannot-be-null'), // TODO! This is a bug.  A transaction with no userdata should be accepted...
     });
     await sendAndConfirmTransaction(this.connection, this.clientAccount, transaction);
   }

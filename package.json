@@ -19,7 +19,7 @@
   "license": "MIT",
   "devDependencies": {},
   "dependencies": {
-    "@solana/web3.js": "0.3.1",
+    "@solana/web3.js": "0.9.0",
     "babel-cli": "^6.26.0",
     "babel-core": "^6.26.3",
     "babel-eslint": "^8.2.6",

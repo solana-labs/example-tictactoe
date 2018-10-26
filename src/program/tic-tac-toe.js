@@ -12,10 +12,9 @@ import {
   PublicKey,
   SystemProgram,
   Transaction,
+  sendAndConfirmTransaction
 } from '@solana/web3.js';
 import type {Connection} from '@solana/web3.js';
-
-import {sendAndConfirmTransaction} from '../util/send-and-confirm-transaction';
 
 export type TicTacToeBoard = Array<'F'|'X'|'O'>;
 
@@ -127,8 +126,7 @@ export class TicTacToe {
 
     const userdata = cbor.encode('Init');
     {
-      const transaction = new Transaction({
-        fee: 0,
+      const transaction = new Transaction().add({
         keys: [gameAccount.publicKey, gameAccount.publicKey, playerXAccount.publicKey],
         programId: TicTacToe.programId,
         userdata,
@@ -156,8 +154,7 @@ export class TicTacToe {
 
     const userdata = cbor.encode(['Join', Date.now()]);
     {
-      const transaction = new Transaction({
-        fee: 0,
+      const transaction = new Transaction().add({
         keys: [playerOAccount.publicKey, gamePublicKey],
         programId: TicTacToe.programId,
         userdata,
@@ -180,8 +177,7 @@ export class TicTacToe {
     ];
     const userdata = cbor.encode(cmd);
 
-    const transaction = new Transaction({
-      fee: 0,
+    const transaction = new Transaction().add({
       keys: [this.playerAccount.publicKey, this.gamePublicKey],
       programId: TicTacToe.programId,
       userdata,
@@ -210,8 +206,7 @@ export class TicTacToe {
     ];
     const userdata = cbor.encode(cmd);
 
-    const transaction = new Transaction({
-      fee: 0,
+    const transaction = new Transaction().add({
       keys: [this.playerAccount.publicKey, this.gamePublicKey],
       programId: TicTacToe.programId,
       userdata,
