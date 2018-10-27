@@ -39,6 +39,7 @@ async function main(url: string) {
 
   // Create/load the game dashboard
   const dashboard = await findDashboard(connection);
+  rl.write(`Dashboard: ${dashboard.publicKey.toBase58()}\n`);
 
   rl.write(`Total games played: ${dashboard.state.total}\n\n`);
 
