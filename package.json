@@ -14,7 +14,7 @@
     "build": "webpack --mode=production",
     "builddev": "webpack --mode=development",
     "dev": "set -ex; babel-node src/server/config; webpack-dev-server --config ./webpack.config.js --mode development",
-    "localnet:up": "set -ex; solana-localnet down; set -e; solana-localnet up; ./program/deploy.sh;",
+    "localnet:up": "set -x; solana-localnet down; set -e; solana-localnet up; ./program/deploy.sh;",
     "localnet:down": "solana-localnet down",
     "localnet:logs": "solana-localnet logs -f",
     "postinstall": "scripts/postinstall.sh"
@@ -24,7 +24,7 @@
   "license": "MIT",
   "devDependencies": {},
   "dependencies": {
-    "@solana/web3.js": "0.9.0",
+    "@solana/web3.js": "0.9.2",
     "babel-cli": "^6.26.0",
     "babel-core": "^6.26.3",
     "babel-eslint": "^8.2.6",
