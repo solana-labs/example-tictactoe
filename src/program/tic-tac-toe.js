@@ -7,13 +7,17 @@
  */
 
 import cbor from 'cbor';
+import EventEmitter from 'event-emitter';
 import {
   Account,
   PublicKey,
   Transaction,
   sendAndConfirmTransaction
 } from '@solana/web3.js';
-import type {Connection} from '@solana/web3.js';
+import type {
+  AccountInfo,
+  Connection,
+} from '@solana/web3.js';
 
 import {
   newProgramAccount,
@@ -41,6 +45,8 @@ export class TicTacToe {
   isX: boolean;
   playerAccount: Account;
   state: TicTacToeGameState;
+  _ee: EventEmitter;
+  _changeSubscriptionId: number | null;
 
   /**
    * @private
@@ -74,6 +80,8 @@ export class TicTacToe {
         programId,
         gamePublicKey,
         state,
+        _changeSubscriptionId: null,
+        _ee: new EventEmitter(),
       }
     );
   }
@@ -82,9 +90,21 @@ export class TicTacToe {
    * @private
    */
   scheduleNextKeepAlive() {
+    if (this._changeSubscriptionId === null) {
+      this._changeSubscriptionId = this.connection.onAccountChange(
+        this.gamePublicKey,
+        this._onAccountChange.bind(this)
+      );
+    }
     setTimeout(
       async () => {
         if (this.abandoned) {
+          const {_changeSubscriptionId} = this;
+          if (_changeSubscriptionId !== null) {
+            this._changeSubscriptionId = null;
+            this.connection.removeAccountChangeListener(_changeSubscriptionId);
+          }
+
           //console.log(`\nKeepalive exit, Game abandoned: ${this.gamePublicKey}\n`);
           return;
         }
@@ -138,11 +158,6 @@ export class TicTacToe {
     gamePublicKey: PublicKey
   ): Promise<TicTacToe> {
     const ttt = new TicTacToe(connection, programId, gamePublicKey, false, playerOAccount);
-    await ttt.updateGameState();
-    if (!ttt.isPeerAlive()) {
-      throw new Error('Game appears abandoned');
-    }
-
     {
       const transaction = new Transaction().add({
         keys: [playerOAccount.publicKey, gamePublicKey],
@@ -152,7 +167,9 @@ export class TicTacToe {
       await sendAndConfirmTransaction(connection, playerOAccount, transaction);
     }
 
-    await ttt.updateGameState();
+    ttt._onAccountChange(
+      await connection.getAccountInfo(gamePublicKey)
+    );
     ttt.scheduleNextKeepAlive();
     return ttt;
   }
@@ -186,7 +203,6 @@ export class TicTacToe {
 
   /**
    * Attempt to make a move.
-   * Once this method returns, use `updateGameState()` to fetch the result
    */
   async move(x: number, y: number): Promise<void> {
     const cmd = [
@@ -212,7 +228,15 @@ export class TicTacToe {
     gamePublicKey: PublicKey
   ): Promise<TicTacToeGameState> {
     const accountInfo = await connection.getAccountInfo(gamePublicKey);
+    return TicTacToe._getGameState(accountInfo);
+  }
 
+  /**
+   * @private
+   */
+  static _getGameState(
+    accountInfo: AccountInfo
+  ): TicTacToeGameState {
     const {userdata} = accountInfo;
     const length = userdata.readUInt32LE(0);
     if (length + 4 >= userdata.length) {
@@ -220,7 +244,6 @@ export class TicTacToe {
     }
 
     const tttAccount = cbor.decode(userdata.slice(4));
-    //console.log(JSON.stringify(tttAccount));
     if (tttAccount[0] !== 'Game') {
       throw new Error(`Invalid game state type: ${tttAccount[0]}`);
     }
@@ -261,11 +284,22 @@ export class TicTacToe {
     return state;
   }
 
+  isPeerAlive(): boolean {
+    const peerKeepAlive = this.state.keep_alive[this.isX ? 1 : 0];
+    // Check if the peer has abandoned the game
+    return Date.now() - peerKeepAlive < 10000; /* 10 seconds*/
+  }
+
   /**
    * Update the `state` field with the latest state
+   *
+   * @private
    */
-  async updateGameState(): Promise<void> {
-    this.state = await TicTacToe.getGameState(this.connection, this.gamePublicKey);
+  _onAccountChange(accountInfo: AccountInfo) {
+    //console.log('ttt: onAccountChange', this.gamePublicKey.toString());
+    // , JSON.stringify(accountInfo));
+
+    this.state = TicTacToe._getGameState(accountInfo);
 
     switch (this.state.gameState) {
     case 'Waiting':
@@ -292,12 +326,22 @@ export class TicTacToe {
       this.state.inProgress = false;
       this.abandoned = true;
     }
+    this._ee.emit('change');
   }
 
-  isPeerAlive(): boolean {
-    const peerKeepAlive = this.state.keep_alive[this.isX ? 1 : 0];
-    // Check if the peer has abandoned the game
-    return Date.now() - peerKeepAlive < 10000; /* 10 seconds*/
+  /**
+   * Register a callback for notification when the game state changes
+   */
+  onChange(fn: Function) {
+    this._ee.on('change', fn);
   }
+
+  /**
+   * Remove a previously registered onChange callback
+   */
+  removeChangeListener(fn: Function) {
+    this._ee.off('change', fn);
+  }
+
 }
 

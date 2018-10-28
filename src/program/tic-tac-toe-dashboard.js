@@ -7,13 +7,17 @@
  */
 
 import cbor from 'cbor';
+import EventEmitter from 'event-emitter';
 import {
   Account,
   PublicKey,
   Transaction,
   sendAndConfirmTransaction
 } from '@solana/web3.js';
-import type {Connection} from '@solana/web3.js';
+import type {
+  AccountInfo,
+  Connection,
+} from '@solana/web3.js';
 
 import {
   loadNativeProgram,
@@ -34,11 +38,18 @@ export class TicTacToeDashboard {
   clientAccount: Account;
   programId: PublicKey;
   publicKey: PublicKey;
+  _ee: EventEmitter;
+  _changeSubscriptionId: number | null;
 
   /**
    * @private
    */
   constructor(connection: Connection, programId: PublicKey, publicKey: PublicKey, clientAccount: Account) {
+    const state = {
+      pending: null,
+      completed: [],
+      total: 0,
+    };
     Object.assign(
       this,
       {
@@ -46,6 +57,9 @@ export class TicTacToeDashboard {
         connection,
         programId,
         publicKey,
+        state,
+        _changeSubscriptionId: connection.onAccountChange(publicKey, this._onAccountChange.bind(this)),
+        _ee: new EventEmitter(),
       }
     );
   }
@@ -81,7 +95,7 @@ export class TicTacToeDashboard {
       dashboardAccount.publicKey,
       tempAccount
     );
-    await dashboard.update();
+    //    await dashboard.update();
     return dashboard;
   }
 
@@ -95,14 +109,13 @@ export class TicTacToeDashboard {
     const {programId} = accountInfo;
 
     const tempAccount = await newSystemAccountWithAirdrop(connection, 123);
-
     const dashboard = new TicTacToeDashboard(
       connection,
       programId,
       dashboardPublicKey,
       tempAccount
     );
-    await dashboard.update();
+    dashboard._update(accountInfo);
     return dashboard;
   }
 
@@ -118,11 +131,9 @@ export class TicTacToeDashboard {
   }
 
   /**
-   * Update the `state` field with the latest dashboard contents
+   * @private
    */
-  async update(): Promise<void> {
-    const accountInfo = await this.connection.getAccountInfo(this.publicKey);
-
+  _update(accountInfo: AccountInfo) {
     const {userdata} = accountInfo;
     const length = userdata.readUInt32LE(0);
     if (length + 4 >= userdata.length) {
@@ -150,6 +161,29 @@ export class TicTacToeDashboard {
   }
 
   /**
+   * @private
+   */
+  _onAccountChange(accountInfo: AccountInfo) {
+  //  console.log('ttt dash: onAccountUpdate', JSON.stringify(accountInfo));
+    this._update(accountInfo);
+    this._ee.emit('change');
+  }
+
+  /**
+   * Register a callback for notification when the dashboard state changes
+   */
+  onChange(fn: Function) {
+    this._ee.on('change', fn);
+  }
+
+  /**
+   * Remove a previously registered onChange callback
+   */
+  removeChangeListener(fn: Function) {
+    this._ee.off('change', fn);
+  }
+
+  /**
    * Finds another player and starts a game
    */
   async startGame(): Promise<TicTacToe> {
@@ -158,8 +192,6 @@ export class TicTacToeDashboard {
 
     // Look for pending games from others, while trying to advertise our game.
     for (;;) {
-      await Promise.all([myGame.updateGameState(), this.update()]);
-
       if (myGame.state.inProgress) {
         // Another player joined our game
         console.log(`Another player accepted our game (${myGame.gamePublicKey.toString()})`);

@@ -13,7 +13,6 @@ import {Board} from './Board';
 export class Game extends React.Component {
   constructor(props) {
     super(props);
-    this.stopRefresh = false;
     this.recentGameState = {};
     this.dashboardNotifiedOfCompletedGame = false;
     this.state = {
@@ -26,96 +25,100 @@ export class Game extends React.Component {
   }
 
   componentDidMount() {
-    this.stopRefresh = false;
+    const {dashboard} = this.props;
+    dashboard.onChange(this.onDashboardChange);
+
     setTimeout(() => {
-      this.refreshDashboard();
-      this.refreshGame();
+      this.startGame();
     });
   }
 
   componentWillUnmount() {
-    this.stopRefresh = true;
+    const {dashboard} = this.props;
+    dashboard.removeChangeListener(this.onDashboardChange);
   }
 
-  async refreshGame() {
-    clearTimeout(this.refreshGameTimeout);
-    if (this.stopRefresh) {
-      return;
-    }
+  async startGame() {
     const {dashboard} = this.props;
     let {currentGame} = this.state;
 
-    console.log('refreshGame...');
-
-    if (currentGame === null) {
-      try {
-        this.setState({
-          currentGameStatusMessage: 'Waiting for another player to join...',
-        });
-        currentGame = await dashboard.startGame();
-        this.setState({
-          currentGameStatusMessage: 'Game has started',
-        });
-        this.dashboardNotifiedOfCompletedGame = false;
-      } catch(err) {
-        console.log('Unable to start game:', err);
-        this.setState({
-          currentGameStatusMessage: `Unable to start game: ${err.message}`,
-        });
-      }
-    } else {
-      await currentGame.updateGameState();
+    if (currentGame) {
+      currentGame.abandon();
+      currentGame.removeChangeListener(this.onGameChange);
     }
 
-    if (currentGame !== null) {
-      let currentGameStatusMessage;
+    this.setState({
+      currentGame: null,
+      currentGameStatusMessage: '',
+    });
+    this.dashboardNotifiedOfCompletedGame = false;
 
-      if (currentGame.state.inProgress) {
-        if (currentGame.state.myTurn) {
-          currentGameStatusMessage = `You are ${currentGame.isX ? 'X' : 'O'}, make your move`;
-        } else {
-          currentGameStatusMessage = 'Waiting for opponent to move...';
-        }
-      } else {
-        // Notify the dashboard that the game has completed.
-        if (!this.dashboardNotifiedOfCompletedGame) {
-          this.dashboardNotifiedOfCompletedGame = true;
-          await dashboard.submitGameState(currentGame.gamePublicKey);
-          this.refreshDashboard();
-        }
-
-        currentGameStatusMessage = 'Game Over.  ';
-        if (currentGame.abandoned) {
-          currentGameStatusMessage += 'Opponent abandoned the game.';
-        } else if (currentGame.state.winner) {
-          currentGameStatusMessage += 'You won!';
-        } else if (currentGame.state.draw) {
-          currentGameStatusMessage += 'Draw.';
-        } else {
-          currentGameStatusMessage += 'You lost.';
-        }
-      }
-
+    try {
+      this.setState({
+        currentGameStatusMessage: 'Waiting for another player to join...',
+      });
+      currentGame = await dashboard.startGame();
       this.setState({
         currentGame,
-        currentGameStatusMessage,
+        currentGameStatusMessage: 'Game has started',
       });
-
-      if (currentGame.state.myTurn) {
-        return; // Suspend refreshGame() until the local player makes a move
-      }
+      currentGame.onChange(this.onGameChange);
+    } catch(err) {
+      console.log('Unable to start game:', err);
+      this.setState({
+        currentGameStatusMessage: `Unable to start game: ${err.message}`,
+      });
     }
-    this.refreshGameTimeout = setTimeout(::this.refreshGame, 500);
   }
 
-  async refreshDashboard() {
-    clearTimeout(this.refreshDashboardTimeout);
-    if (this.stopRefresh) {
+
+  onGameChange = () => {
+    console.log('onGameChange()...');
+
+    const {dashboard} = this.props;
+    const {currentGame} = this.state;
+
+    if (currentGame === null) {
+      console.log('Warning: currentGame is not expected to be null');
       return;
     }
-    const {dashboard} = this.props;
-    await dashboard.update();
 
+    let currentGameStatusMessage;
+
+    if (currentGame.state.inProgress) {
+      if (currentGame.state.myTurn) {
+        currentGameStatusMessage = `You are ${currentGame.isX ? 'X' : 'O'}, make your move`;
+      } else {
+        currentGameStatusMessage = 'Waiting for opponent to move...';
+      }
+    } else {
+      // Notify the dashboard that the game has completed.
+      if (!this.dashboardNotifiedOfCompletedGame) {
+        this.dashboardNotifiedOfCompletedGame = true;
+        dashboard.submitGameState(currentGame.gamePublicKey);
+      }
+
+      currentGameStatusMessage = 'Game Over.  ';
+      if (currentGame.abandoned) {
+        currentGameStatusMessage += 'Opponent abandoned the game.';
+      } else if (currentGame.state.winner) {
+        currentGameStatusMessage += 'You won!';
+      } else if (currentGame.state.draw) {
+        currentGameStatusMessage += 'Draw.';
+      } else {
+        currentGameStatusMessage += 'You lost.';
+      }
+    }
+
+    this.setState({
+      currentGame,
+      currentGameStatusMessage,
+    });
+  }
+
+  onDashboardChange = async () => {
+    console.log('onDashboardChange()...');
+    const {dashboard} = this.props;
     for (const [, gamePublicKey] of dashboard.state.completed.entries()) {
       if (!(gamePublicKey in this.recentGameState)) {
         this.recentGameState[gamePublicKey] = await TicTacToe.getGameState(dashboard.connection, gamePublicKey);
@@ -126,8 +129,6 @@ export class Game extends React.Component {
       totalGames: dashboard.state.total,
       completedGames: dashboard.state.completed.map((key) => this.recentGameState[key]),
     });
-
-    this.refreshDashboardTimeout = setTimeout(::this.refreshDashboard, 5000);
   }
 
   async handleClick(i: number) {
@@ -147,9 +148,6 @@ export class Game extends React.Component {
     } catch (err) {
       console.log(`Unable to move to ${x}x${y}: ${err.message}`);
     }
-
-    // Resume polling for remote activity
-    this.refreshGame();
   }
 
   render() {
@@ -210,8 +208,7 @@ export class Game extends React.Component {
             bsStyle="primary"
             onClick={
               () => {
-                currentGame.abandon();
-                this.setState({currentGame: null, currentGameStatusMessage:''});
+                this.startGame();
               }
             }
           >

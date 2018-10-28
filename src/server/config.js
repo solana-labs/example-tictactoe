@@ -4,8 +4,8 @@ import {
   Connection,
   PublicKey,
 } from '@solana/web3.js';
-import {url} from '../../url';
 
+import {url} from '../../url';
 import {Store} from './store';
 import {TicTacToeDashboard} from '../program/tic-tac-toe-dashboard';
 
@@ -38,5 +38,6 @@ if (require.main === module) {
   .then(dashboard => {
     console.log('Dashboard:', dashboard.publicKey.toBase58());
   })
-  .catch(console.error);
+  .catch(console.error)
+  .then(process.exit);
 }

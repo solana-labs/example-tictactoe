@@ -63,7 +63,6 @@ async function main(url: string) {
   rl.write(`\nThe game has started. You are ${ttt.isX ? 'X' : 'O'}\n`);
   let showBoard = false;
   for (;;) {
-    await ttt.updateGameState();
     if (showBoard) {
       rl.write(`\n${renderBoard(ttt.state.board)}\n`);
     }
@@ -74,9 +73,7 @@ async function main(url: string) {
     }
     if (!ttt.state.myTurn) {
       rl.write('.');
-      // For now it's necessary to poll the network for state changes, check
-      // twice a second.
-      await sleep(500);
+      await sleep(250);
       continue;
     }
     rl.write(`\nYour turn.\n${renderBoard(ttt.state.board)}\n`);
