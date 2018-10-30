@@ -6,7 +6,6 @@
  * @flow
  */
 
-import cbor from 'cbor';
 import EventEmitter from 'event-emitter';
 import {
   Account,
@@ -19,23 +18,12 @@ import type {
   Connection,
 } from '@solana/web3.js';
 
+import * as ProgramCommand from './program-command';
+import {deserializeGameState} from './program-state';
+import type {GameState} from './program-state';
 import {
   newProgramAccount,
 } from '../util';
-
-export type TicTacToeBoard = Array<'F'|'X'|'O'>;
-
-type TicTacToeGameState = {
-  gameState: 'Waiting' | 'XMove' | 'OMove' | 'Draw' | 'XWon' | 'OWon';
-  inProgress: boolean,
-  myTurn: boolean,
-  draw: boolean,
-  winner: boolean,
-  board: TicTacToeBoard,
-  playerX: PublicKey | null,
-  playerO: PublicKey | null,
-  keep_alive: [number, number],
-};
 
 export class TicTacToe {
   abandoned: boolean;
@@ -44,7 +32,12 @@ export class TicTacToe {
   gamePublicKey: PublicKey;
   isX: boolean;
   playerAccount: Account;
-  state: TicTacToeGameState;
+  state: GameState;
+  inProgress: boolean;
+  myTurn: boolean;
+  draw: boolean;
+  winner: boolean;
+
   _ee: EventEmitter;
   _changeSubscriptionId: number | null;
 
@@ -59,29 +52,29 @@ export class TicTacToe {
     playerAccount: Account
   ) {
     const state = {
-      gameState: 'Waiting',
-      inProgress: false,
-      myTurn: false,
-      draw: false,
-      winner: false,
-      playerX: null,
-      playerO: null,
       board: [],
-      keep_alive: [0, 0],
+      gameState: 'Waiting',
+      keepAlive: [0, 0],
+      playerO: null,
+      playerX: null,
     };
 
     Object.assign(
       this,
       {
-        abandoned: false,
-        connection,
-        isX,
-        playerAccount,
-        programId,
-        gamePublicKey,
-        state,
         _changeSubscriptionId: null,
         _ee: new EventEmitter(),
+        abandoned: false,
+        connection,
+        draw: false,
+        gamePublicKey,
+        inProgress: false,
+        isX,
+        myTurn: false,
+        playerAccount,
+        programId,
+        state,
+        winner: false,
       }
     );
   }
@@ -108,7 +101,7 @@ export class TicTacToe {
           //console.log(`\nKeepalive exit, Game abandoned: ${this.gamePublicKey}\n`);
           return;
         }
-        if (['XWon', 'OWin', 'Draw'].includes(this.state.gameState)) {
+        if (['XWon', 'OWon', 'Draw'].includes(this.state.gameState)) {
           //console.log(`\nKeepalive exit, Game over: ${this.gamePublicKey}\n`);
           return;
         }
@@ -131,14 +124,14 @@ export class TicTacToe {
       connection,
       playerXAccount,
       programId,
-      256, // userdata space
+      255, // userdata space
     );
 
     {
       const transaction = new Transaction().add({
         keys: [gameAccount.publicKey, gameAccount.publicKey, playerXAccount.publicKey],
         programId,
-        userdata: cbor.encode('InitGame'),
+        userdata: ProgramCommand.initGame(),
       });
       await sendAndConfirmTransaction(connection, gameAccount, transaction);
     }
@@ -162,7 +155,7 @@ export class TicTacToe {
       const transaction = new Transaction().add({
         keys: [playerOAccount.publicKey, gamePublicKey],
         programId,
-        userdata: cbor.encode(['Join', Date.now()]),
+        userdata: ProgramCommand.joinGame(Date.now()),
       });
       await sendAndConfirmTransaction(connection, playerOAccount, transaction);
     }
@@ -177,17 +170,11 @@ export class TicTacToe {
   /**
    * Send a keep-alive message to inform the other player that we're still alive
    */
-  async keepAlive(when: ?number = undefined): Promise<void> {
-    const cmd = [
-      'KeepAlive',
-      when === undefined ? Date.now() : when,
-    ];
-    const userdata = cbor.encode(cmd);
-
+  async keepAlive(when: number | null = null): Promise<void> {
     const transaction = new Transaction().add({
       keys: [this.playerAccount.publicKey, this.gamePublicKey],
       programId: this.programId,
-      userdata,
+      userdata: ProgramCommand.keepAlive(when === null ? Date.now() : when),
     });
     await sendAndConfirmTransaction(this.connection, this.playerAccount, transaction, true);
   }
@@ -200,22 +187,14 @@ export class TicTacToe {
     await this.keepAlive(0);
   }
 
-
   /**
    * Attempt to make a move.
    */
   async move(x: number, y: number): Promise<void> {
-    const cmd = [
-      'Move',
-      x,
-      y,
-    ];
-    const userdata = cbor.encode(cmd);
-
     const transaction = new Transaction().add({
       keys: [this.playerAccount.publicKey, this.gamePublicKey],
       programId: this.programId,
-      userdata,
+      userdata: ProgramCommand.move(x, y),
     });
     await sendAndConfirmTransaction(this.connection, this.playerAccount, transaction, true);
   }
@@ -226,66 +205,13 @@ export class TicTacToe {
   static async getGameState(
     connection: Connection,
     gamePublicKey: PublicKey
-  ): Promise<TicTacToeGameState> {
+  ): Promise<GameState> {
     const accountInfo = await connection.getAccountInfo(gamePublicKey);
-    return TicTacToe._getGameState(accountInfo);
-  }
-
-  /**
-   * @private
-   */
-  static _getGameState(
-    accountInfo: AccountInfo
-  ): TicTacToeGameState {
-    const {userdata} = accountInfo;
-    const length = userdata.readUInt32LE(0);
-    if (length + 4 >= userdata.length) {
-      throw new Error(`Invalid game state length`);
-    }
-
-    const tttAccount = cbor.decode(userdata.slice(4));
-    if (tttAccount[0] !== 'Game') {
-      throw new Error(`Invalid game state type: ${tttAccount[0]}`);
-    }
-
-    const game = tttAccount[1];
-    const playerX = new PublicKey(game.player_x);
-    const playerO = game.player_o ? new PublicKey(game.player_o) : null;
-
-    const state: TicTacToeGameState = {
-      gameState: game.state,
-      inProgress: false,
-      myTurn: false,
-      draw: false,
-      winner: false,
-      playerX,
-      playerO,
-      board: game.board.map(i => i === 'F' ? ' ' : i),
-      keep_alive: game.keep_alive,
-    };
-
-    switch (state.gameState) {
-    case 'Waiting':
-      break;
-    case 'XMove':
-    case 'OMove':
-      state.inProgress = true;
-      break;
-    case 'Draw':
-      state.draw = true;
-      break;
-    case 'XWon':
-    case 'OWon':
-      break;
-    default:
-      throw new Error(`Unhandled game state: ${game.state}`);
-    }
-
-    return state;
+    return deserializeGameState(accountInfo);
   }
 
   isPeerAlive(): boolean {
-    const peerKeepAlive = this.state.keep_alive[this.isX ? 1 : 0];
+    const peerKeepAlive = this.state.keepAlive[this.isX ? 1 : 0];
     // Check if the peer has abandoned the game
     return Date.now() - peerKeepAlive < 10000; /* 10 seconds*/
   }
@@ -296,34 +222,38 @@ export class TicTacToe {
    * @private
    */
   _onAccountChange(accountInfo: AccountInfo) {
-    //console.log('ttt: onAccountChange', this.gamePublicKey.toString());
-    // , JSON.stringify(accountInfo));
-
-    this.state = TicTacToe._getGameState(accountInfo);
+    this.state = deserializeGameState(accountInfo);
+    this.inProgress = false;
+    this.myTurn = false;
+    this.draw = false;
+    this.winner = false;
 
     switch (this.state.gameState) {
     case 'Waiting':
       break;
     case 'XMove':
-      this.state.myTurn = this.isX;
+      this.inProgress = true;
+      this.myTurn = this.isX;
       break;
     case 'OMove':
-      this.state.myTurn = !this.isX;
+      this.inProgress = true;
+      this.myTurn = !this.isX;
       break;
     case 'Draw':
+      this.draw = true;
       break;
     case 'XWon':
-      this.state.winner = this.isX;
+      this.winner = this.isX;
       break;
     case 'OWon':
-      this.state.winner = !this.isX;
+      this.winner = !this.isX;
       break;
     default:
       throw new Error(`Unhandled game state: ${this.state.gameState}`);
     }
 
-    if (this.state.inProgress && !this.isPeerAlive()) {
-      this.state.inProgress = false;
+    if (this.inProgress && !this.isPeerAlive()) {
+      this.inProgress = false;
       this.abandoned = true;
     }
     this._ee.emit('change');
@@ -342,6 +272,4 @@ export class TicTacToe {
   removeChangeListener(fn: Function) {
     this._ee.off('change', fn);
   }
-
 }
-

@@ -9,10 +9,10 @@ import {Connection} from '@solana/web3.js';
 import {url} from '../../url';
 import {sleep} from '../util/sleep';
 import {TicTacToe} from '../program/tic-tac-toe';
-import type {TicTacToeBoard} from '../program/tic-tac-toe';
+import type {Board} from '../program/program-state';
 import {findDashboard} from '../server/config';
 
-function renderBoard(board: TicTacToeBoard): string {
+function renderBoard(board: Board): string {
   return [
     board.slice(0,3).join('|'),
     '-+-+-',
@@ -41,16 +41,18 @@ async function main(url: string) {
   const dashboard = await findDashboard(connection);
   rl.write(`Dashboard: ${dashboard.publicKey.toBase58()}\n`);
 
-  rl.write(`Total games played: ${dashboard.state.total}\n\n`);
+  rl.write(`Total games played: ${dashboard.state.totalGames}\n\n`);
+  try {
+    for (const [i, gamePublicKey] of dashboard.state.completedGames.entries()) {
+      const state = await TicTacToe.getGameState(connection, gamePublicKey);
+      const lastMove = new Date(Math.max(...state.keepAlive));
 
-  rl.write(`Recently completed games: ${dashboard.state.completed.length}\n`);
-  for (const [i, gamePublicKey] of dashboard.state.completed.entries()) {
-    const state = await TicTacToe.getGameState(connection, gamePublicKey);
-    const lastMove = new Date(Math.max(...state.keep_alive));
-
-    rl.write(`Game #${i}: ${state.gameState}\n`);
-    rl.write(`${renderBoard(state.board)}\n`);
-    rl.write(`${lastMove.getSeconds() === 0 ? '?' : lastMove.toLocaleString()}\n\n`);
+      rl.write(`Game #${i}: ${state.gameState}\n`);
+      rl.write(`${renderBoard(state.board)}\n`);
+      rl.write(`${lastMove.getSeconds() === 0 ? '?' : lastMove.toLocaleString()}\n\n`);
+    }
+  } catch (err) {
+    console.log(err);
   }
 
   // Find opponent
@@ -62,16 +64,19 @@ async function main(url: string) {
   //
   rl.write(`\nThe game has started. You are ${ttt.isX ? 'X' : 'O'}\n`);
   let showBoard = false;
+
+  let gameUpdateCounter = 0;
+  ttt.onChange(() => ++gameUpdateCounter);
   for (;;) {
     if (showBoard) {
       rl.write(`\n${renderBoard(ttt.state.board)}\n`);
     }
     showBoard = false;
 
-    if (!ttt.state.inProgress) {
+    if (!ttt.inProgress) {
       break;
     }
-    if (!ttt.state.myTurn) {
+    if (!ttt.myTurn) {
       rl.write('.');
       await sleep(250);
       continue;
@@ -87,7 +92,12 @@ async function main(url: string) {
       rl.write(`Invalid response: ${coords}\n`);
     }
 
+    const currentGameUpdateCounter = gameUpdateCounter;
     await ttt.move(Number(coords[0]) - 1, Number(coords[2]) - 1);
+    while (currentGameUpdateCounter === gameUpdateCounter) {
+      rl.write('.');
+      await sleep(250);
+    }
     showBoard = true;
   }
 
@@ -104,9 +114,9 @@ async function main(url: string) {
   await dashboard.submitGameState(ttt.gamePublicKey);
 
   rl.write(`\nGame Over\n=========\n\n${renderBoard(ttt.state.board)}\n\n`);
-  if (ttt.state.winner) {
+  if (ttt.winner) {
     rl.write('You won!\n');
-  } else if (ttt.state.draw) {
+  } else if (ttt.draw) {
     rl.write('Draw.\n');
   } else {
     rl.write('You lost.\n');

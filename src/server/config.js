@@ -8,7 +8,8 @@ import {
 import {url} from '../../url';
 import {Store} from './store';
 import {TicTacToeDashboard} from '../program/tic-tac-toe-dashboard';
-
+import {loadProgram} from '../util/load-program';
+import {newSystemAccountWithAirdrop} from '../util';
 
 export async function findDashboard(connection: Connection): Promise<TicTacToeDashboard> {
   const store = new Store();
@@ -22,7 +23,12 @@ export async function findDashboard(connection: Connection): Promise<TicTacToeDa
     console.log('findDashboard:', err.message);
   }
 
-  const dashboard = await TicTacToeDashboard.create(connection);
+  const tempAccount = await newSystemAccountWithAirdrop(connection, 123);
+
+  const programId = await loadProgram(connection, tempAccount, 'tictactoe');
+  console.log('dashboard programId:', programId.toString());
+
+  const dashboard = await TicTacToeDashboard.create(connection, programId);
   await store.save(
     '../../../dist/config.json',
     {

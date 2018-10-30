@@ -85,8 +85,8 @@ export class Game extends React.Component {
 
     let currentGameStatusMessage;
 
-    if (currentGame.state.inProgress) {
-      if (currentGame.state.myTurn) {
+    if (currentGame.inProgress) {
+      if (currentGame.myTurn) {
         currentGameStatusMessage = `You are ${currentGame.isX ? 'X' : 'O'}, make your move`;
       } else {
         currentGameStatusMessage = 'Waiting for opponent to move...';
@@ -101,9 +101,9 @@ export class Game extends React.Component {
       currentGameStatusMessage = 'Game Over.  ';
       if (currentGame.abandoned) {
         currentGameStatusMessage += 'Opponent abandoned the game.';
-      } else if (currentGame.state.winner) {
+      } else if (currentGame.winner) {
         currentGameStatusMessage += 'You won!';
-      } else if (currentGame.state.draw) {
+      } else if (currentGame.draw) {
         currentGameStatusMessage += 'Draw.';
       } else {
         currentGameStatusMessage += 'You lost.';
@@ -119,15 +119,19 @@ export class Game extends React.Component {
   onDashboardChange = async () => {
     console.log('onDashboardChange()...');
     const {dashboard} = this.props;
-    for (const [, gamePublicKey] of dashboard.state.completed.entries()) {
+    for (const [, gamePublicKey] of dashboard.state.completedGames.entries()) {
       if (!(gamePublicKey in this.recentGameState)) {
-        this.recentGameState[gamePublicKey] = await TicTacToe.getGameState(dashboard.connection, gamePublicKey);
+        try {
+          this.recentGameState[gamePublicKey] = await TicTacToe.getGameState(dashboard.connection, gamePublicKey);
+        } catch (err) {
+          console.log(err);
+        }
       }
     }
 
     this.setState({
-      totalGames: dashboard.state.total,
-      completedGames: dashboard.state.completed.map((key) => this.recentGameState[key]),
+      totalGames: dashboard.state.totalGames,
+      completedGames: dashboard.state.completedGames.map((key) => this.recentGameState[key]),
     });
   }
 
@@ -178,7 +182,7 @@ export class Game extends React.Component {
                 default:
                   break;
                 }
-                const lastMove = new Date(Math.max(...game.keep_alive));
+                const lastMove = new Date(Math.max(...game.keepAlive));
                 return <Carousel.Item key={i}>
                   <div align="center">
                     <h3>{gameState}</h3>
@@ -199,7 +203,7 @@ export class Game extends React.Component {
     );
 
     let playAgain = null;
-    if (currentGame && !currentGame.state.inProgress) {
+    if (currentGame && !currentGame.inProgress) {
       playAgain = (
         <div>
           <br/>
@@ -228,7 +232,7 @@ export class Game extends React.Component {
             <div align="center">
               <h2>{currentGameStatusMessage}</h2>
               <Board
-                disabled={!(currentGame && currentGame.state.myTurn)}
+                disabled={!(currentGame && currentGame.myTurn)}
                 bsSize="large"
                 squares={currentGame ? currentGame.state.board : Array(9).fill(' ')}
                 onClick={i => this.handleClick(i)}
