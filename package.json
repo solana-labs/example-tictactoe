@@ -14,7 +14,7 @@
     "build": "webpack --mode=production",
     "builddev": "webpack --mode=development",
     "dev": "set -ex; babel-node src/server/config; webpack-dev-server --config ./webpack.config.js --mode development",
-    "localnet:up": "set -x; solana-localnet down; set -e; solana-localnet up; ./program/deploy.sh;",
+    "localnet:up": "set -x; solana-localnet down; set -e; solana-localnet up; ./program-native/deploy.sh;",
     "localnet:down": "solana-localnet down",
     "localnet:logs": "solana-localnet logs -f",
     "postinstall": "scripts/postinstall.sh"

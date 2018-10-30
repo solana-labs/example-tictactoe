@@ -9,7 +9,7 @@ if [[ $1 = "--nopull" ]]; then
 fi
 
 buildScript="
-    cd program/;
+    cd program-native/;
     cargo fmt -- --check;
     cargo build;
     cargo clippy -- --deny=warnings;

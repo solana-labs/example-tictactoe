@@ -8,7 +8,7 @@ _() {
 }
 
 _ npx solana-localnet update
-_ ./program/build.sh
+_ ./program-native/build.sh
 _ npm run build
 
 echo
