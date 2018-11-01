@@ -1,3 +1,8 @@
+[![Build status][travis-image]][travis-url]
+
+[travis-image]: https://api.travis-ci.org/solana-labs/example-tictactoe.svg?branch=master
+[travis-url]: https://travis-ci.org/solana-labs/example-tictactoe
+
 # Tic-Tac-Toe on Solana
 
 This project demonstrates how to use the [Solana Javascript API](https://github.com/solana-labs/solana-web3.js)
