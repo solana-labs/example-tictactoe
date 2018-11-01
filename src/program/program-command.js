@@ -1,6 +1,5 @@
 // @flow
 
-//import cbor from 'cbor';
 import * as BufferLayout from 'buffer-layout';
 
 const COMMAND_LENGTH = 16;
