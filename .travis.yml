@@ -10,22 +10,21 @@ notifications:
   email: false
 
 install:
+  - cargo --version
+  - docker --version
   - wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
   - sudo apt-add-repository "deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-7 main"
   - sudo apt-add-repository "deb http://ppa.launchpad.net/ubuntu-toolchain-r/test/ubuntu trusty main"
   - sudo apt-get update
   - sudo apt-get install -y clang-7 --allow-unauthenticated
-  - nvm install node
-  - cargo --version
-  - docker --version
-  - node --version
-  - clang --version
   - clang-7 --version
+  - nvm install node
+  - node --version
   - npm install
 
 script:
+  - npm run build:bpf
   - npm run test
-  - npm run bpf
 
 before_deploy:
   - rm .gitignore
