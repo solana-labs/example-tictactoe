@@ -27,7 +27,8 @@ script:
   - npm run test
 
 before_deploy:
-  - rm .gitignore
+  - git add -f dist/program/tictactoe.o
+  - git commit -m dist/program/tictactoe.o
 
 deploy:
   provider: heroku
