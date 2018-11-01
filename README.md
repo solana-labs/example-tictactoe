@@ -3,14 +3,17 @@
 This project demonstrates how to use the [Solana Javascript API](https://github.com/solana-labs/solana-web3.js)
 to implement an interactive tic-tac-toe game between two users.
 
-The Solana tic-tac-toe program itself consists of two on-chain programs:
-* Manages a tic-tac-toe game between two players: https://github.com/solana-labs/solana/tree/v0.9/src/tictactoe_program.rs
-* Dashboard used by players to find opponents and fetch recent game results: https://github.com/solana-labs/solana/tree/v0.9/src/tictactoe_dashboard_program.rs
+Two variants of the Solana tic-tac-toe program are available:
+* BPF program written in C. See https://github.com/solana-labs/example-tictactoe/tree/dev/program-bpf
+* Native program written in Rust.  This variant is only available on a local
+  instance of Solana and cannot be deployed to teh public testnet.  See https://github.com/solana-labs/example-tictactoe/tree/dev/program-native
 
 ## Getting Started
 Go to https://solana-example-tictactoe.herokuapp.com/ and wait for another player to join.
 
-### Local Repository
+### Development
+
+Ensure clang-7 is installed.  See https://github.com/solana-labs/solana/tree/master/programs/bpf/c/sdk#prerequisites
 
 #### Web App
 ```sh
