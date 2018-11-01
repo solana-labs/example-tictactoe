@@ -4,9 +4,9 @@ This project demonstrates how to use the [Solana Javascript API](https://github.
 to implement an interactive tic-tac-toe game between two users.
 
 Two variants of the Solana tic-tac-toe program are available:
-* BPF program written in C. See https://github.com/solana-labs/example-tictactoe/tree/dev/program-bpf
-* Native program written in Rust.  This variant is only available on a local
-  instance of Solana and cannot be deployed to the public testnet.  See https://github.com/solana-labs/example-tictactoe/tree/dev/program-native
+* BPF program written in C. See https://github.com/solana-labs/example-tictactoe/tree/master/program-bpf
+* Native program written in Rust.  *This variant is only available on a local
+  instance of Solana and cannot be deployed to the public testnet.*  See https://github.com/solana-labs/example-tictactoe/tree/master/program-native
 
 ## Getting Started
 Go to https://solana-example-tictactoe.herokuapp.com/ and wait for another player to join.
@@ -24,7 +24,8 @@ public testnet, `export LIVE=1` in your environment.
 To start a local Solana network run:
 ```bash
 $ npx solana-localnet update
-$ npx solana-localnet up
+$ npm run localnet:up
+$ npm run localnet:logs
 ```
 For more details see the [full instructions](https://github.com/solana-labs/solana-web3.js#local-network)
 for working with a local network.
