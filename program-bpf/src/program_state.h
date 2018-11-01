@@ -52,9 +52,7 @@ typedef struct {
 } Dashboard;
 
 
-typedef struct {
-  union {
-    Game game;
-    Dashboard dashboard;
-  };
+typedef union {
+  Game game;
+  Dashboard dashboard;
 } StateData;

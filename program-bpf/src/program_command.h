@@ -12,17 +12,15 @@ typedef enum {
   Command_Move,              /* Player X/O mark board position (x, y) */
 } Command;
 
-typedef struct {
-  union {
-    struct {
-      uint64_t timestamp;
-    } join;
-    struct {
-      uint64_t timestamp;
-    } keep_alive;
-    struct {
-      uint8_t x;
-      uint8_t y;
-    } move;
-  };
+typedef union {
+  struct {
+    uint64_t timestamp;
+  } join;
+  struct {
+    uint64_t timestamp;
+  } keep_alive;
+  struct {
+    uint8_t x;
+    uint8_t y;
+  } move;
 } CommandData;
