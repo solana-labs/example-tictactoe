@@ -14,11 +14,13 @@
     "build": "webpack --mode=production",
     "builddev": "webpack --mode=development",
     "dev": "set -ex; babel-node src/server/config; webpack-dev-server --config ./webpack.config.js --mode development",
-    "bpf": "make -C program-bpf",
-    "localnet:up": "set -x; solana-localnet down; set -e; solana-localnet up; ./program-native/deploy.sh;",
+    "build:bpf": "make -C program-bpf",
+    "build:native": "make -C program-bpf",
+    "localnet:up": "set -ex; solana-localnet down; set -e; solana-localnet up",
+    "localnet:deploy": "./program-native/deploy.sh",
     "localnet:down": "solana-localnet down",
     "localnet:logs": "solana-localnet logs -f",
-    "postinstall": "scripts/postinstall.sh"
+    "postinstall": "npm run build"
   },
   "keywords": [],
   "author": "",
@@ -62,5 +64,8 @@
     "webpack": "^4.20.2",
     "webpack-cli": "^3.1.1",
     "webpack-dev-server": "^3.1.9"
+  },
+  "engines": {
+    "node": "11.x"
   }
 }

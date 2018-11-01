@@ -1,0 +1,42 @@
+dist: trusty
+sudo: required
+language: rust
+services:
+- docker
+cache:
+  directories:
+  - "~/.npm"
+notifications:
+  email: false
+
+install:
+  - wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+  - sudo apt-add-repository "deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-7 main"
+  - sudo apt-add-repository "deb http://ppa.launchpad.net/ubuntu-toolchain-r/test/ubuntu trusty main"
+  - sudo apt-get update
+  - sudo apt-get install -y clang-7 --allow-unauthenticated
+  - nvm install node
+  - cargo --version
+  - docker --version
+  - node --version
+  - clang --version
+  - clang-7 --version
+  - npm install
+
+script:
+  - npm run test
+  - npm run bpf
+
+before_deploy:
+  - rm .gitignore
+
+deploy:
+  provider: heroku
+  api_key:
+    secure: HEBXce1uoy39R9vF9rQiE26rOVbfYqUHLsEG5/59LGAT28jMTiuRqHHMPDFSQytFo4qRJyorPHJrYNUdL4ur6VBGApxR/ULOVFNySGuC6+gXRT9tPbqD17596DJ98NGETBTB1mzLdoQcy6qlSLqz2rGdlfOvEsupQ65NvivxkTWtQSEWxmci5SzTjmFoUWC72ixkShXfk1me9C6QlyEyTJFMvVVbd2wxeMYQQMZoyB6ZFqBBXkMPJxNFeReG0euYX9RRXUV+YJ9FqdDqtIHYx74aTm3JihHQq2dRqVs0/lU1dGpETFqkyBG3jfYvagOSaKVtM1sjf9gp3EgOGOgyPJQZJKMTqx7FkAGB8R9BUeDu2nNRt6e20j4MDZwh0qgNlIO+jbGK+yVO3+UKPYgYTEmx3mKguwv65ihnNTwDhDBKStwXkDib42/3BLDuWNYjskshuEmgyLXCPUxn9hka5hzbx0/WBr3HrNs3K9r2pygKwPumAS1Y0BB1iscOjYQiqQjtAP5wVxfRfTcmNDuUZjyovVuV4SS+B4G9XpHpE8kh5khfnQ3SPnJPAvXuqAnbNd3mXeQJXBa3kpAHvBE9AKdsFyh7+vc+dtMdhbN+d4fIJbxQqWAI7f9FqnbcCwHd6qk2xDZILlc8B5FGRexpwVwzyz2zi7/2atFjs84kDug=
+  app: solana-example-tictactoe
+  skip_cleanup: true
+  strategy: git
+  on:
+    repo: solana-labs/example-tictactoe
+    branch: dev
