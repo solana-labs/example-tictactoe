@@ -20,7 +20,6 @@ app.get('/config.json', async (req, res) => {
     console.log('findDashboard failed:', err);
     res.status(500).end();
   }
-
 });
 app.use(express.static(path.join(__dirname, '../../dist')));
 
