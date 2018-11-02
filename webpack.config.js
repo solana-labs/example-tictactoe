@@ -31,6 +31,11 @@ module.exports = {
   },
   plugins: [
     new webpack.HotModuleReplacementPlugin(),
+    new webpack.DefinePlugin({
+      'process.env': {
+        LIVE: JSON.stringify(process.env.LIVE)
+      }
+    }),
   ],
   devServer: {
     contentBase: './dist',

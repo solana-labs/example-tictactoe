@@ -30,6 +30,7 @@ class App extends React.Component {
       const initMessage = `Connecting to ${url}... ` +
         (attempt === 0 ? '' : `(#${attempt}: ${errorMessage})`);
       this.setState({initMessage});
+      console.log(initMessage);
       try {
         connection = new Connection(url);
         await connection.getLastId();
