@@ -85,7 +85,7 @@ async function main(url: string) {
 
     let coords = '?x?';
     for (;;) {
-      coords = await rl.questionAsync('Enter row and column (eg. 1x3): ');
+      coords = await rl.questionAsync('Enter column and row (eg. 1x3): ');
       if (/^[123]x[123]$/.test(coords)) {
         break;
       }
@@ -128,4 +128,3 @@ main(url)
   console.error(err);
 })
 .then(() => process.exit());
-
