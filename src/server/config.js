@@ -49,6 +49,7 @@ export async function findDashboard(connection: Connection): Promise<TicTacToeDa
   await store.save(
     '../../../dist/config.json',
     {
+      native,
       publicKey: dashboard.publicKey.toBase58()
     },
   );
