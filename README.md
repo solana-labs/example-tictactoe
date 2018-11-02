@@ -6,22 +6,24 @@
 # Tic-Tac-Toe on Solana
 
 This project demonstrates how to use the [Solana Javascript API](https://github.com/solana-labs/solana-web3.js)
-to implement an interactive tic-tac-toe game between two users.
+to build, deploy, and interact with programs on the Solana blockchain, implementing an interactive tic-tac-toe game between two users.
+To see the final product, go to https://solana-example-tictactoe.herokuapp.com/ and wait for another player to join.
+(Simply direct a 2nd browser window to the web app to play against yourself.)
 
-* The on-chain portion is a BPF program written in C, see `program-bpf/`
-* Command-line and web front-ends are provided under `src/`
+The project comprises:
+
+* The on-chain Tic-Tac-Toe program, a BPF program written in C: `program-bpf/`
+* Easy program build and deployment using the `@solana/web3.js` library
+* Command-line and web front-end: `src/`
 
 ## Getting Started
-Go to https://solana-example-tictactoe.herokuapp.com/ and wait for another player to join.
 
-### Development
-
-First fetch the npm dependencies by running:
+First fetch the npm dependencies, including `@solana/web3.js`, by running:
 ```sh
 $ npm install
 ```
 
-#### Select a Network
+### Select a Network
 The example connects to a local Solana network by default.
 
 To start a local Solana network run:
@@ -29,12 +31,17 @@ To start a local Solana network run:
 $ npx solana-localnet update
 $ npm run localnet:up
 ```
-For more details see the [full instructions](https://github.com/solana-labs/solana-web3.js#local-network)
-for working with a local network.
 
-Alternatively to connect to the public testnet, `export LIVE=1` in your environment before running the front-end.
+Solana network logs are available with:
+```bash
+$ npx solana-localnet logs -f
+```
 
-#### Build the BPF C program
+For more details on working with a local network, see the [full instructions](https://github.com/solana-labs/solana-web3.js#local-network).
+
+Alternatively to connect to the public testnet, `export LIVE=1` in your environment before running a front-end.
+
+### Build the BPF C program
 Ensure clang 7 is installed.  See https://github.com/solana-labs/solana/tree/master/programs/bpf/c/sdk#prerequisites
 
 ```sh
@@ -46,20 +53,41 @@ or
 $ npm run build:bpf
 ```
 
-#### Run the command-line front end
+Compiled files can be found in `dist/program`. Compiler settings are configured in the [Solana SDK](https://github.com/solana-labs/solana/tree/master/programs/bpf/c/sdk/bpf.mk)
+
+### Run the Command-Line Front End
 After building the program,
 
 ```sh
 $ npm run start
 ```
 
-Now wait for another player to join.
+This script uses the Solana Javascript API `BpfLoader` to deploy your Tic-Tac-Toe program to the blockchain.
+Once the deploy transaction is confirmed on the chain, the script calls the program to instantiate a new dashboard
+to track your open and completed games (`findDashboard`), and starts a new game (`dashboard.startGame`), waiting for an opponent.
 
-#### Run the WebApp front end
+To play the game, open a second terminal and again run the `npm run start` script.
+
+To see the program or game state on the blockchain, send a `getAccountInfo` [JSON-RPC request](https://github.com/solana-labs/solana/blob/master/doc/json-rpc.md#getaccountinfo) to the network,
+using the id printed by the script, eg.:
+* `Dashboard programId: HFA4x4oZKWeGcRVbUYaCHM59i5AFfP3nCfc4NkrBvVtP`
+* `Dashboard: HmAEDrGpsRK2PkR51E9mQrKQG7Qa3iyv4SvZND9uEkdR`
+* `Advertising our game (Gx1kjBieYgaPgDhaovzvvZapUTg5Mz6nhXTLWSQJpNMv)`
+
+### Run the WebApp Front End
 After building the program,
 
 ```sh
 $ npm run dev
 ```
 
-Then open your browser to http://localhost:8080/ and wait for another player to join.
+This script deploys the program to the blockchain, and also boots up a local webserver
+for game play.
+
+To instantiate a dashboard and game, open your browser to http://localhost:8080/.
+
+## Customizing the Program
+To customize Tic-Tac-Toe, make changes to the program in `program-bpf/src` and rebuild.
+Now when you run `npm run start`, you should see your changes.
+
+To deploy a program with a different name, edit `src/server/config.js`.
