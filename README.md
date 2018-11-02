@@ -8,10 +8,8 @@
 This project demonstrates how to use the [Solana Javascript API](https://github.com/solana-labs/solana-web3.js)
 to implement an interactive tic-tac-toe game between two users.
 
-Two variants of the Solana tic-tac-toe program are available:
-* BPF program written in C. See https://github.com/solana-labs/example-tictactoe/tree/master/program-bpf
-* Native program written in Rust.  *This variant is only available on a local
-  instance of Solana and cannot be deployed to the public testnet.*  See https://github.com/solana-labs/example-tictactoe/tree/master/program-native
+* The on-chain portion is a BPF program written in C, see `program-bpf/`
+* Command-line and web front-ends are provided under `src/`
 
 ## Getting Started
 Go to https://solana-example-tictactoe.herokuapp.com/ and wait for another player to join.
@@ -23,22 +21,22 @@ First fetch the npm dependencies by running:
 $ npm install
 ```
 
-The example connects to a local Solana network by default.  To connect to the
-public testnet, `export LIVE=1` in your environment.
+#### Select a Network
+The example connects to a local Solana network by default.
 
 To start a local Solana network run:
 ```bash
 $ npx solana-localnet update
 $ npm run localnet:up
-$ npm run localnet:logs
 ```
 For more details see the [full instructions](https://github.com/solana-labs/solana-web3.js#local-network)
 for working with a local network.
 
-#### BPF C program
+Alternatively to connect to the public testnet, `export LIVE=1` in your environment before running the front-end.
+
+#### Build the BPF C program
 Ensure clang 7 is installed.  See https://github.com/solana-labs/solana/tree/master/programs/bpf/c/sdk#prerequisites
 
-To compile:
 ```sh
 $ cd program-bpf/
 $ make
@@ -48,34 +46,7 @@ or
 $ npm run build:bpf
 ```
 
-The BPF program will then be automatically redeployed when the front end is next
-started.
-
-#### Native Rust program
-Ensure rust and cargo are installed (see https://rustup.rs/ for more)
-
-To compile:
-```sh
-$ ./program-native/build.sh
-```
-or
-```
-$ npm run build:native
-```
-
-Then run the following commands to deploy to a local Solana network:
-```sh
-$ npm run localnet:up
-$ npm run localnet:deloy
-```
-
-Note: the local network must be restarted any time the native program is changed
-as redeploys of native programs are not supported.
-
-Ensure `export NATIVE=1` is defined in your environment before
-starting the front end to select the native program.
-
-#### Command-line front end
+#### Run the command-line front end
 After building the program,
 
 ```sh
@@ -84,7 +55,7 @@ $ npm run start
 
 Now wait for another player to join.
 
-#### WebApp front end
+#### Run the WebApp front end
 After building the program,
 
 ```sh
