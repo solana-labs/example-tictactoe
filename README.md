@@ -8,7 +8,7 @@
 This project demonstrates how to use the [Solana Javascript API](https://github.com/solana-labs/solana-web3.js)
 to build, deploy, and interact with programs on the Solana blockchain, implementing an interactive tic-tac-toe game between two users.
 To see the final product, go to https://solana-example-tictactoe.herokuapp.com/ and wait for another player to join.
-(Simply direct a 2nd browser window to the web app to play against yourself.)
+(Simply direct a second browser window to the web app to play against yourself.)
 
 The project comprises:
 
