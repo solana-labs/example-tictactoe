@@ -15,7 +15,7 @@ app.get('/config.json', async (req, res) => {
     const dashboard = await findDashboard(connection);
     const publicKey = dashboard.publicKey.toBase58();
     console.log('findDashboard:', publicKey);
-    res.send(publicKey).end();
+    res.send(JSON.stringify({publicKey})).end();
   } catch (err) {
     console.log('findDashboard failed:', err);
     res.status(500).end();
