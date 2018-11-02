@@ -16,7 +16,7 @@
     "dev": "set -ex; babel-node src/server/config; webpack-dev-server --config ./webpack.config.js --mode development",
     "build:bpf": "make -C program-bpf",
     "build:native": "make -C program-bpf",
-    "localnet:up": "set -ex; solana-localnet down; set -e; solana-localnet up",
+    "localnet:up": "set -x; solana-localnet down; set -e; solana-localnet up",
     "localnet:deploy": "./program-native/deploy.sh",
     "localnet:down": "solana-localnet down",
     "localnet:logs": "solana-localnet logs -f",
