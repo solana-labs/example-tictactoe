@@ -24,41 +24,36 @@ class App extends React.Component {
     await sleep(0); // Exit the `componentDidMount` stack frame
 
     let connection = null;
-    let errorMessage = null;
     let attempt = 0;
-    while (connection === null) {
-      const initMessage = `Connecting to ${url}... ` +
-        (attempt === 0 ? '' : `(#${attempt}: ${errorMessage})`);
-      this.setState({initMessage});
-      console.log(initMessage);
+
+    for (;;) {
       try {
+        this.setState({
+          initMessage: `Connecting to ${url}... ` + (attempt === 0 ? '' : `(#${attempt})`)
+        });
         connection = new Connection(url);
         await connection.getLastId();
+
+        this.setState({initMessage: `Connecting to dashboard...`});
+
+        // Load the dashboard account publicKey from the server, so it remains the
+        // same for all users
+        const configUrl = window.location.origin + '/config.json';
+        const response = await fetch(configUrl);
+        const {publicKey} = await response.json();
+
+        this.setState({initMessage: `Loading dashboard state...`});
+        const dashboard = await TicTacToeDashboard.connect(connection, new PublicKey(publicKey));
+
+        this.setState({initialized: true, dashboard});
+        break;
       } catch (err) {
+        this.setState({initMessage: err.message});
         console.log(err);
-        errorMessage = err.message;
         connection = null;
         await sleep(1000);
+        attempt++;
       }
-      attempt++;
-    }
-
-    try {
-      this.setState({initMessage: `Connecting to dashboard...`});
-
-      // Load the dashboard account publicKey from the server, so it remains the
-      // same for all users
-      const url = window.location.origin + '/config.json';
-      const response = await fetch(url);
-      const {publicKey} = await response.json();
-
-      this.setState({initMessage: `Loading dashboard state...`});
-      const dashboard = await TicTacToeDashboard.connect(connection, new PublicKey(publicKey));
-
-      this.setState({initialized: true, dashboard});
-    } catch (err) {
-      console.log(err);
-      this.setState({initMessage: `Initialization failed: ${err.message}`});
     }
   }
 
