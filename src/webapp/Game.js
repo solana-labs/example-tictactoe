@@ -68,6 +68,7 @@ export class Game extends React.Component {
       this.setState({
         currentGameStatusMessage: `Unable to start game: ${err.message}`,
       });
+      this.props.reconnect();
     }
   }
 
@@ -99,7 +100,9 @@ export class Game extends React.Component {
       }
 
       currentGameStatusMessage = 'Game Over.  ';
-      if (currentGame.abandoned) {
+      if (currentGame.disconnected) {
+        currentGameStatusMessage += 'Game was disconnected.';
+      } else if (currentGame.abandoned) {
         currentGameStatusMessage += 'Opponent abandoned the game.';
       } else if (currentGame.winner) {
         currentGameStatusMessage += 'You won!';
@@ -249,5 +252,6 @@ export class Game extends React.Component {
 }
 Game.propTypes = {
   dashboard: PropTypes.object, // TicTacToeDashboard
+  reconnect: PropTypes.funciton,
 };
 

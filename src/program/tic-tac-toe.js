@@ -27,6 +27,7 @@ import {
 
 export class TicTacToe {
   abandoned: boolean;
+  disconnected: boolean;
   connection: Connection;
   programId: PublicKey;
   gamePublicKey: PublicKey;
@@ -37,6 +38,7 @@ export class TicTacToe {
   myTurn: boolean;
   draw: boolean;
   winner: boolean;
+  _keepAliveErrorCount: number;
 
   _ee: EventEmitter;
   _changeSubscriptionId: number | null;
@@ -65,6 +67,7 @@ export class TicTacToe {
         _changeSubscriptionId: null,
         _ee: new EventEmitter(),
         abandoned: false,
+        disconnected: false,
         connection,
         draw: false,
         gamePublicKey,
@@ -75,6 +78,7 @@ export class TicTacToe {
         programId,
         state,
         winner: false,
+        _keepAliveErrorCount: 0,
       }
     );
   }
@@ -91,7 +95,7 @@ export class TicTacToe {
     }
     setTimeout(
       async () => {
-        if (this.abandoned) {
+        if (this.abandoned || this.disconnected) {
           const {_changeSubscriptionId} = this;
           if (_changeSubscriptionId !== null) {
             this._changeSubscriptionId = null;
@@ -107,8 +111,15 @@ export class TicTacToe {
         }
         try {
           await this.keepAlive();
+          this._keepAliveErrorCount = 0;
         } catch (err) {
-          console.error(`keepAlive() failed: ${err}`);
+          ++this._keepAliveErrorCount;
+          console.error(`keepAlive() failed #${this._keepAliveErrorCount}: ${err}`);
+          if (this._keepAliveErrorCount > 3) {
+            this.disconnected = true;
+            this.inProgress = false;
+            this._ee.emit('change');
+          }
         }
         this.scheduleNextKeepAlive();
       },

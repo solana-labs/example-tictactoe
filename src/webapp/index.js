@@ -17,11 +17,17 @@ import {sleep} from '../util/sleep';
 class App extends React.Component {
   state = {
     initialized: false,
-    initMessage: 'Initializing...',
-  }
+    initMessage: '',
+  };
 
-  async componentDidMount() {
-    await sleep(0); // Exit the `componentDidMount` stack frame
+  initialize = async () => {
+    this.setState(
+      {
+        initialized: false,
+        initMessage: 'Initializing...',
+      }
+    );
+    await sleep(0); // Exit caller's stack frame
 
     let connection = null;
     let attempt = 0;
@@ -48,7 +54,7 @@ class App extends React.Component {
         this.setState({initialized: true, dashboard});
         break;
       } catch (err) {
-        this.setState({initMessage: err.message});
+        this.setState({initMessage: this.state.initMessage + ' - ' + err.message});
         console.log(err);
         connection = null;
         await sleep(1000);
@@ -57,11 +63,15 @@ class App extends React.Component {
     }
   }
 
+  componentDidMount() {
+    this.initialize();
+  }
+
   render() {
     if (!this.state.initialized) {
       return <Well>{this.state.initMessage}</Well>;
     }
-    return <Game dashboard={this.state.dashboard}/>;
+    return <Game reconnect={this.initialize} dashboard={this.state.dashboard}/>;
   }
 }
 

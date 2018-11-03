@@ -161,6 +161,10 @@ export class TicTacToeDashboard {
         break;
       }
 
+      if (myGame.disconnected) {
+        throw new Error('game disconnected');
+      }
+
       const pendingGamePublicKey = this.state.pendingGame;
       if (pendingGamePublicKey === null || !myGame.gamePublicKey.equals(pendingGamePublicKey)) {
         if (pendingGamePublicKey !== null) {
