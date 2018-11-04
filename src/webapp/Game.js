@@ -29,12 +29,8 @@ export class Game extends React.Component {
     };
   }
 
-  onTransaction = (title: string, body: string,) => {
-    const {
-      pause,
-      transactions,
-      totalTransactions,
-    } = this.state;
+  onTransaction = (title: string, body: string) => {
+    const {pause, transactions, totalTransactions} = this.state;
 
     if (pause) {
       return;
@@ -48,7 +44,7 @@ export class Game extends React.Component {
       transactions,
       totalTransactions: totalTransactions + 1,
     });
-  }
+  };
 
   componentDidMount() {
     const {dashboard} = this.props;
@@ -90,7 +86,7 @@ export class Game extends React.Component {
         currentGameStatusMessage: 'Game has started',
       });
       currentGame.onChange(this.onGameChange);
-    } catch(err) {
+    } catch (err) {
       console.log('Unable to start game:', err);
       this.setState({
         currentGameStatusMessage: `Unable to start game: ${err.message}`,
@@ -98,7 +94,6 @@ export class Game extends React.Component {
       this.props.reconnect();
     }
   }
-
 
   onGameChange = () => {
     console.log('onGameChange()...');
@@ -115,7 +110,9 @@ export class Game extends React.Component {
 
     if (currentGame.inProgress) {
       if (currentGame.myTurn) {
-        currentGameStatusMessage = `You are ${currentGame.isX ? 'X' : 'O'}, make your move`;
+        currentGameStatusMessage = `You are ${
+          currentGame.isX ? 'X' : 'O'
+        }, make your move`;
       } else {
         currentGameStatusMessage = 'Waiting for opponent to move...';
       }
@@ -144,7 +141,7 @@ export class Game extends React.Component {
       currentGame,
       currentGameStatusMessage,
     });
-  }
+  };
 
   onDashboardChange = async () => {
     console.log('onDashboardChange()...');
@@ -152,7 +149,10 @@ export class Game extends React.Component {
     for (const [, gamePublicKey] of dashboard.state.completedGames.entries()) {
       if (!(gamePublicKey in this.recentGameState)) {
         try {
-          this.recentGameState[gamePublicKey] = await TicTacToe.getGameState(dashboard.connection, gamePublicKey);
+          this.recentGameState[gamePublicKey] = await TicTacToe.getGameState(
+            dashboard.connection,
+            gamePublicKey,
+          );
         } catch (err) {
           console.log(err);
         }
@@ -161,18 +161,18 @@ export class Game extends React.Component {
 
     this.setState({
       totalGames: dashboard.state.totalGames,
-      completedGames: dashboard.state.completedGames.map((key) => this.recentGameState[key]),
+      completedGames: dashboard.state.completedGames.map(
+        key => this.recentGameState[key],
+      ),
     });
-  }
+  };
 
   async handleClick(i: number) {
     const x = Math.floor(i % 3);
     const y = Math.floor(i / 3);
     console.log('Move', x, y);
 
-    const {
-      currentGame,
-    } = this.state;
+    const {currentGame} = this.state;
     try {
       // Update the UI immediately with the move for better user feedback, but
       // also send the move to the on-chain program for a final decision
@@ -192,59 +192,66 @@ export class Game extends React.Component {
       totalGames,
     } = this.state;
 
-    const gameHistory = completedGames.length === 0 ? <i>None</i> : (
-      <Panel>
-        <Panel.Heading>
-          <Panel.Title>Total Games Played: {totalGames}</Panel.Title>
-        </Panel.Heading>
-        <Panel.Body>
-          <Carousel pauseOnHover={false} interval={3000} indicators={false}>
-            {
-              completedGames.map((game, i) => {
+    const gameHistory =
+      completedGames.length === 0 ? (
+        <i>None</i>
+      ) : (
+        <Panel>
+          <Panel.Heading>
+            <Panel.Title>Total Games Played: {totalGames}</Panel.Title>
+          </Panel.Heading>
+          <Panel.Body>
+            <Carousel pauseOnHover={false} interval={3000} indicators={false}>
+              {completedGames.map((game, i) => {
                 let {gameState} = game;
                 switch (game.gameState) {
-                case 'OWon':
-                  gameState = 'O Won';
-                  break;
-                case 'XWon':
-                  gameState = 'X Won';
-                  break;
-                default:
-                  break;
+                  case 'OWon':
+                    gameState = 'O Won';
+                    break;
+                  case 'XWon':
+                    gameState = 'X Won';
+                    break;
+                  default:
+                    break;
                 }
                 const lastMove = new Date(Math.max(...game.keepAlive));
-                return <Carousel.Item key={i}>
-                  <div align="center">
-                    <h3>{gameState}</h3>
-                    <p><i>{lastMove.getSeconds() === 0 ? '' : moment(lastMove).fromNow()}</i></p>
-                    <Board
-                      disabled="true"
-                      bsSize="xsmall"
-                      squares={game.board}
-                      onClick={() => undefined}
-                    />
-                  </div>
-                </Carousel.Item>;
-              })
-            }
-          </Carousel>
-        </Panel.Body>
-      </Panel>
-    );
+                return (
+                  <Carousel.Item key={i}>
+                    <div align="center">
+                      <h3>{gameState}</h3>
+                      <p>
+                        <i>
+                          {lastMove.getSeconds() === 0
+                            ? ''
+                            : moment(lastMove).fromNow()}
+                        </i>
+                      </p>
+                      <Board
+                        disabled="true"
+                        bsSize="xsmall"
+                        squares={game.board}
+                        onClick={() => undefined}
+                      />
+                    </div>
+                  </Carousel.Item>
+                );
+              })}
+            </Carousel>
+          </Panel.Body>
+        </Panel>
+      );
 
     let playAgain = null;
     if (currentGame && !currentGame.inProgress) {
       playAgain = (
         <div>
-          <br/>
+          <br />
           <Button
             block
             bsStyle="primary"
-            onClick={
-              () => {
-                this.startGame();
-              }
-            }
+            onClick={() => {
+              this.startGame();
+            }}
           >
             Play again
           </Button>
@@ -259,14 +266,11 @@ export class Game extends React.Component {
             <Panel.Title toggle>{tx.title}</Panel.Title>
           </Panel.Heading>
           <Panel.Body>
-            <pre>
-              {tx.body}
-            </pre>
+            <pre>{tx.body}</pre>
           </Panel.Body>
         </Panel>
       );
     });
-
 
     return (
       <div>
@@ -280,10 +284,12 @@ export class Game extends React.Component {
               <Board
                 disabled={!(currentGame && currentGame.myTurn)}
                 bsSize="large"
-                squares={currentGame ? currentGame.state.board : Array(9).fill(' ')}
+                squares={
+                  currentGame ? currentGame.state.board : Array(9).fill(' ')
+                }
                 onClick={i => this.handleClick(i)}
               />
-              <br/>
+              <br />
             </div>
             {playAgain}
           </Panel.Body>
@@ -296,9 +302,12 @@ export class Game extends React.Component {
                 <td>
                   Transactions: {this.state.totalTransactions}
                   &nbsp;
-                </td><td align="right">
+                </td>
+                <td align="right">
                   <ButtonGroup bsSize="xsmall">
-                    <Button onClick={() => this.setState({pause: !this.state.pause})}>
+                    <Button
+                      onClick={() => this.setState({pause: !this.state.pause})}
+                    >
                       {this.state.pause ? 'Resume' : 'Pause'}
                     </Button>
                     <Button onClick={() => this.setState({transactions: []})}>
@@ -323,4 +332,3 @@ Game.propTypes = {
   dashboard: PropTypes.object, // TicTacToeDashboard
   reconnect: PropTypes.funciton,
 };
-

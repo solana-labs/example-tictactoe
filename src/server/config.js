@@ -1,11 +1,6 @@
 // @flow
 
-import {
-  BpfLoader,
-  Connection,
-  NativeLoader,
-  PublicKey,
-} from '@solana/web3.js';
+import {BpfLoader, Connection, NativeLoader, PublicKey} from '@solana/web3.js';
 import fs from 'mz/fs';
 import path from 'path';
 
@@ -14,7 +9,9 @@ import {Store} from './store';
 import {TicTacToeDashboard} from '../program/tic-tac-toe-dashboard';
 import {newSystemAccountWithAirdrop} from '../util';
 
-export async function findDashboard(connection: Connection): Promise<TicTacToeDashboard> {
+export async function findDashboard(
+  connection: Connection,
+): Promise<TicTacToeDashboard> {
   const store = new Store();
   let native = !!process.env.NATIVE;
 
@@ -22,7 +19,10 @@ export async function findDashboard(connection: Connection): Promise<TicTacToeDa
     const config = await store.load('../../../dist/config.json');
     if (config.native === native) {
       const publicKey = new PublicKey(config.publicKey);
-      const dashboard = await TicTacToeDashboard.connect(connection, publicKey);
+      const dashboard = await TicTacToeDashboard.connect(
+        connection,
+        publicKey,
+      );
       return dashboard;
     }
   } catch (err) {
@@ -38,7 +38,7 @@ export async function findDashboard(connection: Connection): Promise<TicTacToeDa
   } else {
     console.log('Using BPF program');
     const elf = await fs.readFile(
-      path.join(__dirname, '..', '..', 'dist', 'program', 'tictactoe.o')
+      path.join(__dirname, '..', '..', 'dist', 'program', 'tictactoe.o'),
     );
     programId = await BpfLoader.load(connection, tempAccount, elf);
   }
@@ -46,24 +46,21 @@ export async function findDashboard(connection: Connection): Promise<TicTacToeDa
   console.log('dashboard programId:', programId.toString());
 
   const dashboard = await TicTacToeDashboard.create(connection, programId);
-  await store.save(
-    '../../../dist/config.json',
-    {
-      native,
-      publicKey: dashboard.publicKey.toBase58()
-    },
-  );
+  await store.save('../../../dist/config.json', {
+    native,
+    publicKey: dashboard.publicKey.toBase58(),
+  });
   return dashboard;
 }
 
 if (require.main === module) {
   const connection = new Connection(url);
   findDashboard(connection)
-  .then(dashboard => {
-    console.log('Dashboard:', dashboard.publicKey.toBase58());
-  })
-  .then(process.exit)
-  .catch(console.error)
-  .then(() => 1)
-  .then(process.exit);
+    .then(dashboard => {
+      console.log('Dashboard:', dashboard.publicKey.toBase58());
+    })
+    .then(process.exit)
+    .catch(console.error)
+    .then(() => 1)
+    .then(process.exit);
 }

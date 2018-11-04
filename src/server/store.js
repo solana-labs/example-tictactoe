@@ -20,4 +20,3 @@ export class Store {
     await fs.writeFile(filename, JSON.stringify(config), 'utf8');
   }
 }
-

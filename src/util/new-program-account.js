@@ -1,13 +1,7 @@
 // @flow
 
-import {
-  Account,
-  Connection,
-  SystemProgram,
-} from '@solana/web3.js';
-import type {
-  PublicKey,
-} from '@solana/web3.js';
+import {Account, Connection, SystemProgram} from '@solana/web3.js';
+import type {PublicKey} from '@solana/web3.js';
 
 import {sendAndConfirmTransaction} from './send-and-confirm-transaction';
 
@@ -26,23 +20,21 @@ export async function newProgramAccount(
   connection: Connection,
   from: Account,
   programId: PublicKey,
-  space: number
+  space: number,
 ): Promise<Account> {
-
   const stateAccount = new Account();
   const transaction = SystemProgram.createAccount(
     from.publicKey,
     stateAccount.publicKey,
     1,
     space,
-    programId
+    programId,
   );
   await sendAndConfirmTransaction(
     'SystemProgram.createAccount',
     connection,
     from,
-    transaction
+    transaction,
   );
   return stateAccount;
 }
-

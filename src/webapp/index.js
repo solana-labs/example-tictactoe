@@ -1,13 +1,8 @@
 import fetch from 'node-fetch';
 import React from 'react';
 import ReactDOM from 'react-dom';
-import {
-  Well,
-} from 'react-bootstrap';
-import {
-  Connection,
-  PublicKey,
-} from '@solana/web3.js';
+import {Well} from 'react-bootstrap';
+import {Connection, PublicKey} from '@solana/web3.js';
 
 import {Game} from './Game';
 import {TicTacToeDashboard} from '../program/tic-tac-toe-dashboard';
@@ -21,12 +16,10 @@ class App extends React.Component {
   };
 
   initialize = async () => {
-    this.setState(
-      {
-        initialized: false,
-        initMessage: 'Initializing...',
-      }
-    );
+    this.setState({
+      initialized: false,
+      initMessage: 'Initializing...',
+    });
     await sleep(0); // Exit caller's stack frame
 
     let connection = null;
@@ -35,7 +28,8 @@ class App extends React.Component {
     for (;;) {
       try {
         this.setState({
-          initMessage: `Connecting to ${url}... ` + (attempt === 0 ? '' : `(#${attempt})`)
+          initMessage:
+            `Connecting to ${url}... ` + (attempt === 0 ? '' : `(#${attempt})`),
         });
         connection = new Connection(url);
         await connection.getLastId();
@@ -49,19 +43,24 @@ class App extends React.Component {
         const {publicKey} = await response.json();
 
         this.setState({initMessage: `Loading dashboard state...`});
-        const dashboard = await TicTacToeDashboard.connect(connection, new PublicKey(publicKey));
+        const dashboard = await TicTacToeDashboard.connect(
+          connection,
+          new PublicKey(publicKey),
+        );
 
         this.setState({initialized: true, dashboard});
         break;
       } catch (err) {
-        this.setState({initMessage: this.state.initMessage + ' - ' + err.message});
+        this.setState({
+          initMessage: this.state.initMessage + ' - ' + err.message,
+        });
         console.log(err);
         connection = null;
         await sleep(1000);
         attempt++;
       }
     }
-  }
+  };
 
   componentDidMount() {
     this.initialize();
@@ -71,7 +70,9 @@ class App extends React.Component {
     if (!this.state.initialized) {
       return <Well>{this.state.initMessage}</Well>;
     }
-    return <Game reconnect={this.initialize} dashboard={this.state.dashboard}/>;
+    return (
+      <Game reconnect={this.initialize} dashboard={this.state.dashboard} />
+    );
   }
 }
 

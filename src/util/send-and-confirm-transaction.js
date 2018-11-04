@@ -1,18 +1,12 @@
 // @flow
 
-import {
-  sendAndConfirmTransaction as realSendAndConfirmTransaction
-} from '@solana/web3.js';
-import type {
-  Account,
-  Connection,
-  Transaction,
-} from '@solana/web3.js';
+import {sendAndConfirmTransaction as realSendAndConfirmTransaction} from '@solana/web3.js';
+import type {Account, Connection, Transaction} from '@solana/web3.js';
 import YAML from 'json-to-pretty-yaml';
 
 type TransactionNotification = (string, string) => void;
 
-let notify: (TransactionNotification) = () => undefined;
+let notify: TransactionNotification = () => undefined;
 
 export function onTransaction(callback: TransactionNotification) {
   notify = callback;
@@ -23,14 +17,19 @@ export async function sendAndConfirmTransaction(
   connection: Connection,
   from: Account,
   transaction: Transaction,
-  runtimeErrorOk: boolean = false
+  runtimeErrorOk: boolean = false,
 ): Promise<void> {
   const when = Date.now();
 
-  const signature = await realSendAndConfirmTransaction(connection, from, transaction, runtimeErrorOk);
+  const signature = await realSendAndConfirmTransaction(
+    connection,
+    from,
+    transaction,
+    runtimeErrorOk,
+  );
 
   const body = {
-    time: (new Date(when)).toString(),
+    time: new Date(when).toString(),
     from: from.publicKey.toBase58(),
     signature,
     instructions: transaction.instructions.map(i => {

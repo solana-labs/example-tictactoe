@@ -29,7 +29,6 @@ app.get('/config.json', async (req, res) => {
 });
 app.use(express.static(path.join(__dirname, '../../dist')));
 
-
 async function loadDashboard() {
   for (;;) {
     try {

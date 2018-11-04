@@ -7,21 +7,10 @@
  */
 
 import EventEmitter from 'event-emitter';
-import {
-  Account,
-  PublicKey,
-  Transaction,
-} from '@solana/web3.js';
-import type {
-  AccountInfo,
-  Connection,
-} from '@solana/web3.js';
+import {Account, PublicKey, Transaction} from '@solana/web3.js';
+import type {AccountInfo, Connection} from '@solana/web3.js';
 
-import {
-  newProgramAccount,
-  newSystemAccountWithAirdrop,
-  sleep,
-} from '../util';
+import {newProgramAccount, newSystemAccountWithAirdrop, sleep} from '../util';
 import {sendAndConfirmTransaction} from '../util/send-and-confirm-transaction';
 import * as ProgramCommand from './program-command';
 import {deserializeDashboardState} from './program-state';
@@ -29,7 +18,6 @@ import type {DashboardState} from './program-state';
 import {TicTacToe} from './tic-tac-toe';
 
 export class TicTacToeDashboard {
-
   state: DashboardState;
   connection: Connection;
   clientAccount: Account;
@@ -41,30 +29,38 @@ export class TicTacToeDashboard {
   /**
    * @private
    */
-  constructor(connection: Connection, programId: PublicKey, publicKey: PublicKey, clientAccount: Account) {
+  constructor(
+    connection: Connection,
+    programId: PublicKey,
+    publicKey: PublicKey,
+    clientAccount: Account,
+  ) {
     const state = {
       pendingGame: null,
       completedGames: [],
       totalGames: 0,
     };
-    Object.assign(
-      this,
-      {
-        clientAccount,
-        connection,
-        programId,
+    Object.assign(this, {
+      clientAccount,
+      connection,
+      programId,
+      publicKey,
+      state,
+      _changeSubscriptionId: connection.onAccountChange(
         publicKey,
-        state,
-        _changeSubscriptionId: connection.onAccountChange(publicKey, this._onAccountChange.bind(this)),
-        _ee: new EventEmitter(),
-      }
-    );
+        this._onAccountChange.bind(this),
+      ),
+      _ee: new EventEmitter(),
+    });
   }
 
   /**
    * Creates a new dashboard
    */
-  static async create(connection: Connection, programId: PublicKey): Promise<TicTacToeDashboard> {
+  static async create(
+    connection: Connection,
+    programId: PublicKey,
+  ): Promise<TicTacToeDashboard> {
     const tempAccount = await newSystemAccountWithAirdrop(connection, 123);
 
     const dashboardAccount = await newProgramAccount(
@@ -80,24 +76,30 @@ export class TicTacToeDashboard {
         programId,
         userdata: ProgramCommand.initDashboard(),
       });
-      await sendAndConfirmTransaction('initDashboard', connection, dashboardAccount, transaction);
+      await sendAndConfirmTransaction(
+        'initDashboard',
+        connection,
+        dashboardAccount,
+        transaction,
+      );
     }
 
     const dashboard = new TicTacToeDashboard(
       connection,
       programId,
       dashboardAccount.publicKey,
-      tempAccount
+      tempAccount,
     );
     return dashboard;
   }
 
-
   /**
    * Connects to an existing dashboard
    */
-  static async connect(connection: Connection, dashboardPublicKey: PublicKey): Promise<TicTacToeDashboard> {
-
+  static async connect(
+    connection: Connection,
+    dashboardPublicKey: PublicKey,
+  ): Promise<TicTacToeDashboard> {
     const accountInfo = await connection.getAccountInfo(dashboardPublicKey);
     const {programId} = accountInfo;
 
@@ -106,7 +108,7 @@ export class TicTacToeDashboard {
       connection,
       programId,
       dashboardPublicKey,
-      tempAccount
+      tempAccount,
     );
     dashboard.state = deserializeDashboardState(accountInfo);
     return dashboard;
@@ -121,7 +123,12 @@ export class TicTacToeDashboard {
       programId: this.programId,
       userdata: ProgramCommand.updateDashboard(),
     });
-    await sendAndConfirmTransaction('updateDashboard', this.connection, this.clientAccount, transaction);
+    await sendAndConfirmTransaction(
+      'updateDashboard',
+      this.connection,
+      this.clientAccount,
+      transaction,
+    );
   }
 
   /**
@@ -150,14 +157,23 @@ export class TicTacToeDashboard {
    * Finds another player and starts a game
    */
   async startGame(): Promise<TicTacToe> {
-    const myAccount: Account = await newSystemAccountWithAirdrop(this.connection, 123);
-    const myGame = await TicTacToe.create(this.connection, this.programId, myAccount);
+    const myAccount: Account = await newSystemAccountWithAirdrop(
+      this.connection,
+      123,
+    );
+    const myGame = await TicTacToe.create(
+      this.connection,
+      this.programId,
+      myAccount,
+    );
 
     // Look for pending games from others, while trying to advertise our game.
     for (;;) {
       if (myGame.inProgress) {
         // Another player joined our game
-        console.log(`Another player accepted our game (${myGame.gamePublicKey.toString()})`);
+        console.log(
+          `Another player accepted our game (${myGame.gamePublicKey.toString()})`,
+        );
         break;
       }
 
@@ -166,7 +182,10 @@ export class TicTacToeDashboard {
       }
 
       const pendingGamePublicKey = this.state.pendingGame;
-      if (pendingGamePublicKey === null || !myGame.gamePublicKey.equals(pendingGamePublicKey)) {
+      if (
+        pendingGamePublicKey === null ||
+        !myGame.gamePublicKey.equals(pendingGamePublicKey)
+      ) {
         if (pendingGamePublicKey !== null) {
           try {
             console.log(`Trying to join ${pendingGamePublicKey.toString()}`);
@@ -189,7 +208,9 @@ export class TicTacToeDashboard {
         }
 
         // Advertise myGame as the pending game for others to see and join
-        console.log(`Advertising our game (${myGame.gamePublicKey.toString()})`);
+        console.log(
+          `Advertising our game (${myGame.gamePublicKey.toString()})`,
+        );
         await this.submitGameState(myGame.gamePublicKey);
       }
 
@@ -199,4 +220,3 @@ export class TicTacToeDashboard {
     return myGame;
   }
 }
-

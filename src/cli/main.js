@@ -14,20 +14,19 @@ import {findDashboard} from '../server/config';
 
 function renderBoard(board: Board): string {
   return [
-    board.slice(0,3).join('|'),
+    board.slice(0, 3).join('|'),
     '-+-+-',
-    board.slice(3,6).join('|'),
+    board.slice(3, 6).join('|'),
     '-+-+-',
-    board.slice(6,9).join('|'),
+    board.slice(6, 9).join('|'),
   ].join('\n');
 }
-
 
 async function main(url: string) {
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
-    terminal: true
+    terminal: true,
   });
 
   //
@@ -35,7 +34,6 @@ async function main(url: string) {
   //
   rl.write(`Connecting to network: ${url}...\n`);
   const connection = new Connection(url);
-
 
   // Create/load the game dashboard
   const dashboard = await findDashboard(connection);
@@ -49,7 +47,9 @@ async function main(url: string) {
 
       rl.write(`Game #${i}: ${state.gameState}\n`);
       rl.write(`${renderBoard(state.board)}\n`);
-      rl.write(`${lastMove.getSeconds() === 0 ? '?' : lastMove.toLocaleString()}\n\n`);
+      rl.write(
+        `${lastMove.getSeconds() === 0 ? '?' : lastMove.toLocaleString()}\n\n`,
+      );
     }
   } catch (err) {
     console.log(err);
@@ -101,7 +101,6 @@ async function main(url: string) {
     showBoard = true;
   }
 
-
   //
   // Display result
   //
@@ -124,7 +123,7 @@ async function main(url: string) {
 }
 
 main(url)
-.catch((err) => {
-  console.error(err);
-})
-.then(() => process.exit());
+  .catch(err => {
+    console.error(err);
+  })
+  .then(() => process.exit());
