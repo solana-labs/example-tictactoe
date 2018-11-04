@@ -123,7 +123,7 @@ export class TicTacToe {
         }
         this.scheduleNextKeepAlive();
       },
-      1000
+      3000
     );
   }
 
