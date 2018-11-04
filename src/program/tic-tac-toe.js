@@ -207,7 +207,7 @@ export class TicTacToe {
       programId: this.programId,
       userdata: ProgramCommand.move(x, y),
     });
-    await sendAndConfirmTransaction('move', this.connection, this.playerAccount, transaction, true);
+    await sendAndConfirmTransaction(`move(${x},${y})`, this.connection, this.playerAccount, transaction, true);
   }
 
   /**
