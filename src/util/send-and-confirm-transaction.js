@@ -42,5 +42,5 @@ export async function sendAndConfirmTransaction(
     }),
   };
 
-  notify(title, YAML.stringify(body));
+  notify(title, YAML.stringify(body).replace(/"/g, ''));
 }
