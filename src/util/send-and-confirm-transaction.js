@@ -30,7 +30,7 @@ export async function sendAndConfirmTransaction(
   const signature = await realSendAndConfirmTransaction(connection, from, transaction, runtimeErrorOk);
 
   const body = {
-    timestamp: (new Date(when)).toString(),
+    time: (new Date(when)).toString(),
     from: from.publicKey.toBase58(),
     signature,
     instructions: transaction.instructions.map(i => {
