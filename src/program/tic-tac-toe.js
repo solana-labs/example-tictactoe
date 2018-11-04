@@ -11,7 +11,6 @@ import {
   Account,
   PublicKey,
   Transaction,
-  sendAndConfirmTransaction
 } from '@solana/web3.js';
 import type {
   AccountInfo,
@@ -24,6 +23,7 @@ import type {GameState} from './program-state';
 import {
   newProgramAccount,
 } from '../util';
+import {sendAndConfirmTransaction} from '../util/send-and-confirm-transaction';
 
 export class TicTacToe {
   abandoned: boolean;
@@ -144,7 +144,7 @@ export class TicTacToe {
         programId,
         userdata: ProgramCommand.initGame(),
       });
-      await sendAndConfirmTransaction(connection, gameAccount, transaction);
+      await sendAndConfirmTransaction('initGame', connection, gameAccount, transaction);
     }
 
     const ttt = new TicTacToe(connection, programId, gameAccount.publicKey, true, playerXAccount);
@@ -168,7 +168,7 @@ export class TicTacToe {
         programId,
         userdata: ProgramCommand.joinGame(Date.now()),
       });
-      await sendAndConfirmTransaction(connection, playerOAccount, transaction);
+      await sendAndConfirmTransaction('joinGame', connection, playerOAccount, transaction);
     }
 
     ttt._onAccountChange(
@@ -187,7 +187,7 @@ export class TicTacToe {
       programId: this.programId,
       userdata: ProgramCommand.keepAlive(when === null ? Date.now() : when),
     });
-    await sendAndConfirmTransaction(this.connection, this.playerAccount, transaction, true);
+    await sendAndConfirmTransaction('keepAlive', this.connection, this.playerAccount, transaction, true);
   }
 
   /**
@@ -207,7 +207,7 @@ export class TicTacToe {
       programId: this.programId,
       userdata: ProgramCommand.move(x, y),
     });
-    await sendAndConfirmTransaction(this.connection, this.playerAccount, transaction, true);
+    await sendAndConfirmTransaction('move', this.connection, this.playerAccount, transaction, true);
   }
 
   /**

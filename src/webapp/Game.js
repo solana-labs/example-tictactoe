@@ -2,13 +2,16 @@ import moment from 'moment';
 import React from 'react';
 import {
   Button,
+  ButtonGroup,
   Carousel,
   Panel,
+  PanelGroup,
 } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 
 import {TicTacToe} from '../program/tic-tac-toe';
 import {Board} from './Board';
+import {onTransaction} from '../util/send-and-confirm-transaction';
 
 export class Game extends React.Component {
   constructor(props) {
@@ -16,16 +19,40 @@ export class Game extends React.Component {
     this.recentGameState = {};
     this.dashboardNotifiedOfCompletedGame = false;
     this.state = {
-      totalGames: 0,
       completedGames: [],
-
       currentGame: null,
       currentGameStatusMessage: '',
+      pause: false,
+      totalGames: 0,
+      transactions: [],
+      totalTransactions: 0,
     };
+  }
+
+  onTransaction = (title: string, body: string,) => {
+    const {
+      pause,
+      transactions,
+      totalTransactions,
+    } = this.state;
+
+    if (pause) {
+      return;
+    }
+
+    transactions.unshift({title, body});
+    while (transactions.length > 100) {
+      transactions.pop();
+    }
+    this.setState({
+      transactions,
+      totalTransactions: totalTransactions + 1,
+    });
   }
 
   componentDidMount() {
     const {dashboard} = this.props;
+    onTransaction(this.onTransaction);
     dashboard.onChange(this.onDashboardChange);
 
     setTimeout(() => {
@@ -225,6 +252,22 @@ export class Game extends React.Component {
       );
     }
 
+    const transactions = this.state.transactions.map((tx, index) => {
+      return (
+        <Panel eventKey={index} key={index}>
+          <Panel.Heading>
+            <Panel.Title toggle>{tx.title}</Panel.Title>
+          </Panel.Heading>
+          <Panel.Body>
+            <pre>
+              {tx.body}
+            </pre>
+          </Panel.Body>
+        </Panel>
+      );
+    });
+
+
     return (
       <div>
         <Panel>
@@ -246,6 +289,32 @@ export class Game extends React.Component {
           </Panel.Body>
         </Panel>
         {gameHistory}
+        <Panel>
+          <Panel.Heading>
+            <Panel.Title>
+              <table width="100%">
+                <td>
+                  Transactions: {this.state.totalTransactions}
+                  &nbsp;
+                </td><td align="right">
+                  <ButtonGroup bsSize="xsmall">
+                    <Button onClick={() => this.setState({pause: !this.state.pause})}>
+                      {this.state.pause ? 'Resume' : 'Pause'}
+                    </Button>
+                    <Button onClick={() => this.setState({transactions: []})}>
+                      Clear
+                    </Button>
+                  </ButtonGroup>
+                </td>
+              </table>
+            </Panel.Title>
+          </Panel.Heading>
+          <Panel.Body>
+            <PanelGroup accordion id="accordion-example">
+              {transactions}
+            </PanelGroup>
+          </Panel.Body>
+        </Panel>
       </div>
     );
   }

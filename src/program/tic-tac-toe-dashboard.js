@@ -11,7 +11,6 @@ import {
   Account,
   PublicKey,
   Transaction,
-  sendAndConfirmTransaction
 } from '@solana/web3.js';
 import type {
   AccountInfo,
@@ -23,6 +22,7 @@ import {
   newSystemAccountWithAirdrop,
   sleep,
 } from '../util';
+import {sendAndConfirmTransaction} from '../util/send-and-confirm-transaction';
 import * as ProgramCommand from './program-command';
 import {deserializeDashboardState} from './program-state';
 import type {DashboardState} from './program-state';
@@ -80,7 +80,7 @@ export class TicTacToeDashboard {
         programId,
         userdata: ProgramCommand.initDashboard(),
       });
-      await sendAndConfirmTransaction(connection, dashboardAccount, transaction);
+      await sendAndConfirmTransaction('initDashboard', connection, dashboardAccount, transaction);
     }
 
     const dashboard = new TicTacToeDashboard(
@@ -121,7 +121,7 @@ export class TicTacToeDashboard {
       programId: this.programId,
       userdata: ProgramCommand.updateDashboard(),
     });
-    await sendAndConfirmTransaction(this.connection, this.clientAccount, transaction);
+    await sendAndConfirmTransaction('updateDashboard', this.connection, this.clientAccount, transaction);
   }
 
   /**

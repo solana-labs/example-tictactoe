@@ -4,11 +4,12 @@ import {
   Account,
   Connection,
   SystemProgram,
-  sendAndConfirmTransaction,
 } from '@solana/web3.js';
 import type {
   PublicKey,
 } from '@solana/web3.js';
+
+import {sendAndConfirmTransaction} from './send-and-confirm-transaction';
 
 /**
  * Allocates a new Account with the specified programId and userdata space
@@ -36,7 +37,12 @@ export async function newProgramAccount(
     space,
     programId
   );
-  await sendAndConfirmTransaction(connection, from, transaction);
+  await sendAndConfirmTransaction(
+    'SystemProgram.createAccount',
+    connection,
+    from,
+    transaction
+  );
   return stateAccount;
 }
 
