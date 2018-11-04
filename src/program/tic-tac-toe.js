@@ -123,7 +123,7 @@ export class TicTacToe {
         }
         this.scheduleNextKeepAlive();
       },
-      3000
+      2000
     );
   }
 
@@ -207,7 +207,7 @@ export class TicTacToe {
       programId: this.programId,
       userdata: ProgramCommand.move(x, y),
     });
-    await sendAndConfirmTransaction(`move(${x},${y})`, this.connection, this.playerAccount, transaction, true);
+    await sendAndConfirmTransaction(`move(${x + 1},${y + 1})`, this.connection, this.playerAccount, transaction, true);
   }
 
   /**
