@@ -10,6 +10,7 @@ const port = process.env.PORT || 8080;
 const app = express();
 
 async function getDashboardPublicKey() {
+  console.log('Using', url);
   const connection = new Connection(url);
   const dashboard = await findDashboard(connection);
   const publicKey = dashboard.publicKey.toBase58();

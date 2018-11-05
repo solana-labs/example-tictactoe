@@ -54,6 +54,7 @@ export async function findDashboard(
 }
 
 if (require.main === module) {
+  console.log('Using', url);
   const connection = new Connection(url);
   findDashboard(connection)
     .then(dashboard => {
