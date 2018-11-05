@@ -86,6 +86,7 @@ export class Game extends React.Component {
         currentGameStatusMessage: 'Game has started',
       });
       currentGame.onChange(this.onGameChange);
+      this.onGameChange();
     } catch (err) {
       console.log('Unable to start game:', err);
       this.setState({
