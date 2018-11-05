@@ -38,8 +38,7 @@ Alternatively to connect to the public testnet, `export LIVE=1` in your environm
 Ensure clang 7 is installed.  See https://github.com/solana-labs/solana/tree/master/programs/bpf/c/sdk#prerequisites
 
 ```sh
-$ cd program-bpf/
-$ make
+$ V=1 make -C program-bpf
 ```
 or
 ```
