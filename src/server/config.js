@@ -46,7 +46,7 @@ export async function findDashboard(
     programId = await BpfLoader.load(connection, tempAccount, elf);
   }
 
-  console.log('dashboard programId:', programId.toString());
+  console.log('Dashboard programId:', programId.toString());
 
   const dashboard = await TicTacToeDashboard.create(connection, programId);
   await store.save('../../../dist/config.json', {
