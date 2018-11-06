@@ -1,3 +1,6 @@
+/**
+ * React component for a single board
+ */
 import React from 'react';
 import {Button} from 'react-bootstrap';
 import PropTypes from 'prop-types';

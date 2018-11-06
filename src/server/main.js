@@ -1,3 +1,9 @@
+/**
+ * http server entrypoint
+ *
+ * This http server exists only to dynamically serve /config.json containing the
+ * latest Dashboard public key
+ */
 import express from 'express';
 import path from 'path';
 import {Connection} from '@solana/web3.js';

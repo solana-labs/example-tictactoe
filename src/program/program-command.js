@@ -1,4 +1,9 @@
-// @flow
+/**
+ * The commands (encoded as Transaction Instructions) that are accepted by the
+ * TicTacToe Game and Dashboard program
+ *
+ * @flow
+ */
 
 import * as BufferLayout from 'buffer-layout';
 

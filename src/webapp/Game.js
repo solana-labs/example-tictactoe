@@ -1,3 +1,7 @@
+/**
+ * Primary React component for the Game.
+ */
+
 import moment from 'moment';
 import React from 'react';
 import {

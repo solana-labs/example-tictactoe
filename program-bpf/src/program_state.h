@@ -1,8 +1,18 @@
+/**
+ * Tic-tac-toe account userdata contains a State enum (as a 32 bit value) followed by a StateData union
+ */
+
 #pragma once
 #include <solana_sdk.h>
 
 typedef enum {
-  GameState_Waiting = 0,
+  State_Uninitialized = 0, /* State is not initialized yet */
+  State_Dashboard,         /* State holds dashboard state */
+  State_Game,              /* State holds game state */
+} State;
+
+typedef enum {
+  GameState_Waiting = 0,   /* Player X is waiting for Player O to join */
   GameState_XMove,
   GameState_OMove,
   GameState_XWon,
@@ -17,7 +27,7 @@ typedef enum {
 } BoardItem;
 
 /**
- * Game program account userdata format
+ * Game state
  *
  * Board Coordinates
  * | 0,0 | 1,0 | 2,0 |
@@ -34,7 +44,7 @@ typedef struct {
 
 
 /**
- * Dashboard program account userdata format
+ * Dashboard state
  */
 #define MAX_COMPLETED_GAMES 5
 typedef struct {
@@ -44,15 +54,6 @@ typedef struct {
   uint8_t latest_completed_game_index;            /* Index of the latest completed game */
 } Dashboard;
 
-
-/**
- * A tic-tac-toe account userdata contains a State enum, as a 32 bit value, followed by a StateData union
- */
-typedef enum {
-  State_Uninitialized = 0, /* State is not initialized yet */
-  State_Dashboard,         /* State holds dashboard state */
-  State_Game,              /* State holds game state */
-} State;
 
 typedef union {
   Game game;

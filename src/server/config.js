@@ -9,6 +9,9 @@ import {Store} from './store';
 import {TicTacToeDashboard} from '../program/tic-tac-toe-dashboard';
 import {newSystemAccountWithAirdrop} from '../util';
 
+/**
+ * Obtain the Dashboard singleton object
+ */
 export async function findDashboard(
   connection: Connection,
 ): Promise<TicTacToeDashboard> {

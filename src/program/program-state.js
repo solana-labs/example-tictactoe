@@ -1,4 +1,8 @@
-// @flow
+/**
+ * Functions to deserialize TicTacToe Game and Dashboard account data
+ *
+ * @flow
+ */
 
 import * as BufferLayout from 'buffer-layout';
 import {PublicKey} from '@solana/web3.js';

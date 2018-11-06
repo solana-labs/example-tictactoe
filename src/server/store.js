@@ -1,4 +1,8 @@
-// @flow
+/**
+ * Simple file-based datastore
+ *
+ * @flow
+ */
 
 import path from 'path';
 import fs from 'mz/fs';

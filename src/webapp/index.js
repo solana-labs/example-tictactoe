@@ -1,3 +1,6 @@
+/**
+ * Webapp entrypoint
+ */
 import fetch from 'node-fetch';
 import React from 'react';
 import ReactDOM from 'react-dom';

@@ -1,7 +1,7 @@
 /**
  *
  * The TicTacToe class exported by this file is used to interact with the
- * on-chain tic-tac-toe program.
+ * on-chain tic-tac-toe game program.
  *
  * @flow
  */

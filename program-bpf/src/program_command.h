@@ -1,23 +1,88 @@
+/**
+ * Transactions sent to the tic-tac-toe program contain commands that are
+ * defined in this file.
+ *
+ * The Transaction Instruction fields:
+ * - keys will vary by the specified Command
+ * - userdata is a Command enum (as a 32 bit value) followed by a CommandData union.
+ *
+ * The keys
+ */
 #pragma once
 
 typedef enum {
   /* Dashboard account commands */
-  Command_InitDashboard = 0, /* Initialize a dashboard account */
-  Command_UpdateDashboard,   /* Update the dashboard with the provided game account */
 
-  /* Game account commands */
-  Command_InitGame,          /* Initialize a game account */
-  Command_Join,              /* Player O wants to join (seconds since UNIX epoch) */
-  Command_KeepAlive,         /* Player X/O keep alive (seconds since UNIX epoch) */
-  Command_Move,              /* Player X/O mark board position (x, y) */
+  /*
+   * Initialize a dashboard account
+   *
+   * key[0] - dashboard account
+   * key[1] - dashboard account (duplication is for implementation convenience)
+   *
+   * CommandData: none
+   */
+  Command_InitDashboard = 0,
+
+  /*
+   * Update the dashboard with the provided game account
+   *
+   * key[0] - anybody.
+   * key[1] - dashboard account
+   * key[2] - game account to update the dashboard from
+   *
+   * CommandData: none
+   */
+  Command_UpdateDashboard,
+
+  /* Game account commands*/
+
+  /*
+   * Initialize a game account
+   *
+   * key[0] - game account
+   * key[1] - game account (duplication is for implementation convenience)
+   *
+   * CommandData: none
+   */
+  Command_InitGame,
+
+  /*
+   * Player O wants to join
+   *
+   * key[0] - player O
+   * key[1] - game account
+   *
+   * CommandData: join
+   */
+  Command_Join,
+
+  /*
+   * Player X/O keep alive
+   *
+   * key[0] - player X or O
+   * key[1] - game account
+   *
+   * CommandData: keep_alive
+   */
+  Command_KeepAlive,
+
+  /*
+   * Player X/O mark board position (x, y)
+   *
+   * key[0] - player X or O
+   * key[1] - game account
+   *
+   * CommandData: move
+   */
+  Command_Move,
 } Command;
 
 typedef union {
   struct {
-    uint64_t timestamp;
+    uint64_t timestamp; // (seconds since UNIX epoch)
   } join;
   struct {
-    uint64_t timestamp;
+    uint64_t timestamp; // (seconds since UNIX epoch)
   } keep_alive;
   struct {
     uint8_t x;
