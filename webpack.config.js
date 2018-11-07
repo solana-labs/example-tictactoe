@@ -38,6 +38,7 @@ module.exports = {
     }),
   ],
   devServer: {
+    disableHostCheck: true,
     contentBase: './dist',
     hot: true,
     host: '0.0.0.0',
