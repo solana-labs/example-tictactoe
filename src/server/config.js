@@ -43,7 +43,18 @@ export async function findDashboard(
     const elf = await fs.readFile(
       path.join(__dirname, '..', '..', 'dist', 'program', 'tictactoe.o'),
     );
-    programId = await BpfLoader.load(connection, tempAccount, elf);
+
+    let attempts = 5;
+    while (attempts > 0) {
+      try {
+        console.log('Loading Bpf program');
+        programId = await BpfLoader.load(connection, tempAccount, elf);
+        break;
+      } catch (err) {
+        console.log(err.message);
+        attempts--;
+      }
+    }
   }
 
   console.log('Dashboard programId:', programId.toString());
