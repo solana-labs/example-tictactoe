@@ -56,6 +56,9 @@ export async function findDashboard(
       }
     }
   }
+  if (!programId) {
+    throw new Error('Unable to load program');
+  }
 
   console.log('Dashboard programId:', programId.toString());
 
