@@ -228,17 +228,21 @@ extern bool entrypoint(const uint8_t *input) {
   const uint8_t *instruction_data;
   uint64_t instruction_data_len;
 
+  sol_log("tic-tac-toe program entrypoint");
+
   if (!sol_deserialize(input, ka, SOL_ARRAY_SIZE(ka), &ka_len, &instruction_data, &instruction_data_len)) {
-    sol_log_64(0, 0, 0, 0, 1);
+    sol_log("Error: deserialize failed");
     return false;
   }
 
   if (ka_len < 2) {
+    sol_log("Error: two keys required");
     sol_log_64(0, 0, 0, 0, 2);
     return false;
   }
 
   if (instruction_data_len < sizeof(uint32_t) + sizeof(CommandData)) {
+    sol_log("Error: invalid instruction_data_len");
     sol_log_64(0, 0, instruction_data_len, sizeof(uint32_t) + sizeof(CommandData), 3);
     return false;
   }
@@ -246,6 +250,7 @@ extern bool entrypoint(const uint8_t *input) {
   CommandData const *cmd_data = (CommandData *) (instruction_data + sizeof(uint32_t));
 
   if (ka[1].userdata_len < sizeof(uint32_t) + sizeof(StateData)) {
+    sol_log("Error: invalid userdata_len");
     sol_log_64(0, cmd, ka[1].userdata_len, sizeof(uint32_t) + sizeof(StateData), 4);
     return false;
   }
@@ -254,6 +259,7 @@ extern bool entrypoint(const uint8_t *input) {
 
   switch (*state) {
   case State_Uninitialized:
+    sol_log("Account is uninitialized");
     sol_log_64(1, 0, 0, 0, 0);
 
     if (sol_memcmp(ka[0].key, ka[1].key, sizeof(SolPubkey)) != 0) {
@@ -265,69 +271,73 @@ extern bool entrypoint(const uint8_t *input) {
 
     switch (cmd) {
     case Command_InitDashboard:
-      sol_log_64(1, 0, 0, 0, 2);
+      sol_log("Command_InitDashboard");
       *state = State_Dashboard;
       return true;
 
     case Command_InitGame:
+      sol_log("Command_InitGame");
       if (ka_len < 3) {
-        sol_log_64(1, 0, 0, 0, 3);
+        sol_log("Error: 3 keys required");
         return false;
       }
-      sol_log_64(1, 0, 0, 0, 4);
       *state = State_Game;
       return game_create(&state_data->game, ka[2].key);
 
     default:
-      sol_log_64(1, 0, 0, 0, 5);
+      sol_log("Error: Invalid command");
       return false;
     }
 
   case State_Game:
-    sol_log_64(2, 0, 0, 0, 0);
+    sol_log("Account is a game");
+
     SolPubkey *player = ka[0].key;
     switch (cmd) {
     case Command_Join:
+      sol_log("Command_Join");
       sol_log_64(2, cmd_data->join.timestamp, 0, 0, 1);
       return game_join(&state_data->game, player, cmd_data->join.timestamp);
     case Command_Move:
+      sol_log("Command_Move");
       sol_log_64(2, cmd_data->move.x, cmd_data->move.y, 0, 2);
       return game_move(&state_data->game, player, cmd_data->move.x, cmd_data->move.y);
     case Command_KeepAlive:
+      sol_log("Command_KeepAlive");
       sol_log_64(2, cmd_data->keep_alive.timestamp, 0, 0, 3);
       return game_keep_alive(&state_data->game, player, cmd_data->keep_alive.timestamp);
     default:
-      sol_log_64(2, 0, 0, 0, 4);
+      sol_log("Error: Invalid command");
       return false;
     }
 
   case State_Dashboard:
-    sol_log_64(3, 0, 0, 0, 0);
+    sol_log("Account is a dashboard");
+
     if (ka_len < 3) {
-      sol_log_64(3, 0, 0, 0, 1);
+      sol_log("Error: 3 keys required");
       return false;
     }
     if (ka[2].userdata_len < sizeof(uint32_t) + sizeof(StateData)) {
-      sol_log_64(3, 0, 0, 0, 2);
+      sol_log("Error: invalid userdata_len");
       return false;
     }
     State game_state = *(uint32_t *) ka[2].userdata;
     StateData *game_state_data = (StateData *) (ka[2].userdata + sizeof(uint32_t));
 
     if (cmd != Command_UpdateDashboard) {
-      sol_log_64(3, 0, 0, 0, 3);
+      sol_log("Error: Invalid command");
       return false;
     }
-
     if (game_state != State_Game) {
-      sol_log_64(3, 0, 0, 0, 4);
+      sol_log("Error: 3rd key is not a game account");
       return false;
     }
-    sol_log_64(3, 0, 0, 0, 5);
+    sol_log("Command_UpdateDashboard");
     return dashboard_update(&state_data->dashboard, ka[2].key, &game_state_data->game);
 
   default:
-    sol_log_64(0, 0, 0, 0, 5);
+    sol_log("Error: Invalid account state");
     return false;
   }
 }
