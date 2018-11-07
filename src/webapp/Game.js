@@ -232,7 +232,7 @@ export class Game extends React.Component {
                         </i>
                       </p>
                       <Board
-                        disabled="true"
+                        disabled={true}
                         bsSize="xsmall"
                         squares={game.board}
                         onClick={() => undefined}
