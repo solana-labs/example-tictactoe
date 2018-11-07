@@ -47,12 +47,14 @@ export async function findDashboard(
     let attempts = 5;
     while (attempts > 0) {
       try {
-        console.log('Loading Bpf program');
         programId = await BpfLoader.load(connection, tempAccount, elf);
         break;
       } catch (err) {
-        console.log(err.message);
         attempts--;
+        console.log(
+          `Error loading BPF program, ${attempts} attempts remaining:`,
+          err.message,
+        );
       }
     }
   }
