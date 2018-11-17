@@ -33,8 +33,8 @@ export async function newProgramAccount(
   await sendAndConfirmTransaction(
     'SystemProgram.createAccount',
     connection,
-    from,
     transaction,
+    from,
   );
   return stateAccount;
 }

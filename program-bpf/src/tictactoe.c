@@ -227,10 +227,11 @@ extern bool entrypoint(const uint8_t *input) {
   uint64_t ka_len;
   const uint8_t *instruction_data;
   uint64_t instruction_data_len;
+  SolClusterInfo info;
 
   sol_log("tic-tac-toe program entrypoint");
 
-  if (!sol_deserialize(input, ka, SOL_ARRAY_SIZE(ka), &ka_len, &instruction_data, &instruction_data_len)) {
+  if (!sol_deserialize(input, ka, SOL_ARRAY_SIZE(ka), &ka_len, &instruction_data, &instruction_data_len, &info)) {
     sol_log("Error: deserialize failed");
     return false;
   }
@@ -333,6 +334,7 @@ extern bool entrypoint(const uint8_t *input) {
       sol_log("Error: 3rd key is not a game account");
       return false;
     }
+    if (ka[2].owner
     sol_log("Command_UpdateDashboard");
     return dashboard_update(&state_data->dashboard, ka[2].key, &game_state_data->game);
 

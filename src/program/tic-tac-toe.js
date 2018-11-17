@@ -142,8 +142,8 @@ export class TicTacToe {
       await sendAndConfirmTransaction(
         'initGame',
         connection,
-        gameAccount,
         transaction,
+        gameAccount,
       );
     }
 
@@ -183,8 +183,8 @@ export class TicTacToe {
       await sendAndConfirmTransaction(
         'joinGame',
         connection,
-        playerOAccount,
         transaction,
+        playerOAccount,
       );
     }
 
@@ -205,9 +205,8 @@ export class TicTacToe {
     await sendAndConfirmTransaction(
       'keepAlive',
       this.connection,
-      this.playerAccount,
       transaction,
-      true,
+      this.playerAccount,
     );
   }
 
@@ -231,9 +230,8 @@ export class TicTacToe {
     await sendAndConfirmTransaction(
       `move(${x + 1},${y + 1})`,
       this.connection,
-      this.playerAccount,
       transaction,
-      true,
+      this.playerAccount,
     );
   }
 

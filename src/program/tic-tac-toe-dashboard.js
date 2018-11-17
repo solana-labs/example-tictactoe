@@ -79,8 +79,8 @@ export class TicTacToeDashboard {
       await sendAndConfirmTransaction(
         'initDashboard',
         connection,
-        dashboardAccount,
         transaction,
+        dashboardAccount,
       );
     }
 
@@ -101,12 +101,12 @@ export class TicTacToeDashboard {
     dashboardPublicKey: PublicKey,
   ): Promise<TicTacToeDashboard> {
     const accountInfo = await connection.getAccountInfo(dashboardPublicKey);
-    const {programId} = accountInfo;
+    const {owner} = accountInfo;
 
     const tempAccount = await newSystemAccountWithAirdrop(connection, 123);
     const dashboard = new TicTacToeDashboard(
       connection,
-      programId,
+      owner,
       dashboardPublicKey,
       tempAccount,
     );
@@ -126,8 +126,8 @@ export class TicTacToeDashboard {
     await sendAndConfirmTransaction(
       'updateDashboard',
       this.connection,
-      this.clientAccount,
       transaction,
+      this.clientAccount,
     );
   }
 

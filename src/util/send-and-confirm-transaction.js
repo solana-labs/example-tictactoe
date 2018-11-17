@@ -15,22 +15,20 @@ export function onTransaction(callback: TransactionNotification) {
 export async function sendAndConfirmTransaction(
   title: string,
   connection: Connection,
-  from: Account,
   transaction: Transaction,
-  runtimeErrorOk: boolean = false,
+  ...signers: Array<Account>
 ): Promise<void> {
   const when = Date.now();
 
   const signature = await realSendAndConfirmTransaction(
     connection,
-    from,
     transaction,
-    runtimeErrorOk,
+    ...signers,
   );
 
   const body = {
     time: new Date(when).toString(),
-    from: from.publicKey.toBase58(),
+    from: signers[0].publicKey.toBase58(),
     signature,
     instructions: transaction.instructions.map(i => {
       return {
