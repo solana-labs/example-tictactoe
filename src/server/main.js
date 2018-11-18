@@ -4,9 +4,12 @@
  * This http server exists only to dynamically serve /config.json containing the
  * latest Dashboard public key
  */
+import bodyParser from 'body-parser';
 import express from 'express';
+import jayson from 'jayson';
 import path from 'path';
 import {Connection} from '@solana/web3.js';
+import {struct} from 'superstruct';
 
 import {findDashboard} from './config';
 import {sleep} from '../util/sleep';
@@ -34,6 +37,7 @@ app.get('/config.json', async (req, res) => {
     res.status(500).end();
   }
 });
+app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, '../../dist')));
 
 async function loadDashboard() {
@@ -49,7 +53,24 @@ async function loadDashboard() {
     await sleep(500);
   }
 }
-loadDashboard();
 
+const rpcServer = jayson.server({
+  ping: (rawargs, callback) => {
+    try {
+      console.log('ping rawargs', rawargs);
+      const pingMessage = struct([struct.literal('hi')]);
+      const args = pingMessage(rawargs);
+      console.log('ping args', args);
+      callback(null, 'pong');
+    } catch (err) {
+      console.log('ping failed:', err);
+      callback(err);
+    }
+  },
+});
+
+app.use(rpcServer.middleware());
+
+loadDashboard();
 app.listen(port);
 console.log('Listening on port', port);
