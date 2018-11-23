@@ -38,4 +38,4 @@ deploy:
   strategy: git
   on:
     repo: solana-labs/example-tictactoe
-    branch: master
+    tags: true
