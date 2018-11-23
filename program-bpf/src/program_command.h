@@ -48,7 +48,7 @@ typedef enum {
    * key[0] - player O
    * key[1] - game account
    *
-   * CommandData: join
+   * CommandData: none
    */
   Command_Join,
 
@@ -58,7 +58,7 @@ typedef enum {
    * key[0] - player X or O
    * key[1] - game account
    *
-   * CommandData: keep_alive
+   * CommandData: none
    */
   Command_KeepAlive,
 
@@ -74,12 +74,6 @@ typedef enum {
 } Command;
 
 typedef union {
-  struct {
-    uint64_t timestamp; // (seconds since UNIX epoch)
-  } join;
-  struct {
-    uint64_t timestamp; // (seconds since UNIX epoch)
-  } keep_alive;
   struct {
     uint8_t x;
     uint8_t y;

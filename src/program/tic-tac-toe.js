@@ -178,7 +178,7 @@ export class TicTacToe {
       const transaction = new Transaction().add({
         keys: [playerOAccount.publicKey, gamePublicKey],
         programId,
-        userdata: ProgramCommand.joinGame(Date.now()),
+        userdata: ProgramCommand.joinGame(),
       });
       await sendAndConfirmTransaction(
         'joinGame',
@@ -196,11 +196,11 @@ export class TicTacToe {
   /**
    * Send a keep-alive message to inform the other player that we're still alive
    */
-  async keepAlive(when: number | null = null): Promise<void> {
+  async keepAlive(): Promise<void> {
     const transaction = new Transaction().add({
       keys: [this.playerAccount.publicKey, this.gamePublicKey],
       programId: this.programId,
-      userdata: ProgramCommand.keepAlive(when === null ? Date.now() : when),
+      userdata: ProgramCommand.keepAlive(),
     });
     await sendAndConfirmTransaction(
       'keepAlive',
@@ -211,11 +211,10 @@ export class TicTacToe {
   }
 
   /**
-   * Signal to the other player that we're leaving
+   * Leave the game
    */
-  async abandon(): Promise<void> {
+  abandon() {
     this.abandoned = true;
-    await this.keepAlive(0);
   }
 
   /**
@@ -247,9 +246,10 @@ export class TicTacToe {
   }
 
   isPeerAlive(): boolean {
-    const peerKeepAlive = this.state.keepAlive[this.isX ? 1 : 0];
-    // Check if the peer has abandoned the game
-    return Date.now() - peerKeepAlive < 10000; /* 10 seconds*/
+    const keepAliveDiff = Math.abs(
+      this.state.keepAlive[0] - this.state.keepAlive[1],
+    );
+    return keepAliveDiff < 100; // ~10 seconds
   }
 
   /**

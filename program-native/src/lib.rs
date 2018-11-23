@@ -5,6 +5,7 @@ extern crate serde;
 #[macro_use]
 extern crate serde_derive;
 extern crate simple_logger;
+#[macro_use]
 extern crate solana_sdk;
 
 mod dashboard;
@@ -34,7 +35,7 @@ fn expect_n_accounts(info: &mut [KeyedAccount], n: usize) -> Result<()> {
     }
 }
 
-fn entrypoint(info: &mut [KeyedAccount], input: &[u8]) -> Result<()> {
+fn process(info: &mut [KeyedAccount], input: &[u8], tick_height: u64) -> Result<()> {
     expect_n_accounts(info, 2)?;
 
     let command = Command::deserialize(input)?;
@@ -71,9 +72,9 @@ fn entrypoint(info: &mut [KeyedAccount], input: &[u8]) -> Result<()> {
         State::Game(ref mut game) => {
             let player = info[0].key;
             match command {
-                Command::Join(timestamp) => game.join(*player, timestamp),
+                Command::Join => game.join(*player, tick_height),
                 Command::Move(x, y) => game.next_move(*player, x as usize, y as usize),
-                Command::KeepAlive(timestamp) => game.keep_alive(*player, timestamp),
+                Command::KeepAlive => game.keep_alive(*player, tick_height),
                 _ => {
                     error!("invalid command for State::Game");
                     Err(ProgramError::InvalidInput)
@@ -105,12 +106,15 @@ fn entrypoint(info: &mut [KeyedAccount], input: &[u8]) -> Result<()> {
     Ok(())
 }
 
-#[no_mangle]
-pub extern "C" fn process(info: &mut [KeyedAccount], input: &[u8]) -> bool {
+solana_entrypoint!(entrypoint);
+fn entrypoint(
+    _program_id: &Pubkey,
+    keyed_accounts: &mut [KeyedAccount],
+    data: &[u8],
+    tick_height: u64,
+) -> bool {
     logger::setup();
-
-    trace!("process: info={:?} input={:?}", info, input);
-    match entrypoint(info, input) {
+    match process(info, input, tick_height) {
         Err(err) => {
             error!("{:?}", err);
             false

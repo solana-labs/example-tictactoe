@@ -35,7 +35,7 @@ typedef enum {
  * | 0,2 | 1,2 | 2,2 |
  */
 typedef struct {
-  uint64_t keep_alive[2];  /* Keep alive timestamp for each player */
+  uint64_t keep_alive[2];  /* Keep alive tick_height for each player (0 == x, 1 == y) */
   uint32_t game_state;     /* Current state of the game (GameState) */
   SolPubkey player_x;      /* Player who initialized the game */
   SolPubkey player_o;      /* Player who joined the game */

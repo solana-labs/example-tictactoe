@@ -14,32 +14,28 @@ SOL_FN_PREFIX void game_dump_board(Game *self) {
   sol_log_64(0x9, 0x9, 0x9, 0x9, 0x9);
 }
 
-SOL_FN_PREFIX bool game_create(Game *self, SolPubkey *player_x) {
+SOL_FN_PREFIX bool game_create(Game *self, SolPubkey *player_x, uint64_t tick_height) {
   // account memory is zero-initialized
   sol_memcpy(&self->player_x, player_x, sizeof(*player_x));
+  self->keep_alive[0] = tick_height;
   return true;
 }
 
 SOL_FN_PREFIX bool game_join(
   Game *self,
   SolPubkey *player_o,
-  uint64_t timestamp
+  uint64_t tick_height
 ) {
   if (self->game_state != GameState_Waiting) {
+    sol_log("Unable to join, game is not in the waiting state");
     sol_log_64(2, self->game_state, 0, 1, 1);
-    // Result_GameInProgress;
     return false;
   }
   sol_memcpy(self->player_o.x, player_o, sizeof(*player_o));
   self->game_state = GameState_XMove;
 
-  if (timestamp <= self->keep_alive[1]) {
-    sol_log_64(2, 0, 0, 2, 1);
-    // Result_InvalidTimestamp;
-    return false;
-  }
-  sol_log_64(2, 0, 0, 3, 1);
-  self->keep_alive[1] = timestamp;
+  sol_log("Game joined");
+  self->keep_alive[1] = tick_height;
   return true;
 }
 
@@ -67,7 +63,7 @@ SOL_FN_PREFIX bool game_move(
 ) {
   int board_index = y * 3 + x;
   if (board_index >= 9 || self->board[board_index] != BoardItem_Free) {
-    // Result_InvalidMove
+    sol_log("Invalid move");
     return false;
   }
 
@@ -77,7 +73,7 @@ SOL_FN_PREFIX bool game_move(
   switch (self->game_state) {
   case GameState_XMove:
     if (!game_same_player(player, &self->player_x)) {
-      // Result_PlayerNotFound
+      sol_log("Invalid player for x move");
       return false;
     }
     self->game_state = GameState_OMove;
@@ -87,7 +83,7 @@ SOL_FN_PREFIX bool game_move(
 
   case GameState_OMove:
     if (!game_same_player(player, &self->player_o)) {
-      // Result_PlayerNotFound
+      sol_log("Invalid player for o move");
       return false;
     }
     self->game_state = GameState_XMove;
@@ -96,7 +92,7 @@ SOL_FN_PREFIX bool game_move(
     break;
 
   default:
-    // Result_NotYourTurn
+    sol_log("Game is not in progress");
     return false;
   }
 
@@ -139,39 +135,43 @@ SOL_FN_PREFIX bool game_move(
 SOL_FN_PREFIX bool game_keep_alive(
   Game *self,
   SolPubkey *player,
-  uint64_t timestamp
+  uint64_t tick_height
 ) {
   switch (self->game_state) {
     case GameState_Waiting:
     case GameState_XMove:
     case GameState_OMove:
       if (game_same_player(player, &self->player_x)) {
-        if (timestamp <= self->keep_alive[0]) {
-          sol_log_64(2, timestamp, self->keep_alive[0], 1, 3);
+        if (tick_height <= self->keep_alive[0]) {
+          sol_log("Invalid player x keep_alive");
+          sol_log_64(2, tick_height, self->keep_alive[0], 1, 3);
           // Result_InvalidTimestamp;
           return false;
         }
-        sol_log_64(2, timestamp, 0, 2, 3);
-        self->keep_alive[0] = timestamp;
+        sol_log("Player x keep_alive");
+        sol_log_64(2, tick_height, 0, 2, 3);
+        self->keep_alive[0] = tick_height;
         return true;
       }
 
       if (game_same_player(player, &self->player_o)) {
-        if (timestamp <= self->keep_alive[1]) {
-          sol_log_64(2, timestamp, self->keep_alive[1], 3, 3);
+        if (tick_height <= self->keep_alive[1]) {
+          sol_log("Invalid player o keep_alive");
+          sol_log_64(2, tick_height, self->keep_alive[1], 3, 3);
           // Result_InvalidTimestamp;
           return false;
         }
-        sol_log_64(2, timestamp, 0, 4, 3);
-        self->keep_alive[1] = timestamp;
+        sol_log("Player y keep_alive");
+        sol_log_64(2, tick_height, 0, 4, 3);
+        self->keep_alive[1] = tick_height;
         return true;
       }
-      sol_log_64(2, 0, 0, 5, 3);
+      sol_log("Unknown player");
       // Result_PlayerNotFound;
       return false;
 
     default:
-      sol_log_64(2, 0, 0, 6, 3);
+      sol_log("Invalid game state");
       // Result_NotYourTurn
       return false;
   }
@@ -180,11 +180,12 @@ SOL_FN_PREFIX bool game_keep_alive(
 SOL_FN_PREFIX bool dashboard_update(
   Dashboard *self,
   SolPubkey const *game_pubkey,
-  Game const *game
+  Game const *game,
+  uint64_t tick_height
 ) {
   switch (game->game_state) {
   case GameState_Waiting:
-    sol_log_64(3, 0, 0, 0, 6);
+    sol_log("Replacing dashboard pending game");
     sol_memcpy(&self->pending_game, game_pubkey, sizeof(*game_pubkey));
     break;
   case GameState_XMove:
@@ -195,16 +196,15 @@ SOL_FN_PREFIX bool dashboard_update(
   case GameState_XWon:
   case GameState_OWon:
   case GameState_Draw:
-    sol_log_64(3, 0, 0, 0, 8);
+    sol_log("Adding new completed game");
     for (int i = 0; i < MAX_COMPLETED_GAMES; i++) {
       if (SolPubkey_same(&self->completed_games[i], game_pubkey)) {
-        // TODO: Once the PoH height is exposed to programs, it could be used
-        // to ensure
-        //       that old games are not being re-added and causing total to
-        //       increment incorrectly.
         return true;
       }
     }
+
+    // NOTE: tick_height could be used here to ensure that old games are not
+    // being re-added and causing total to increment incorrectly.
     self->total_games += 1;
     self->latest_completed_game_index =
       (self->latest_completed_game_index + 1) % MAX_COMPLETED_GAMES;
@@ -218,7 +218,6 @@ SOL_FN_PREFIX bool dashboard_update(
   default:
     break;
   }
-  sol_log_64(3, 0, 0, 0, 9);
   return true;
 }
 
@@ -238,7 +237,6 @@ extern bool entrypoint(const uint8_t *input) {
 
   if (ka_len < 2) {
     sol_log("Error: two keys required");
-    sol_log_64(0, 0, 0, 0, 2);
     return false;
   }
 
@@ -261,12 +259,11 @@ extern bool entrypoint(const uint8_t *input) {
   switch (*state) {
   case State_Uninitialized:
     sol_log("Account is uninitialized");
-    sol_log_64(1, 0, 0, 0, 0);
 
     if (sol_memcmp(ka[0].key, ka[1].key, sizeof(SolPubkey)) != 0) {
       // InitGame/InitDashboard commands must be signed by the
       // state account itself
-      sol_log_64(1, 0, 0, 0, 1);
+      sol_log("Account not self signed");
       return false;
     }
 
@@ -283,7 +280,7 @@ extern bool entrypoint(const uint8_t *input) {
         return false;
       }
       *state = State_Game;
-      return game_create(&state_data->game, ka[2].key);
+      return game_create(&state_data->game, ka[2].key, info.tick_height);
 
     default:
       sol_log("Error: Invalid command");
@@ -297,16 +294,14 @@ extern bool entrypoint(const uint8_t *input) {
     switch (cmd) {
     case Command_Join:
       sol_log("Command_Join");
-      sol_log_64(2, cmd_data->join.timestamp, 0, 0, 1);
-      return game_join(&state_data->game, player, cmd_data->join.timestamp);
+      return game_join(&state_data->game, player, info.tick_height);
     case Command_Move:
       sol_log("Command_Move");
       sol_log_64(2, cmd_data->move.x, cmd_data->move.y, 0, 2);
       return game_move(&state_data->game, player, cmd_data->move.x, cmd_data->move.y);
     case Command_KeepAlive:
       sol_log("Command_KeepAlive");
-      sol_log_64(2, cmd_data->keep_alive.timestamp, 0, 0, 3);
-      return game_keep_alive(&state_data->game, player, cmd_data->keep_alive.timestamp);
+      return game_keep_alive(&state_data->game, player, info.tick_height);
     default:
       sol_log("Error: Invalid command");
       return false;
@@ -334,9 +329,18 @@ extern bool entrypoint(const uint8_t *input) {
       sol_log("Error: 3rd key is not a game account");
       return false;
     }
-    if (ka[2].owner
+    if (sol_memcmp(ka[1].program_id, ka[2].program_id, sizeof(*ka[1].program_id))) {
+      sol_log("Error: incompatible game account");
+      return false;
+    }
+
     sol_log("Command_UpdateDashboard");
-    return dashboard_update(&state_data->dashboard, ka[2].key, &game_state_data->game);
+    return dashboard_update(
+      &state_data->dashboard,
+      ka[2].key,
+      &game_state_data->game,
+      info.tick_height
+    );
 
   default:
     sol_log("Error: Invalid account state");

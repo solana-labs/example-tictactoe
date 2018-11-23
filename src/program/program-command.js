@@ -7,7 +7,7 @@
 
 import * as BufferLayout from 'buffer-layout';
 
-const COMMAND_LENGTH = 16;
+const COMMAND_LENGTH = 6;
 
 const Command = {
   // Dashboard account commands
@@ -16,8 +16,8 @@ const Command = {
 
   // Game account commands
   InitGame: 2, // Initialize a game account
-  Join: 3, // Player O wants to join (seconds since UNIX epoch)
-  KeepAlive: 4, // Player X/O keep alive (seconds since UNIX epoch)
+  Join: 3, // Player O wants to join
+  KeepAlive: 4, // Player X/O keep alive
   Move: 5, // Player X/O mark board position (x, y)
 };
 
@@ -39,16 +39,6 @@ function commandWithNoArgs(command: number): Buffer {
   return zeroPad(buffer);
 }
 
-function commandWithTimestamp(command: number, timestamp: number): Buffer {
-  const layout = BufferLayout.struct([
-    BufferLayout.u32('command'),
-    BufferLayout.nu64('timestamp'),
-  ]);
-  const buffer = Buffer.alloc(layout.span);
-  layout.encode({command, timestamp}, buffer);
-  return zeroPad(buffer);
-}
-
 export function initDashboard(): Buffer {
   return commandWithNoArgs(Command.InitDashboard);
 }
@@ -61,12 +51,12 @@ export function initGame(): Buffer {
   return commandWithNoArgs(Command.InitGame);
 }
 
-export function joinGame(timestamp: number): Buffer {
-  return commandWithTimestamp(Command.Join, timestamp);
+export function joinGame(): Buffer {
+  return commandWithNoArgs(Command.Join);
 }
 
-export function keepAlive(timestamp: number): Buffer {
-  return commandWithTimestamp(Command.KeepAlive, timestamp);
+export function keepAlive(): Buffer {
+  return commandWithNoArgs(Command.KeepAlive);
 }
 
 export function move(x: number, y: number): Buffer {
