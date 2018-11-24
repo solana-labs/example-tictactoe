@@ -115,9 +115,7 @@ SOL_FN_PREFIX bool game_move(
 
   if (winner) {
     self->game_state = won_state;
-  }
-
-  {
+  } else {
     int draw = true;
     for (int i = 0; i < 9; i++) {
       if (BoardItem_Free == self->board[i]) {
