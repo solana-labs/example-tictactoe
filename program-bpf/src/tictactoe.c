@@ -327,7 +327,7 @@ extern bool entrypoint(const uint8_t *input) {
       sol_log("Error: 3rd key is not a game account");
       return false;
     }
-    if (sol_memcmp(ka[1].program_id, ka[2].program_id, sizeof(*ka[1].program_id))) {
+    if (sol_memcmp(ka[1].owner, ka[2].owner, sizeof(*ka[1].owner))) {
       sol_log("Error: incompatible game account");
       return false;
     }
