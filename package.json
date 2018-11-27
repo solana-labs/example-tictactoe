@@ -14,7 +14,7 @@
     "build": "webpack --mode=production",
     "builddev": "webpack --mode=development",
     "dev": "set -ex; babel-node src/server/config; webpack-dev-server --config ./webpack.config.js --mode development",
-    "build:bpf": "make -C program-bpf",
+    "build:bpf": "V=1 make -C program-bpf",
     "clean:bpf": "make -C program-bpf clean",
     "build:native": "./program-native/build.sh",
     "clean:native": "rm -rf ./program-native/target",
@@ -32,7 +32,7 @@
     "prettier": "^1.14.3"
   },
   "dependencies": {
-    "@solana/web3.js": "0.12.2",
+    "@solana/web3.js": "0.12.3",
     "babel-cli": "^6.26.0",
     "babel-core": "^6.26.3",
     "babel-eslint": "^8.2.6",
