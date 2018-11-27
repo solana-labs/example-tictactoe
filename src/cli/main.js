@@ -29,9 +29,6 @@ async function main(url: string) {
     terminal: true,
   });
 
-  //
-  // Connect to the network with a new account, and airdrop a minimal amount of tokens
-  //
   rl.write(`Connecting to network: ${url}...\n`);
   const connection = new Connection(url);
 
@@ -110,7 +107,7 @@ async function main(url: string) {
   }
 
   // Notify the dashboard that the game has completed.
-  await dashboard.submitGameState(ttt.gamePublicKey);
+  // await dashboard.submitGameState(ttt.gamePublicKey);
 
   rl.write(`\nGame Over\n=========\n\n${renderBoard(ttt.state.board)}\n\n`);
   if (ttt.winner) {

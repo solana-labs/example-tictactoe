@@ -5,7 +5,7 @@ import fetch from 'node-fetch';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import {Well} from 'react-bootstrap';
-import {Connection, PublicKey} from '@solana/web3.js';
+import {Connection, Account} from '@solana/web3.js';
 
 import {Game} from './Game';
 import {TicTacToeDashboard} from '../program/tic-tac-toe-dashboard';
@@ -39,16 +39,16 @@ class App extends React.Component {
 
         this.setState({initMessage: `Connecting to dashboard...`});
 
-        // Load the dashboard account publicKey from the server, so it remains the
+        // Load the dashboard account from the server so it remains the
         // same for all users
         const configUrl = window.location.origin + '/config.json';
         const response = await fetch(configUrl);
-        const {publicKey} = await response.json();
+        const config = await response.json();
 
         this.setState({initMessage: `Loading dashboard state...`});
         const dashboard = await TicTacToeDashboard.connect(
           connection,
-          new PublicKey(publicKey),
+          new Account(Buffer.from(config.secretKey, 'hex')),
         );
 
         this.setState({initialized: true, dashboard});

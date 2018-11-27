@@ -14,29 +14,27 @@ SOL_FN_PREFIX void game_dump_board(Game *self) {
   sol_log_64(0x9, 0x9, 0x9, 0x9, 0x9);
 }
 
-SOL_FN_PREFIX bool game_create(Game *self, SolPubkey *player_x, uint64_t tick_height) {
+SOL_FN_PREFIX void game_create(Game *self, SolPubkey *player_x, uint64_t tick_height) {
   // account memory is zero-initialized
   sol_memcpy(&self->player_x, player_x, sizeof(*player_x));
   self->keep_alive[0] = tick_height;
-  return true;
 }
 
-SOL_FN_PREFIX bool game_join(
+SOL_FN_PREFIX void game_join(
   Game *self,
   SolPubkey *player_o,
   uint64_t tick_height
 ) {
   if (self->game_state != GameState_Waiting) {
     sol_log("Unable to join, game is not in the waiting state");
-    sol_log_64(2, self->game_state, 0, 1, 1);
-    return false;
-  }
-  sol_memcpy(self->player_o.x, player_o, sizeof(*player_o));
-  self->game_state = GameState_XMove;
+    sol_log_64(self->game_state, 0, 0, 0, 0);
+  } else {
+    sol_memcpy(self->player_o.x, player_o, sizeof(*player_o));
+    self->game_state = GameState_XMove;
 
-  sol_log("Game joined");
-  self->keep_alive[1] = tick_height;
-  return true;
+    sol_log("Game joined");
+    self->keep_alive[1] = tick_height;
+  }
 }
 
 SOL_FN_PREFIX bool game_same(
@@ -142,40 +140,35 @@ SOL_FN_PREFIX bool game_keep_alive(
       if (game_same_player(player, &self->player_x)) {
         if (tick_height <= self->keep_alive[0]) {
           sol_log("Invalid player x keep_alive");
-          sol_log_64(2, tick_height, self->keep_alive[0], 1, 3);
-          // Result_InvalidTimestamp;
+          sol_log_64(tick_height, self->keep_alive[0], 0, 0, 0);
           return false;
         }
         sol_log("Player x keep_alive");
-        sol_log_64(2, tick_height, 0, 2, 3);
+        sol_log_64(tick_height, 0, 0, 0, 0);
         self->keep_alive[0] = tick_height;
-        return true;
-      }
-
-      if (game_same_player(player, &self->player_o)) {
+      } else if (game_same_player(player, &self->player_o)) {
         if (tick_height <= self->keep_alive[1]) {
           sol_log("Invalid player o keep_alive");
-          sol_log_64(2, tick_height, self->keep_alive[1], 3, 3);
-          // Result_InvalidTimestamp;
+          sol_log_64(tick_height, self->keep_alive[1], 0, 0, 0);
           return false;
         }
         sol_log("Player y keep_alive");
-        sol_log_64(2, tick_height, 0, 4, 3);
+        sol_log_64(tick_height, 0, 0, 0, 0);
         self->keep_alive[1] = tick_height;
-        return true;
+      } else {
+        sol_log("Unknown player");
+        return false;
       }
-      sol_log("Unknown player");
-      // Result_PlayerNotFound;
-      return false;
+      break;
 
     default:
       sol_log("Invalid game state");
-      // Result_NotYourTurn
       return false;
   }
+  return true;
 }
 
-SOL_FN_PREFIX bool dashboard_update(
+SOL_FN_PREFIX void dashboard_update(
   Dashboard *self,
   SolPubkey const *game_pubkey,
   Game const *game,
@@ -188,18 +181,18 @@ SOL_FN_PREFIX bool dashboard_update(
     break;
   case GameState_XMove:
   case GameState_OMove:
-    // Nothing to do.  In progress games are not managed by the dashboard
-    sol_log_64(3, 0, 0, 0, 7);
+    // Nothing to do
     break;
   case GameState_XWon:
   case GameState_OWon:
   case GameState_Draw:
-    sol_log("Adding new completed game");
     for (int i = 0; i < MAX_COMPLETED_GAMES; i++) {
       if (SolPubkey_same(&self->completed_games[i], game_pubkey)) {
-        return true;
+        sol_log("Ignoring known completed game");
+        return;
       }
     }
+    sol_log("Adding new completed game");
 
     // NOTE: tick_height could be used here to ensure that old games are not
     // being re-added and causing total to increment incorrectly.
@@ -216,11 +209,26 @@ SOL_FN_PREFIX bool dashboard_update(
   default:
     break;
   }
+}
+
+SOL_FN_PREFIX bool fund_next_move(SolKeyedAccount *dashboard_ka, SolKeyedAccount *ka) {
+  sol_log("fund_next_move");
+  sol_log_64(*(dashboard_ka->tokens), *(ka->tokens), 0, 0, 0);
+  if (*ka->tokens != 0) {
+    sol_log("Player still has tokens");
+  } else if (*dashboard_ka->tokens <= 1) {
+    sol_log("Dashboard is out of tokens");
+    return false;
+  } else {
+    *(ka->tokens) += 1;
+    *(dashboard_ka->tokens) -= 1;
+    sol_log_64(*(dashboard_ka->tokens), *(ka->tokens), 0, 0, 0);
+  }
   return true;
 }
 
 extern bool entrypoint(const uint8_t *input) {
-  SolKeyedAccounts ka[3];
+  SolKeyedAccount ka[3];
   uint64_t ka_len;
   const uint8_t *instruction_data;
   uint64_t instruction_data_len;
@@ -233,115 +241,161 @@ extern bool entrypoint(const uint8_t *input) {
     return false;
   }
 
-  if (ka_len < 2) {
-    sol_log("Error: two keys required");
-    return false;
-  }
-
   if (instruction_data_len < sizeof(uint32_t) + sizeof(CommandData)) {
     sol_log("Error: invalid instruction_data_len");
-    sol_log_64(0, 0, instruction_data_len, sizeof(uint32_t) + sizeof(CommandData), 3);
+    sol_log_64(instruction_data_len, sizeof(uint32_t) + sizeof(CommandData), 0, 0, 0);
     return false;
   }
   Command const cmd = *(uint32_t *) instruction_data;
   CommandData const *cmd_data = (CommandData *) (instruction_data + sizeof(uint32_t));
+  sol_log_64(cmd, 0, 0, 0, 0);
 
-  if (ka[1].userdata_len < sizeof(uint32_t) + sizeof(StateData)) {
-    sol_log("Error: invalid userdata_len");
-    sol_log_64(0, cmd, ka[1].userdata_len, sizeof(uint32_t) + sizeof(StateData), 4);
+  State *dashboard_state = NULL;
+  StateData *dashboard_state_data = NULL;
+
+  if (cmd == Command_InitDashboard) {
+    sol_log("Command_InitDashboard");
+    if (ka_len != 1) {
+      sol_log("Error: one key expected");
+      return false;
+    }
+
+    if (!state_deserialize(&ka[0], &dashboard_state, &dashboard_state_data)) {
+      return false;
+    }
+
+    if (*dashboard_state != State_Uninitialized) {
+      sol_log("Dashboard is already uninitialized");
+      return false;
+    }
+
+    *dashboard_state = State_Dashboard;
+    return true;
+  }
+
+  if (cmd == Command_InitPlayer) {
+    sol_log("Command_InitPlayer");
+    if (ka_len != 2) {
+      sol_log("Error: two keys expected");
+      return false;
+    }
+
+    if (!state_deserialize(&ka[0], &dashboard_state, &dashboard_state_data)) {
+      return false;
+    }
+
+    if (*dashboard_state != State_Dashboard) {
+      sol_log("Invalid dashboard account");
+      return false;
+    }
+
+    if (!SolPubkey_same(ka[0].owner, ka[1].owner) || ka[1].userdata_len != 0) {
+      sol_log("Invalid player account");
+      return false;
+    }
+    // Distribute funds to the player for their next transaction
+    return fund_next_move(&ka[0], &ka[1]);
+  }
+  if (ka_len != 3) {
+    sol_log("Error: three keys expected");
     return false;
   }
-  State *state = (uint32_t *) ka[1].userdata;
-  StateData *state_data = (StateData *) (ka[1].userdata + sizeof(uint32_t));
 
-  switch (*state) {
-  case State_Uninitialized:
-    sol_log("Account is uninitialized");
+  if (!state_deserialize(&ka[1], &dashboard_state, &dashboard_state_data)) {
+    sol_log("dashboard deserialize failed");
+    return false;
+  }
 
-    if (sol_memcmp(ka[0].key, ka[1].key, sizeof(SolPubkey)) != 0) {
-      // InitGame/InitDashboard commands must be signed by the
-      // state account itself
-      sol_log("Account not self signed");
+  if (*dashboard_state != State_Dashboard) {
+    sol_log("Invalid dashboard account");
+    return false;
+  }
+
+  State *game_state = NULL;
+  StateData *game_state_data = NULL;
+
+  if (cmd == Command_InitGame) {
+    sol_log("Command_InitGame");
+    if (!state_deserialize(&ka[0], &game_state, &game_state_data)) {
       return false;
     }
 
-    switch (cmd) {
-    case Command_InitDashboard:
-      sol_log("Command_InitDashboard");
-      *state = State_Dashboard;
-      return true;
-
-    case Command_InitGame:
-      sol_log("Command_InitGame");
-      if (ka_len < 3) {
-        sol_log("Error: 3 keys required");
-        return false;
-      }
-      *state = State_Game;
-      return game_create(&state_data->game, ka[2].key, info.tick_height);
-
-    default:
-      sol_log("Error: Invalid command");
+    if (*game_state != State_Uninitialized) {
+      sol_log("Account is already uninitialized");
       return false;
     }
 
-  case State_Game:
-    sol_log("Account is a game");
-
-    SolPubkey *player = ka[0].key;
-    switch (cmd) {
-    case Command_Join:
-      sol_log("Command_Join");
-      return game_join(&state_data->game, player, info.tick_height);
-    case Command_Move:
-      sol_log("Command_Move");
-      sol_log_64(2, cmd_data->move.x, cmd_data->move.y, 0, 2);
-      return game_move(&state_data->game, player, cmd_data->move.x, cmd_data->move.y);
-    case Command_KeepAlive:
-      sol_log("Command_KeepAlive");
-      return game_keep_alive(&state_data->game, player, info.tick_height);
-    default:
-      sol_log("Error: Invalid command");
+    if (!SolPubkey_same(ka[0].owner, ka[2].owner) || ka[2].userdata_len != 0) {
+      sol_log("Invalid player account");
       return false;
     }
 
-  case State_Dashboard:
-    sol_log("Account is a dashboard");
+    *game_state = State_Game;
+    SolPubkey *player_x = ka[2].key;
+    game_create(&game_state_data->game, player_x, info.tick_height);
 
-    if (ka_len < 3) {
-      sol_log("Error: 3 keys required");
-      return false;
-    }
-    if (ka[2].userdata_len < sizeof(uint32_t) + sizeof(StateData)) {
-      sol_log("Error: invalid userdata_len");
-      return false;
-    }
-    State game_state = *(uint32_t *) ka[2].userdata;
-    StateData *game_state_data = (StateData *) (ka[2].userdata + sizeof(uint32_t));
-
-    if (cmd != Command_UpdateDashboard) {
-      sol_log("Error: Invalid command");
-      return false;
-    }
-    if (game_state != State_Game) {
-      sol_log("Error: 3rd key is not a game account");
-      return false;
-    }
-    if (sol_memcmp(ka[1].owner, ka[2].owner, sizeof(*ka[1].owner))) {
-      sol_log("Error: incompatible game account");
-      return false;
-    }
-
-    sol_log("Command_UpdateDashboard");
-    return dashboard_update(
-      &state_data->dashboard,
-      ka[2].key,
+    dashboard_update(
+      &dashboard_state_data->dashboard,
+      ka[0].key,
       &game_state_data->game,
       info.tick_height
     );
 
-  default:
-    sol_log("Error: Invalid account state");
+    // Distribute funds to the player for their next transaction, and to the
+    // game account to keep it's state loaded
+    return fund_next_move(&ka[1], &ka[0]) && fund_next_move(&ka[1], &ka[2]);
+  }
+
+  if (!state_deserialize(&ka[2], &game_state, &game_state_data)) {
+    sol_log("game deserialize failed");
     return false;
   }
+
+  if (*game_state != State_Game) {
+    sol_log("Invalid game account");
+    return false;
+  }
+
+  if (!SolPubkey_same(ka[0].owner, ka[1].owner) || ka[0].userdata_len != 0) {
+    sol_log("Invalid player account");
+    return false;
+  }
+
+  SolPubkey *player = ka[0].key;
+  switch (cmd) {
+  case Command_Advertise:
+    sol_log("Command_Advertise");
+    // Nothing to do here beyond the dashboard_update() below
+    break;
+  case Command_Join:
+    sol_log("Command_Join");
+    game_join(&game_state_data->game, player, info.tick_height);
+    break;
+  case Command_Move:
+    sol_log("Command_Move");
+    sol_log_64(cmd_data->move.x, cmd_data->move.y, 0, 0, 0);
+    if (!game_move(&game_state_data->game, player, cmd_data->move.x, cmd_data->move.y)) {
+      return false;
+    }
+    break;
+  case Command_KeepAlive:
+    sol_log("Command_KeepAlive");
+    if (!game_keep_alive(&game_state_data->game, player, info.tick_height)) {
+      return false;
+    }
+    break;
+  default:
+    sol_log("Error: Invalid command");
+    return false;
+  }
+
+  dashboard_update(
+    &dashboard_state_data->dashboard,
+    ka[2].key,
+    &game_state_data->game,
+    info.tick_height
+  );
+
+  // Distribute funds to the player for their next transaction
+  return fund_next_move(&ka[1], &ka[0]);
 }

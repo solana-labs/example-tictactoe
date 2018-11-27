@@ -1,16 +1,15 @@
 use simple_serde::SimpleSerde;
 
 #[repr(C)]
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub enum Command {
-    // Dashboard account commands
-    InitDashboard,   // Initialize a dashboard account
-    UpdateDashboard, // Update the dashboard with the provided game account
+    InitDashboard, // Initialize a dashboard account
+    InitPlayer,    // Initialize a player account
+    InitGame,      // Initialize a game account
 
-    // Game account commands
-    InitGame,     // Initialize a game account
-    Join,         // Player O wants to join (seconds since UNIX epoch)
-    KeepAlive,    // Player X/O keep alive (seconds since UNIX epoch)
+    Advertise,    // Used by Player X to advertise their game
+    Join,         // Player O wants to join
+    KeepAlive,    // Player X/O keep alive
     Move(u8, u8), // Player X/O mark board position (x, y)
 }
 impl SimpleSerde for Command {}
@@ -26,7 +25,7 @@ mod test {
         cmd.serialize(&mut b).unwrap();
         assert_eq!(b, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
 
-        let cmd = Command::UpdateDashboard;
+        let cmd = Command::InitPlayer;
         let mut b = vec![0; 16];
         cmd.serialize(&mut b).unwrap();
         assert_eq!(b, [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
@@ -36,19 +35,24 @@ mod test {
         cmd.serialize(&mut b).unwrap();
         assert_eq!(b, [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
 
-        let cmd = Command::Join;
+        let cmd = Command::Advertise;
         let mut b = vec![0; 16];
         cmd.serialize(&mut b).unwrap();
         assert_eq!(b, [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
 
-        let cmd = Command::KeepAlive;
+        let cmd = Command::Join;
         let mut b = vec![0; 16];
         cmd.serialize(&mut b).unwrap();
         assert_eq!(b, [4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
 
+        let cmd = Command::KeepAlive;
+        let mut b = vec![0; 16];
+        cmd.serialize(&mut b).unwrap();
+        assert_eq!(b, [5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+
         let cmd = Command::Move(1, 2);
         let mut b = vec![0; 16];
         cmd.serialize(&mut b).unwrap();
-        assert_eq!(b, [5, 0, 0, 0, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+        assert_eq!(b, [6, 0, 0, 0, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
     }
 }

@@ -7,13 +7,12 @@
  */
 
 import EventEmitter from 'event-emitter';
-import {Account, PublicKey, Transaction} from '@solana/web3.js';
+import {Account, PublicKey, Transaction, SystemProgram} from '@solana/web3.js';
 import type {AccountInfo, Connection} from '@solana/web3.js';
 
 import * as ProgramCommand from './program-command';
 import {deserializeGameState} from './program-state';
 import type {GameState} from './program-state';
-import {newProgramAccount} from '../util';
 import {sendAndConfirmTransaction} from '../util/send-and-confirm-transaction';
 
 export class TicTacToe {
@@ -21,6 +20,7 @@ export class TicTacToe {
   disconnected: boolean;
   connection: Connection;
   programId: PublicKey;
+  dashboard: PublicKey;
   gamePublicKey: PublicKey;
   isX: boolean;
   playerAccount: Account;
@@ -40,6 +40,7 @@ export class TicTacToe {
   constructor(
     connection: Connection,
     programId: PublicKey,
+    dashboard: PublicKey,
     gamePublicKey: PublicKey,
     isX: boolean,
     playerAccount: Account,
@@ -65,6 +66,7 @@ export class TicTacToe {
       myTurn: false,
       playerAccount,
       programId,
+      dashboard,
       state,
       winner: false,
       _keepAliveErrorCount: 0,
@@ -120,36 +122,36 @@ export class TicTacToe {
   static async create(
     connection: Connection,
     programId: PublicKey,
+    dashboard: PublicKey,
     playerXAccount: Account,
   ): Promise<TicTacToe> {
-    const gameAccount = await newProgramAccount(
-      connection,
-      playerXAccount,
-      programId,
-      255, // userdata space
-    );
+    const gameAccount = new Account();
 
-    {
-      const transaction = new Transaction().add({
-        keys: [
-          gameAccount.publicKey,
-          gameAccount.publicKey,
-          playerXAccount.publicKey,
-        ],
-        programId,
-        userdata: ProgramCommand.initGame(),
-      });
-      await sendAndConfirmTransaction(
-        'initGame',
-        connection,
-        transaction,
-        gameAccount,
-      );
-    }
+    const transaction = SystemProgram.createAccount(
+      gameAccount.publicKey,
+      gameAccount.publicKey,
+      0,
+      255, // userdata space
+      programId,
+    );
+    transaction.add({
+      keys: [gameAccount.publicKey, dashboard, playerXAccount.publicKey],
+      programId,
+      userdata: ProgramCommand.initGame(),
+    });
+
+    await sendAndConfirmTransaction(
+      'initGame',
+      connection,
+      transaction,
+      playerXAccount,
+      gameAccount,
+    );
 
     const ttt = new TicTacToe(
       connection,
       programId,
+      dashboard,
       gameAccount.publicKey,
       true,
       playerXAccount,
@@ -164,19 +166,21 @@ export class TicTacToe {
   static async join(
     connection: Connection,
     programId: PublicKey,
+    dashboard: PublicKey,
     playerOAccount: Account,
     gamePublicKey: PublicKey,
-  ): Promise<TicTacToe> {
+  ): Promise<TicTacToe | null> {
     const ttt = new TicTacToe(
       connection,
       programId,
+      dashboard,
       gamePublicKey,
       false,
       playerOAccount,
     );
     {
       const transaction = new Transaction().add({
-        keys: [playerOAccount.publicKey, gamePublicKey],
+        keys: [playerOAccount.publicKey, dashboard, gamePublicKey],
         programId,
         userdata: ProgramCommand.joinGame(),
       });
@@ -189,6 +193,15 @@ export class TicTacToe {
     }
 
     ttt._onAccountChange(await connection.getAccountInfo(gamePublicKey));
+    if (!ttt.inProgress) {
+      return null;
+    }
+    if (ttt.state.playerO === null) {
+      return null;
+    }
+    if (!playerOAccount.publicKey.equals(ttt.state.playerO)) {
+      return null;
+    }
     ttt.scheduleNextKeepAlive();
     return ttt;
   }
@@ -198,7 +211,7 @@ export class TicTacToe {
    */
   async keepAlive(): Promise<void> {
     const transaction = new Transaction().add({
-      keys: [this.playerAccount.publicKey, this.gamePublicKey],
+      keys: [this.playerAccount.publicKey, this.dashboard, this.gamePublicKey],
       programId: this.programId,
       userdata: ProgramCommand.keepAlive(),
     });
@@ -222,7 +235,7 @@ export class TicTacToe {
    */
   async move(x: number, y: number): Promise<void> {
     const transaction = new Transaction().add({
-      keys: [this.playerAccount.publicKey, this.gamePublicKey],
+      keys: [this.playerAccount.publicKey, this.dashboard, this.gamePublicKey],
       programId: this.programId,
       userdata: ProgramCommand.move(x, y),
     });

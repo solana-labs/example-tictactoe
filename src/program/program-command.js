@@ -10,15 +10,13 @@ import * as BufferLayout from 'buffer-layout';
 const COMMAND_LENGTH = 6;
 
 const Command = {
-  // Dashboard account commands
   InitDashboard: 0, // Initialize a dashboard account
-  UpdateDashboard: 1, // Update the dashboard with the provided game account
-
-  // Game account commands
+  InitPlayer: 1, // Initialize a player account
   InitGame: 2, // Initialize a game account
-  Join: 3, // Player O wants to join
-  KeepAlive: 4, // Player X/O keep alive
-  Move: 5, // Player X/O mark board position (x, y)
+  Advertise: 3, // Used by Player X to advertise their game
+  Join: 4, // Player O wants to join
+  KeepAlive: 5, // Player X/O keep alive
+  Move: 6, // Player X/O mark board position (x, y)
 };
 
 function zeroPad(command: Buffer): Buffer {
@@ -43,12 +41,16 @@ export function initDashboard(): Buffer {
   return commandWithNoArgs(Command.InitDashboard);
 }
 
-export function updateDashboard(): Buffer {
-  return commandWithNoArgs(Command.UpdateDashboard);
+export function initPlayer(): Buffer {
+  return commandWithNoArgs(Command.InitPlayer);
 }
 
 export function initGame(): Buffer {
   return commandWithNoArgs(Command.InitGame);
+}
+
+export function advertiseGame(): Buffer {
+  return commandWithNoArgs(Command.Advertise);
 }
 
 export function joinGame(): Buffer {

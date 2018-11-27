@@ -59,3 +59,15 @@ typedef union {
   Game game;
   Dashboard dashboard;
 } StateData;
+
+
+SOL_FN_PREFIX bool state_deserialize(SolKeyedAccount *ka, State **state, StateData **state_data) {
+  if (ka->userdata_len < sizeof(uint32_t) + sizeof(StateData)) {
+    sol_log("Error: invalid userdata_len");
+    sol_log_64(ka->userdata_len, sizeof(uint32_t) + sizeof(StateData), 0, 0, 0);
+    return false;
+  }
+  *state = (uint32_t *) ka->userdata;
+  *state_data = (StateData *) (ka->userdata + sizeof(uint32_t));
+  return true;
+}

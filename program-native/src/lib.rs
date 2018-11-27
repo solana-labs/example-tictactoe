@@ -21,6 +21,7 @@ use program_state::State;
 use result::{ProgramError, Result};
 use simple_serde::SimpleSerde;
 use solana_sdk::account::KeyedAccount;
+use solana_sdk::pubkey::Pubkey;
 
 fn expect_n_accounts(info: &mut [KeyedAccount], n: usize) -> Result<()> {
     if info.len() < n {
@@ -35,43 +36,142 @@ fn expect_n_accounts(info: &mut [KeyedAccount], n: usize) -> Result<()> {
     }
 }
 
-fn process(info: &mut [KeyedAccount], input: &[u8], tick_height: u64) -> Result<()> {
-    expect_n_accounts(info, 2)?;
+fn fund_next_move(
+    info: &mut [KeyedAccount],
+    dashboard_index: usize,
+    user_or_game_index: usize,
+) -> Result<()> {
+    if info[dashboard_index].account.tokens <= 1 {
+        error!("Dashboard is out of tokens");
+        Err(ProgramError::InvalidInput)
+    } else {
+        if info[user_or_game_index].account.tokens != 0 {
+            debug!("user_or_game still has tokens");
+        } else {
+            info[user_or_game_index].account.tokens += 1;
+            info[dashboard_index].account.tokens -= 1;
+        }
+        Ok(())
+    }
+}
 
+fn process_instruction(info: &mut [KeyedAccount], input: &[u8], tick_height: u64) -> Result<()> {
     let command = Command::deserialize(input)?;
     debug!("entrypoint: command={:?}", command);
-    let mut state = State::deserialize(&info[1].account.userdata)?;
-    debug!("entrypoint: state={:?}", state);
 
-    match state {
-        State::Uninitialized => {
-            if info[0].key != info[1].key {
-                // InitGame/InitDashboard commands must be signed by the
-                // state account itself
-                error!("info[0]/info[1] mismatch");
+    if command == Command::InitDashboard {
+        expect_n_accounts(info, 1)?;
+        let mut dashboard_state = State::deserialize(&info[0].account.userdata)?;
+
+        match dashboard_state {
+            State::Uninitialized => {
+                dashboard_state = State::Dashboard(Default::default());
+                Ok(())
+            }
+            _ => {
+                error!(
+                    "Invalid dashboard state for InitDashboard: {:?}",
+                    dashboard_state
+                );
                 Err(ProgramError::InvalidInput)
-            } else {
-                match command {
-                    Command::InitGame => {
-                        expect_n_accounts(info, 3)?;
-                        let player_x = info[2].key;
-                        state = State::Game(game::Game::create(&player_x));
-                        Ok(())
-                    }
-                    Command::InitDashboard => {
-                        state = State::Dashboard(Default::default());
-                        Ok(())
-                    }
-                    _ => {
-                        error!("invalid command for State::Uninitialized");
-                        Err(ProgramError::InvalidInput)
-                    }
+            }
+        }?;
+        dashboard_state.serialize(&mut info[0].account.userdata)?;
+        return Ok(());
+    }
+
+    if command == Command::InitPlayer {
+        expect_n_accounts(info, 2)?;
+        {
+            let dashboard_state = State::deserialize(&info[0].account.userdata)?;
+            match dashboard_state {
+                State::Dashboard(_) => Ok(()),
+                _ => {
+                    error!(
+                        "Invalid dashboard state for InitPlayer: {:?}",
+                        dashboard_state
+                    );
+                    Err(ProgramError::InvalidInput)
                 }
+            }?;
+
+            if info[0].account.owner != info[1].account.owner || info[1].account.userdata.len() != 0
+            {
+                error!(
+                    "Invalid player account for InitPlayer: {:?}",
+                    dashboard_state
+                );
+                Err(ProgramError::InvalidInput)?;
             }
         }
+        return fund_next_move(info, 0, 1);
+    }
+
+    expect_n_accounts(info, 3)?;
+    let mut dashboard_state = State::deserialize(&info[1].account.userdata)?;
+    match dashboard_state {
+        State::Dashboard(_) => Ok(()),
+        _ => {
+            error!("Invalid dashboard state: {:?}", dashboard_state);
+            Err(ProgramError::InvalidInput)
+        }
+    }?;
+
+    if command == Command::InitGame {
+        let mut game_state = State::deserialize(&info[0].account.userdata)?;
+
+        if info[0].account.owner != info[1].account.owner {
+            error!("Invalid game account for InitGame: {:?}", dashboard_state);
+            Err(ProgramError::InvalidInput)?;
+        }
+        if info[0].account.owner != info[2].account.owner || info[2].account.userdata.len() != 0 {
+            error!("Invalid player account for InitGame: {:?}", dashboard_state);
+            Err(ProgramError::InvalidInput)?;
+        }
+
+        match game_state {
+            State::Uninitialized => {
+                let game = game::Game::create(&info[2].key);
+                match dashboard_state {
+                    State::Dashboard(ref mut dashboard) => dashboard.update(&info[1].key, &game),
+                    _ => {
+                        error!(
+                            "Invalid dashboard state for InitGame: {:?}",
+                            dashboard_state
+                        );
+                        Err(ProgramError::InvalidInput)
+                    }
+                }?;
+                game_state = State::Game(game);
+                Ok(())
+            }
+            _ => {
+                error!("Invalid game state for InitGame: {:?}", game_state);
+                Err(ProgramError::InvalidInput)
+            }
+        }?;
+
+        dashboard_state.serialize(&mut info[1].account.userdata)?;
+        game_state.serialize(&mut info[0].account.userdata)?;
+        fund_next_move(info, 1, 0)?;
+        return fund_next_move(info, 1, 2);
+    }
+
+    let mut game_state = State::deserialize(&info[2].account.userdata)?;
+    if info[0].account.owner != info[1].account.owner || info[0].account.userdata.len() != 0 {
+        error!("Invalid player account");
+        Err(ProgramError::InvalidInput)?;
+    }
+    if info[1].account.owner != info[2].account.owner {
+        error!("Invalid game account");
+        Err(ProgramError::InvalidInput)?;
+    }
+
+    match game_state {
         State::Game(ref mut game) => {
             let player = info[0].key;
             match command {
+                Command::Advertise => Ok(()), // Nothing to do here beyond the dashboard_update() below
                 Command::Join => game.join(*player, tick_height),
                 Command::Move(x, y) => game.next_move(*player, x as usize, y as usize),
                 Command::KeepAlive => game.keep_alive(*player, tick_height),
@@ -79,31 +179,26 @@ fn process(info: &mut [KeyedAccount], input: &[u8], tick_height: u64) -> Result<
                     error!("invalid command for State::Game");
                     Err(ProgramError::InvalidInput)
                 }
-            }
-        }
-        State::Dashboard(ref mut dashboard) => {
-            expect_n_accounts(info, 3)?;
-            let mut game_state = State::deserialize(&info[2].account.userdata)?;
-            match command {
-                Command::UpdateDashboard => {
-                    debug!("Updating dashboard with game {:?}", game_state);
-                    if let State::Game(game) = game_state {
-                        dashboard.update(&info[2].key, &game)
-                    } else {
-                        error!("invalid game state");
-                        Err(ProgramError::InvalidInput)
-                    }
-                }
+            }?;
+
+            match dashboard_state {
+                State::Dashboard(ref mut dashboard) => dashboard.update(&info[1].key, &game),
                 _ => {
-                    error!("invalid command for State::Dashboard");
+                    error!("Invalid dashboard stat: {:?}", dashboard_state);
                     Err(ProgramError::InvalidInput)
                 }
             }
         }
+        _ => {
+            error!("Invalid game state: {:?}", game_state);
+            Err(ProgramError::InvalidInput)
+        }
     }?;
 
-    state.serialize(&mut info[1].account.userdata)?;
-    Ok(())
+    dashboard_state.serialize(&mut info[1].account.userdata)?;
+    game_state.serialize(&mut info[2].account.userdata)?;
+    // Distribute funds to the player for their next transaction
+    return fund_next_move(info, 1, 0);
 }
 
 solana_entrypoint!(entrypoint);
@@ -114,7 +209,7 @@ fn entrypoint(
     tick_height: u64,
 ) -> bool {
     logger::setup();
-    match process(info, input, tick_height) {
+    match process_instruction(keyed_accounts, data, tick_height) {
         Err(err) => {
             error!("{:?}", err);
             false

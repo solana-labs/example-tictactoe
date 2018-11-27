@@ -1,13 +1,13 @@
 // @flow
 
-import {BpfLoader, Connection, NativeLoader, PublicKey} from '@solana/web3.js';
+import {BpfLoader, Connection, NativeLoader, Account} from '@solana/web3.js';
 import fs from 'mz/fs';
 import path from 'path';
 
 import {url} from '../../url';
 import {Store} from './store';
 import {TicTacToeDashboard} from '../program/tic-tac-toe-dashboard';
-import {newSystemAccountWithAirdrop} from '../util';
+import {newSystemAccountWithAirdrop} from '../util/new-system-account-with-airdrop';
 
 /**
  * Obtain the Dashboard singleton object
@@ -21,10 +21,9 @@ export async function findDashboard(
   try {
     const config = await store.load('../../../dist/config.json');
     if (config.native === native) {
-      const publicKey = new PublicKey(config.publicKey);
       const dashboard = await TicTacToeDashboard.connect(
         connection,
-        publicKey,
+        new Account(Buffer.from(config.secretKey, 'hex')),
       );
       return dashboard;
     }
@@ -32,12 +31,12 @@ export async function findDashboard(
     console.log('findDashboard:', err.message);
   }
 
-  const tempAccount = await newSystemAccountWithAirdrop(connection, 123);
+  const loaderAccount = await newSystemAccountWithAirdrop(connection, 123);
 
   let programId;
   if (native) {
     console.log('Using native program');
-    programId = await NativeLoader.load(connection, tempAccount, 'tictactoe');
+    programId = await NativeLoader.load(connection, loaderAccount, 'tictactoe');
   } else {
     console.log('Using BPF program');
     const elf = await fs.readFile(
@@ -47,7 +46,7 @@ export async function findDashboard(
     let attempts = 5;
     while (attempts > 0) {
       try {
-        programId = await BpfLoader.load(connection, tempAccount, elf);
+        programId = await BpfLoader.load(connection, loaderAccount, elf);
         break;
       } catch (err) {
         attempts--;
@@ -67,7 +66,9 @@ export async function findDashboard(
   const dashboard = await TicTacToeDashboard.create(connection, programId);
   await store.save('../../../dist/config.json', {
     native,
-    publicKey: dashboard.publicKey.toBase58(),
+    secretKey: Buffer.from(dashboard._dashboardAccount.secretKey).toString(
+      'hex',
+    ),
   });
   return dashboard;
 }

@@ -21,7 +21,6 @@ export class Game extends React.Component {
   constructor(props) {
     super(props);
     this.recentGameState = {};
-    this.dashboardNotifiedOfCompletedGame = false;
     this.state = {
       completedGames: [],
       currentGame: null,
@@ -78,7 +77,6 @@ export class Game extends React.Component {
       currentGame: null,
       currentGameStatusMessage: '',
     });
-    this.dashboardNotifiedOfCompletedGame = false;
 
     try {
       this.setState({
@@ -103,9 +101,7 @@ export class Game extends React.Component {
   onGameChange = () => {
     console.log('onGameChange()...');
 
-    const {dashboard} = this.props;
     const {currentGame} = this.state;
-
     if (currentGame === null) {
       console.log('Warning: currentGame is not expected to be null');
       return;
@@ -122,12 +118,6 @@ export class Game extends React.Component {
         currentGameStatusMessage = 'Waiting for opponent to move...';
       }
     } else {
-      // Notify the dashboard that the game has completed.
-      if (!this.dashboardNotifiedOfCompletedGame) {
-        this.dashboardNotifiedOfCompletedGame = true;
-        dashboard.submitGameState(currentGame.gamePublicKey);
-      }
-
       currentGameStatusMessage = 'Game Over.  ';
       if (currentGame.disconnected) {
         currentGameStatusMessage += 'Game was disconnected.';

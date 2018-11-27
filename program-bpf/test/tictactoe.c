@@ -10,9 +10,9 @@ void start_game(void) {
 
   sol_memset(&game, 0, sizeof(game));
   cr_assert_eq(game.game_state, GameState_Waiting);
-  cr_assert(game_create(&game, &player_x, 0));
+  game_create(&game, &player_x, 0);
   cr_assert_eq(game.game_state, GameState_Waiting);
-  cr_assert(game_join(&game, &player_o, 0));
+  game_join(&game, &player_o, 0);
   cr_assert_eq(game.game_state, GameState_XMove);
 }
 
@@ -132,9 +132,9 @@ Test(game, solo_game) {
 
   sol_memset(&game, 0, sizeof(game));
   cr_assert_eq(game.game_state, GameState_Waiting);
-  cr_assert(game_create(&game, &player_x, 0));
+  game_create(&game, &player_x, 0);
   cr_assert_eq(game.game_state, GameState_Waiting);
-  cr_assert(game_join(&game, &player_x, 0));
+  game_join(&game, &player_x, 0);
 
   cr_assert_eq(game.game_state, GameState_XMove);
   cr_assert(game_move(&game, &player_x, 0, 0));
