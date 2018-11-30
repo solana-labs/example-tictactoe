@@ -241,6 +241,11 @@ extern bool entrypoint(const uint8_t *input) {
     return false;
   }
 
+  if (!ka[0].is_signer) {
+    sol_log("Transaction not signed by key 0");
+    return false;
+  }
+
   if (instruction_data_len < sizeof(uint32_t) + sizeof(CommandData)) {
     sol_log("Error: invalid instruction_data_len");
     sol_log_64(instruction_data_len, sizeof(uint32_t) + sizeof(CommandData), 0, 0, 0);

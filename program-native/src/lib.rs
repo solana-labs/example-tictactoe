@@ -23,7 +23,7 @@ use simple_serde::SimpleSerde;
 use solana_sdk::account::KeyedAccount;
 use solana_sdk::pubkey::Pubkey;
 
-fn expect_n_accounts(info: &mut [KeyedAccount], n: usize) -> Result<()> {
+fn xpect_n_accounts(info: &mut [KeyedAccount], n: usize) -> Result<()> {
     if info.len() < n {
         error!(
             "Error: Expected at least {} accounts, received {}",
@@ -131,9 +131,11 @@ fn process_instruction(info: &mut [KeyedAccount], input: &[u8], tick_height: u64
 
         match game_state {
             State::Uninitialized => {
-                let game = game::Game::create(&info[2].key);
+                let game = game::Game::create(&info[2].unsigned_key());
                 match dashboard_state {
-                    State::Dashboard(ref mut dashboard) => dashboard.update(&info[1].key, &game),
+                    State::Dashboard(ref mut dashboard) => {
+                        dashboard.update(&info[1].unsigned_key(), &game)
+                    }
                     _ => {
                         error!(
                             "Invalid dashboard state for InitGame: {:?}",
@@ -169,7 +171,7 @@ fn process_instruction(info: &mut [KeyedAccount], input: &[u8], tick_height: u64
 
     match game_state {
         State::Game(ref mut game) => {
-            let player = info[0].key;
+            let player = info[0].signer_key().unwrap();
             match command {
                 Command::Advertise => Ok(()), // Nothing to do here beyond the dashboard_update() below
                 Command::Join => game.join(*player, tick_height),
@@ -182,7 +184,9 @@ fn process_instruction(info: &mut [KeyedAccount], input: &[u8], tick_height: u64
             }?;
 
             match dashboard_state {
-                State::Dashboard(ref mut dashboard) => dashboard.update(&info[1].key, &game),
+                State::Dashboard(ref mut dashboard) => {
+                    dashboard.update(&info[1].unsigned_key(), &game)
+                }
                 _ => {
                     error!("Invalid dashboard stat: {:?}", dashboard_state);
                     Err(ProgramError::InvalidInput)
@@ -209,6 +213,12 @@ fn entrypoint(
     tick_height: u64,
 ) -> bool {
     logger::setup();
+
+    if keyed_accounts[0].signer_key().is_none() {
+        error!("key 0 did not sign the transaction");
+        return false;
+    }
+
     match process_instruction(keyed_accounts, data, tick_height) {
         Err(err) => {
             error!("{:?}", err);
