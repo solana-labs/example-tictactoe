@@ -40,7 +40,7 @@ export async function findDashboard(
   } else {
     console.log('Using BPF program');
     const elf = await fs.readFile(
-      path.join(__dirname, '..', '..', 'dist', 'program', 'tictactoe.o'),
+      path.join(__dirname, '..', '..', 'dist', 'program', 'tictactoe.so'),
     );
 
     let attempts = 5;
