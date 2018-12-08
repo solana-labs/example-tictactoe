@@ -42,8 +42,6 @@ For more details on working with a local network, see the [full instructions](ht
 Alternatively to connect to the public testnet, `export LIVE=1` in your environment before running a front-end.
 
 ### Build the BPF C program
-Ensure clang 7 is installed.  See https://github.com/solana-labs/solana/tree/master/programs/bpf/c/sdk#prerequisites
-
 ```sh
 $ V=1 make -C program-bpf
 ```
@@ -52,7 +50,7 @@ or
 $ npm run build:bpf
 ```
 
-Compiled files can be found in `dist/program`. Compiler settings are configured in the [Solana SDK](https://github.com/solana-labs/solana/tree/master/programs/bpf/c/sdk/bpf.mk)
+Compiled files can be found in `dist/program`. Compiler settings are configured in the [Solana SDK](https://github.com/solana-labs/solana/tree/master/sdk/bpf/bpf.mk)
 
 ### Run the Command-Line Front End
 After building the program,
@@ -67,8 +65,7 @@ to track your open and completed games (`findDashboard`), and starts a new game 
 
 To play the game, open a second terminal and again run the `npm run start` script.
 
-To see the program or game state on the blockchain, send a `getAccountInfo` [JSON-RPC request](https://github.com/solana-labs/solana/blob/master/doc/json-rpc.md#getaccountinfo) to the network,
-using the id printed by the script, eg.:
+To see the program or game state on the blockchain, send a `getAccountInfo` [JSON-RPC request](https://solana-labs.github.io/solana/jsonrpc-api.html#getaccountinfo) to the cluster, using the id printed by the script, eg.:
 * `Dashboard programId: HFA4x4oZKWeGcRVbUYaCHM59i5AFfP3nCfc4NkrBvVtP`
 * `Dashboard: HmAEDrGpsRK2PkR51E9mQrKQG7Qa3iyv4SvZND9uEkdR`
 * `Advertising our game (Gx1kjBieYgaPgDhaovzvvZapUTg5Mz6nhXTLWSQJpNMv)`
