@@ -18,20 +18,25 @@ import {url} from '../../url';
 const port = process.env.PORT || 8080;
 const app = express();
 
-async function getDashboardPublicKey() {
+async function getDashboard() {
   console.log('Using', url);
   const connection = new Connection(url);
-  const dashboard = await findDashboard(connection);
-  const publicKey = dashboard.publicKey.toBase58();
-  return publicKey;
+  return await findDashboard(connection);
 }
 
 app.get('/config.json', async (req, res) => {
   console.log('findDashboard request');
   try {
-    const publicKey = await getDashboardPublicKey();
-    console.log('findDashboard:', publicKey);
-    res.send(JSON.stringify({publicKey})).end();
+    const dashboard = await getDashboard();
+    res
+      .send(
+        JSON.stringify({
+          secretKey: Buffer.from(
+            dashboard._dashboardAccount.secretKey,
+          ).toString('hex'),
+        }),
+      )
+      .end();
   } catch (err) {
     console.log('findDashboard failed:', err);
     res.status(500).end();
@@ -44,7 +49,8 @@ async function loadDashboard() {
   for (;;) {
     try {
       console.log('loading dashboard');
-      const publicKey = await getDashboardPublicKey();
+      const dashboard = await getDashboard();
+      const publicKey = dashboard.publicKey.toBase58();
       console.log('dashboard loaded:', publicKey);
       return;
     } catch (err) {
