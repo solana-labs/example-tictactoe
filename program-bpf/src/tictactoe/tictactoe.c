@@ -229,30 +229,27 @@ SOL_FN_PREFIX bool fund_next_move(SolKeyedAccount *dashboard_ka, SolKeyedAccount
 
 extern bool entrypoint(const uint8_t *input) {
   SolKeyedAccount ka[3];
-  uint64_t ka_len;
-  const uint8_t *instruction_data;
-  uint64_t instruction_data_len;
-  SolClusterInfo info;
+  SolParameters params = (SolParameters) { .ka = ka };
 
   sol_log("tic-tac-toe program entrypoint");
 
-  if (!sol_deserialize(input, ka, SOL_ARRAY_SIZE(ka), &ka_len, &instruction_data, &instruction_data_len, &info)) {
+  if (!sol_deserialize(input, &params, SOL_ARRAY_SIZE(ka))) {
     sol_log("Error: deserialize failed");
     return false;
   }
 
-  if (!ka[0].is_signer) {
+  if (!params.ka[0].is_signer) {
     sol_log("Transaction not signed by key 0");
     return false;
   }
 
-  if (instruction_data_len < sizeof(uint32_t) + sizeof(CommandData)) {
+  if (params.data_len < sizeof(uint32_t) + sizeof(CommandData)) {
     sol_log("Error: invalid instruction_data_len");
-    sol_log_64(instruction_data_len, sizeof(uint32_t) + sizeof(CommandData), 0, 0, 0);
+    sol_log_64(params.data_len, sizeof(uint32_t) + sizeof(CommandData), 0, 0, 0);
     return false;
   }
-  Command const cmd = *(uint32_t *) instruction_data;
-  CommandData const *cmd_data = (CommandData *) (instruction_data + sizeof(uint32_t));
+  Command const cmd = *(uint32_t *) params.data;
+  CommandData const *cmd_data = (CommandData *) (params.data + sizeof(uint32_t));
   sol_log_64(cmd, 0, 0, 0, 0);
 
   State *dashboard_state = NULL;
@@ -260,12 +257,12 @@ extern bool entrypoint(const uint8_t *input) {
 
   if (cmd == Command_InitDashboard) {
     sol_log("Command_InitDashboard");
-    if (ka_len != 1) {
+    if (params.ka_num != 1) {
       sol_log("Error: one key expected");
       return false;
     }
 
-    if (!state_deserialize(&ka[0], &dashboard_state, &dashboard_state_data)) {
+    if (!state_deserialize(&params.ka[0], &dashboard_state, &dashboard_state_data)) {
       return false;
     }
 
@@ -280,12 +277,12 @@ extern bool entrypoint(const uint8_t *input) {
 
   if (cmd == Command_InitPlayer) {
     sol_log("Command_InitPlayer");
-    if (ka_len != 2) {
+    if (params.ka_num != 2) {
       sol_log("Error: two keys expected");
       return false;
     }
 
-    if (!state_deserialize(&ka[0], &dashboard_state, &dashboard_state_data)) {
+    if (!state_deserialize(&params.ka[0], &dashboard_state, &dashboard_state_data)) {
       return false;
     }
 
@@ -294,19 +291,19 @@ extern bool entrypoint(const uint8_t *input) {
       return false;
     }
 
-    if (!SolPubkey_same(ka[0].owner, ka[1].owner) || ka[1].userdata_len != 0) {
+    if (!SolPubkey_same(params.ka[0].owner, params.ka[1].owner) || params.ka[1].userdata_len != 0) {
       sol_log("Invalid player account");
       return false;
     }
     // Distribute funds to the player for their next transaction
-    return fund_next_move(&ka[0], &ka[1]);
+    return fund_next_move(&params.ka[0], &params.ka[1]);
   }
-  if (ka_len != 3) {
+  if (params.ka_num != 3) {
     sol_log("Error: three keys expected");
     return false;
   }
 
-  if (!state_deserialize(&ka[1], &dashboard_state, &dashboard_state_data)) {
+  if (!state_deserialize(&params.ka[1], &dashboard_state, &dashboard_state_data)) {
     sol_log("dashboard deserialize failed");
     return false;
   }
@@ -330,28 +327,28 @@ extern bool entrypoint(const uint8_t *input) {
       return false;
     }
 
-    if (!SolPubkey_same(ka[0].owner, ka[2].owner) || ka[2].userdata_len != 0) {
+    if (!SolPubkey_same(ka[0].owner, params.ka[2].owner) ||params.ka[2].userdata_len != 0) {
       sol_log("Invalid player account");
       return false;
     }
 
     *game_state = State_Game;
-    SolPubkey *player_x = ka[2].key;
-    game_create(&game_state_data->game, player_x, info.tick_height);
+    SolPubkey *player_x = params.ka[2].key;
+    game_create(&game_state_data->game, player_x, params.tick_height);
 
     dashboard_update(
       &dashboard_state_data->dashboard,
-      ka[0].key,
+      params.ka[0].key,
       &game_state_data->game,
-      info.tick_height
+      params.tick_height
     );
 
     // Distribute funds to the player for their next transaction, and to the
     // game account to keep it's state loaded
-    return fund_next_move(&ka[1], &ka[0]) && fund_next_move(&ka[1], &ka[2]);
+    return fund_next_move(&params.ka[1], &params.ka[0]) && fund_next_move(&ka[1], &params.ka[2]);
   }
 
-  if (!state_deserialize(&ka[2], &game_state, &game_state_data)) {
+  if (!state_deserialize(&params.ka[2], &game_state, &game_state_data)) {
     sol_log("game deserialize failed");
     return false;
   }
@@ -361,12 +358,12 @@ extern bool entrypoint(const uint8_t *input) {
     return false;
   }
 
-  if (!SolPubkey_same(ka[0].owner, ka[1].owner) || ka[0].userdata_len != 0) {
+  if (!SolPubkey_same(params.ka[0].owner, params.ka[1].owner) || params.ka[0].userdata_len != 0) {
     sol_log("Invalid player account");
     return false;
   }
 
-  SolPubkey *player = ka[0].key;
+  SolPubkey *player = params.ka[0].key;
   switch (cmd) {
   case Command_Advertise:
     sol_log("Command_Advertise");
@@ -374,7 +371,7 @@ extern bool entrypoint(const uint8_t *input) {
     break;
   case Command_Join:
     sol_log("Command_Join");
-    game_join(&game_state_data->game, player, info.tick_height);
+    game_join(&game_state_data->game, player, params.tick_height);
     break;
   case Command_Move:
     sol_log("Command_Move");
@@ -385,7 +382,7 @@ extern bool entrypoint(const uint8_t *input) {
     break;
   case Command_KeepAlive:
     sol_log("Command_KeepAlive");
-    if (!game_keep_alive(&game_state_data->game, player, info.tick_height)) {
+    if (!game_keep_alive(&game_state_data->game, player, params.tick_height)) {
       return false;
     }
     break;
@@ -396,11 +393,11 @@ extern bool entrypoint(const uint8_t *input) {
 
   dashboard_update(
     &dashboard_state_data->dashboard,
-    ka[2].key,
+    params.ka[2].key,
     &game_state_data->game,
-    info.tick_height
+    params.tick_height
   );
 
   // Distribute funds to the player for their next transaction
-  return fund_next_move(&ka[1], &ka[0]);
+  return fund_next_move(&params.ka[1], &params.ka[0]);
 }

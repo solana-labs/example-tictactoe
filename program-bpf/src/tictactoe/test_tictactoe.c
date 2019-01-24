@@ -1,5 +1,5 @@
 #include <criterion/criterion.h>
-#include "../src/tictactoe.c"
+#include "tictactoe.c"
 
 static Game game = {};
 static SolPubkey player_x = {.x = {1,}};
