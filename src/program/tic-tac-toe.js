@@ -117,7 +117,7 @@ export class TicTacToe {
   }
 
   /**
-   * Creates a new game, costing playerX 1 token
+   * Creates a new game, costing playerX 1 lamport
    */
   static async create(
     connection: Connection,

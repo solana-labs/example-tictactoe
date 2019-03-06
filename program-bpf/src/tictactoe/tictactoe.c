@@ -213,16 +213,16 @@ SOL_FN_PREFIX void dashboard_update(
 
 SOL_FN_PREFIX bool fund_next_move(SolKeyedAccount *dashboard_ka, SolKeyedAccount *ka) {
   sol_log("fund_next_move");
-  sol_log_64(*(dashboard_ka->tokens), *(ka->tokens), 0, 0, 0);
-  if (*ka->tokens != 0) {
-    sol_log("Player still has tokens");
-  } else if (*dashboard_ka->tokens <= 1) {
-    sol_log("Dashboard is out of tokens");
+  sol_log_64(*(dashboard_ka->lamports), *(ka->lamports), 0, 0, 0);
+  if (*ka->lamports != 0) {
+    sol_log("Player still has lamports");
+  } else if (*dashboard_ka->lamports <= 1) {
+    sol_log("Dashboard is out of lamports");
     return false;
   } else {
-    *(ka->tokens) += 1;
-    *(dashboard_ka->tokens) -= 1;
-    sol_log_64(*(dashboard_ka->tokens), *(ka->tokens), 0, 0, 0);
+    *(ka->lamports) += 1;
+    *(dashboard_ka->lamports) -= 1;
+    sol_log_64(*(dashboard_ka->lamports), *(ka->lamports), 0, 0, 0);
   }
   return true;
 }

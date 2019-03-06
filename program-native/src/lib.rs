@@ -41,15 +41,15 @@ fn fund_next_move(
     dashboard_index: usize,
     user_or_game_index: usize,
 ) -> Result<()> {
-    if info[dashboard_index].account.tokens <= 1 {
-        error!("Dashboard is out of tokens");
+    if info[dashboard_index].account.lamports <= 1 {
+        error!("Dashboard is out of lamports");
         Err(ProgramError::InvalidInput)
     } else {
-        if info[user_or_game_index].account.tokens != 0 {
-            debug!("user_or_game still has tokens");
+        if info[user_or_game_index].account.lamports != 0 {
+            debug!("user_or_game still has lamports");
         } else {
-            info[user_or_game_index].account.tokens += 1;
-            info[dashboard_index].account.tokens -= 1;
+            info[user_or_game_index].account.lamports += 1;
+            info[dashboard_index].account.lamports -= 1;
         }
         Ok(())
     }

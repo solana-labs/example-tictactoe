@@ -70,15 +70,15 @@ export class TicTacToeDashboard {
     connection: Connection,
     programId: PublicKey,
   ): Promise<TicTacToeDashboard> {
-    const tokens = 1000;
-    const tempAccount = await newSystemAccountWithAirdrop(connection, tokens);
+    const lamports = 1000;
+    const tempAccount = await newSystemAccountWithAirdrop(connection, lamports);
 
     const dashboardAccount = new Account();
 
     const transaction = SystemProgram.createAccount(
       tempAccount.publicKey,
       dashboardAccount.publicKey,
-      tokens - 1,
+      lamports - 1,
       255, // userdata space
       programId,
     );
