@@ -18,12 +18,12 @@ mod simple_serde;
 
 use program_command::Command;
 use program_state::State;
-use result::{ProgramError, Result};
+use result::{ProgramError, Result as ProgramResult};
 use simple_serde::SimpleSerde;
 use solana_sdk::account::KeyedAccount;
 use solana_sdk::pubkey::Pubkey;
 
-fn xpect_n_accounts(info: &mut [KeyedAccount], n: usize) -> Result<()> {
+fn expect_n_accounts(info: &mut [KeyedAccount], n: usize) -> ProgramResult<()> {
     if info.len() < n {
         error!(
             "Error: Expected at least {} accounts, received {}",
@@ -40,7 +40,7 @@ fn fund_next_move(
     info: &mut [KeyedAccount],
     dashboard_index: usize,
     user_or_game_index: usize,
-) -> Result<()> {
+) -> ProgramResult<()> {
     if info[dashboard_index].account.lamports <= 1 {
         error!("Dashboard is out of lamports");
         Err(ProgramError::InvalidInput)
@@ -55,7 +55,7 @@ fn fund_next_move(
     }
 }
 
-fn process_instruction(info: &mut [KeyedAccount], input: &[u8], tick_height: u64) -> Result<()> {
+fn process_instruction(info: &mut [KeyedAccount], input: &[u8], tick_height: u64) -> ProgramResult<()> {
     let command = Command::deserialize(input)?;
     debug!("entrypoint: command={:?}", command);
 
@@ -211,19 +211,19 @@ fn entrypoint(
     keyed_accounts: &mut [KeyedAccount],
     data: &[u8],
     tick_height: u64,
-) -> bool {
+) -> Result<(), ProgramError> {
     logger::setup();
 
     if keyed_accounts[0].signer_key().is_none() {
         error!("key 0 did not sign the transaction");
-        return false;
+        return Err(ProgramError::InvalidInput);
     }
 
     match process_instruction(keyed_accounts, data, tick_height) {
         Err(err) => {
             error!("{:?}", err);
-            false
+            Err(err)
         }
-        Ok(_) => true,
+        _ => Ok(()),
     }
 }
