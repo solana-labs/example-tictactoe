@@ -35,7 +35,7 @@ class App extends React.Component {
             `Connecting to ${url}... ` + (attempt === 0 ? '' : `(#${attempt})`),
         });
         connection = new Connection(url);
-        await connection.getLastId();
+        await connection.getRecentBlockhash();
 
         this.setState({initMessage: `Connecting to dashboard...`});
 
