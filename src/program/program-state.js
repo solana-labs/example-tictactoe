@@ -39,7 +39,7 @@ export function deserializeGameState(accountInfo: AccountInfo): GameState {
     publicKeyLayout('playerO'),
     BufferLayout.seq(BufferLayout.u8(), 9, 'board'),
   ]);
-  const game = gameLayout.decode(accountInfo.userdata);
+  const game = gameLayout.decode(accountInfo.data);
   if (game.stateType != 2 /* StateType_Game */) {
     throw new Error(`Invalid game stateType: ${game.stateType}`);
   }
@@ -74,7 +74,7 @@ export function deserializeDashboardState(
     BufferLayout.u8('lastGameIndex'),
   ]);
 
-  const dashboard = dashboardLayout.decode(accountInfo.userdata);
+  const dashboard = dashboardLayout.decode(accountInfo.data);
   if (dashboard.stateType != 1 /* StateType_Dashboard */) {
     throw new Error(`Invalid dashboard stateType: ${dashboard.stateType}`);
   }

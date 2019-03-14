@@ -131,13 +131,13 @@ export class TicTacToe {
       gameAccount.publicKey,
       gameAccount.publicKey,
       0,
-      255, // userdata space
+      255, // data space
       programId,
     );
     transaction.add({
       keys: [gameAccount.publicKey, dashboard, playerXAccount.publicKey],
       programId,
-      userdata: ProgramCommand.initGame(),
+      data: ProgramCommand.initGame(),
     });
 
     await sendAndConfirmTransaction(
@@ -182,7 +182,7 @@ export class TicTacToe {
       const transaction = new Transaction().add({
         keys: [playerOAccount.publicKey, dashboard, gamePublicKey],
         programId,
-        userdata: ProgramCommand.joinGame(),
+        data: ProgramCommand.joinGame(),
       });
       await sendAndConfirmTransaction(
         'joinGame',
@@ -213,7 +213,7 @@ export class TicTacToe {
     const transaction = new Transaction().add({
       keys: [this.playerAccount.publicKey, this.dashboard, this.gamePublicKey],
       programId: this.programId,
-      userdata: ProgramCommand.keepAlive(),
+      data: ProgramCommand.keepAlive(),
     });
     await sendAndConfirmTransaction(
       'keepAlive',
@@ -237,7 +237,7 @@ export class TicTacToe {
     const transaction = new Transaction().add({
       keys: [this.playerAccount.publicKey, this.dashboard, this.gamePublicKey],
       programId: this.programId,
-      userdata: ProgramCommand.move(x, y),
+      data: ProgramCommand.move(x, y),
     });
     await sendAndConfirmTransaction(
       `move(${x + 1},${y + 1})`,

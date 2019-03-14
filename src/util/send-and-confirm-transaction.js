@@ -34,7 +34,7 @@ export async function sendAndConfirmTransaction(
       return {
         keys: i.keys.map(key => key.toBase58()),
         programId: i.programId.toBase58(),
-        userdata: '0x' + i.userdata.toString('hex'),
+        data: '0x' + i.data.toString('hex'),
       };
     }),
   };

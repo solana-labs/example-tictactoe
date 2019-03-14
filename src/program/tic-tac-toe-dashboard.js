@@ -79,13 +79,13 @@ export class TicTacToeDashboard {
       tempAccount.publicKey,
       dashboardAccount.publicKey,
       lamports - 1,
-      255, // userdata space
+      255, // data space
       programId,
     );
     transaction.add({
       keys: [dashboardAccount.publicKey],
       programId,
-      userdata: ProgramCommand.initDashboard(),
+      data: ProgramCommand.initDashboard(),
     });
     await sendAndConfirmTransaction(
       'initDashboard',
@@ -160,7 +160,7 @@ export class TicTacToeDashboard {
     transaction.add(SystemProgram.assign(playerPublicKey, this.programId), {
       keys: [this._dashboardAccount.publicKey, playerPublicKey],
       programId: this.programId,
-      userdata: ProgramCommand.initPlayer(),
+      data: ProgramCommand.initPlayer(),
     });
     transaction.signPartial(this._dashboardAccount, playerPublicKey);
     return transaction;
@@ -245,7 +245,7 @@ export class TicTacToeDashboard {
         const transaction = new Transaction().add({
           keys: [playerAccount.publicKey, this.publicKey, myGame.gamePublicKey],
           programId: this.programId,
-          userdata: ProgramCommand.advertiseGame(),
+          data: ProgramCommand.advertiseGame(),
         });
         await sendAndConfirmTransaction(
           'advertiseGame',
