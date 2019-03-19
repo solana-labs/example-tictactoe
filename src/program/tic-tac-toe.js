@@ -125,10 +125,13 @@ export class TicTacToe {
     dashboard: PublicKey,
     playerXAccount: Account,
   ): Promise<TicTacToe> {
+    const invalidAccount = new Account();
     const gameAccount = new Account();
 
     const transaction = SystemProgram.createAccount(
-      gameAccount.publicKey,
+      // The initGame instruction funds `gameAccount`, so the account here can
+      // be one with zero lamports (an invalid account)
+      invalidAccount.publicKey,
       gameAccount.publicKey,
       0,
       255, // data space
@@ -145,6 +148,7 @@ export class TicTacToe {
       connection,
       transaction,
       playerXAccount,
+      invalidAccount,
       gameAccount,
     );
 
