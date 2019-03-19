@@ -39,7 +39,11 @@ $ npx solana-localnet logs -f
 
 For more details on working with a local network, see the [full instructions](https://github.com/solana-labs/solana-web3.js#local-network).
 
-Alternatively to connect to the public testnet, `export LIVE=1` in your environment before running a front-end.
+Alternatively to connect to the public testnet, `export LIVE=1` in your
+environment.  By default `LIVE=1` will connect to the
+beta testnet.  To use the edge testnet instead define `export CHANNEL=edge' in
+your environment (see [url.js](https://github.com/solana-labs/solana/tree/master/urj.js) for more)
+
 
 ### Build the BPF C program
 ```sh
