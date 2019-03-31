@@ -57,7 +57,7 @@
     "flow-bin": "0.95.1",
     "flow-typed": "^2.5.1",
     "http-server": "^0.11.1",
-    "jayson": "^2.1.0",
+    "jayson": "^3.0.1",
     "json-to-pretty-yaml": "^1.2.2",
     "mkdirp-promise": "^5.0.1",
     "moment": "^2.22.2",
