@@ -33,6 +33,7 @@ module.exports = {
     new webpack.HotModuleReplacementPlugin(),
     new webpack.DefinePlugin({
       'process.env': {
+        TESTNET_IP: JSON.stringify(process.env.TESTNET_IP),
         LIVE: JSON.stringify(process.env.LIVE),
       },
     }),
