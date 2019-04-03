@@ -334,14 +334,11 @@ export class Game extends React.Component {
       maybeProgramId &&
       this.blockExplorerUrl + 'txns-by-prgid/' + maybeProgramId;
 
-    const maybeShortProgramId =
-      maybeProgramId && maybeProgramId.substring(0, 20) + '…';
-
     const programIdLink = !programIdBlockexplorerLink ? (
       <span />
     ) : (
       <span title={maybeProgramId}>
-        (<a href={programIdBlockexplorerLink}>{maybeShortProgramId}</a>)
+        (<a href={programIdBlockexplorerLink}>{maybeProgramId}</a>)
       </span>
     );
 
