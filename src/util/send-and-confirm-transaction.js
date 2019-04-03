@@ -4,7 +4,7 @@ import {sendAndConfirmTransaction as realSendAndConfirmTransaction} from '@solan
 import type {Account, Connection, Transaction} from '@solana/web3.js';
 import YAML from 'json-to-pretty-yaml';
 
-type TransactionNotification = (string, string) => void;
+type TransactionNotification = (string, string, Object) => void;
 
 let notify: TransactionNotification = () => undefined;
 
