@@ -262,9 +262,7 @@ export class Game extends React.Component {
     const programIdLink = this.getBlockexplorerLink();
 
     const transactions = this.state.transactions.map((tx, index) => {
-      return (
-        <TransactionEntry key={index} index={index} tx={tx} />
-      );
+      return <TransactionEntry key={index} index={index} tx={tx} />;
     });
 
     return (
@@ -324,20 +322,28 @@ export class Game extends React.Component {
   }
 
   getBlockexplorerLink() {
-    const maybeProgramId = this.state.transactions
-      && this.state.transactions[0]
-      && this.state.transactions[0].data
-      && this.state.transactions[0].data.instructions
-      && this.state.transactions[0].data.instructions[0]
-      && this.state.transactions[0].data.instructions[0].programId;
+    const maybeProgramId =
+      this.state.transactions &&
+      this.state.transactions[0] &&
+      this.state.transactions[0].data &&
+      this.state.transactions[0].data.instructions &&
+      this.state.transactions[0].data.instructions[0] &&
+      this.state.transactions[0].data.instructions[0].programId;
 
-    const programIdBlockexplorerLink = maybeProgramId
-      && this.blockExplorerUrl + 'txns-by-prgid/' + maybeProgramId;
+    const programIdBlockexplorerLink =
+      maybeProgramId &&
+      this.blockExplorerUrl + 'txns-by-prgid/' + maybeProgramId;
 
-    const maybeShortProgramId = maybeProgramId && maybeProgramId.substring(0, 20) + '…';
+    const maybeShortProgramId =
+      maybeProgramId && maybeProgramId.substring(0, 20) + '…';
 
-    const programIdLink = !programIdBlockexplorerLink ? (<span />) :
-      (<span title={maybeProgramId}>(<a href={programIdBlockexplorerLink}>{maybeShortProgramId}</a>)</span>);
+    const programIdLink = !programIdBlockexplorerLink ? (
+      <span />
+    ) : (
+      <span title={maybeProgramId}>
+        (<a href={programIdBlockexplorerLink}>{maybeShortProgramId}</a>)
+      </span>
+    );
 
     return programIdLink;
   }
