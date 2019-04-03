@@ -34,6 +34,7 @@ module.exports = {
     new webpack.DefinePlugin({
       'process.env': {
         TESTNET_IP: JSON.stringify(process.env.TESTNET_IP),
+        BLOCKSTREAM_IP: JSON.stringify(process.env.BLOCKSTREAM_IP),
         LIVE: JSON.stringify(process.env.LIVE),
       },
     }),

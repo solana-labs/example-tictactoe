@@ -16,13 +16,13 @@ import PropTypes from 'prop-types';
 import {TicTacToe} from '../program/tic-tac-toe';
 import {Board} from './Board';
 import {onTransaction} from '../util/send-and-confirm-transaction';
-import {url} from '../../url';
+import {blockstreamUrl} from '../../url';
 
 export class Game extends React.Component {
   constructor(props) {
     super(props);
     // FIXME: implicitly use port 80 for now
-    this.blockExplorerUrl = url.replace(/:\d+$/, '/');
+    this.blockExplorerUrl = blockstreamUrl.replace(/:\d+$/, '/');
     this.recentGameState = {};
     this.state = {
       completedGames: [],
