@@ -2,7 +2,7 @@
  * Primary React component for the Game.
  */
 
-import moment from 'moment';
+// import moment from 'moment';
 import React from 'react';
 import {
   Button,
@@ -16,10 +16,13 @@ import PropTypes from 'prop-types';
 import {TicTacToe} from '../program/tic-tac-toe';
 import {Board} from './Board';
 import {onTransaction} from '../util/send-and-confirm-transaction';
+import {url} from '../../url';
 
 export class Game extends React.Component {
   constructor(props) {
     super(props);
+    // FIXME: implicitly use port 80 for now
+    this.blockExplorerUrl = url.replace(/:\d+$/, '/');
     this.recentGameState = {};
     this.state = {
       completedGames: [],
@@ -32,14 +35,14 @@ export class Game extends React.Component {
     };
   }
 
-  onTransaction = (title: string, body: string) => {
+  onTransaction = (title: string, body: string, data: string) => {
     const {pause, transactions, totalTransactions} = this.state;
 
     if (pause) {
       return;
     }
 
-    transactions.unshift({title, body});
+    transactions.unshift({title, body, data});
     while (transactions.length > 100) {
       transactions.pop();
     }
@@ -209,17 +212,19 @@ export class Game extends React.Component {
                   default:
                     break;
                 }
-                const lastMove = new Date(Math.max(...game.keepAlive));
+                // const lastMove = new Date(Math.max(...game.keepAlive));
                 return (
                   <Carousel.Item key={i}>
                     <div align="center">
                       <h3>{gameState}</h3>
                       <p>
+                        {/* FIXME: impl tick -> epoch millis
                         <i>
                           {lastMove.getSeconds() === 0
                             ? ''
                             : moment(lastMove).fromNow()}
                         </i>
+                        */}
                       </p>
                       <Board
                         disabled={true}
@@ -254,16 +259,11 @@ export class Game extends React.Component {
       );
     }
 
+    const programIdLink = this.getBlockexplorerLink();
+
     const transactions = this.state.transactions.map((tx, index) => {
       return (
-        <Panel eventKey={index} key={index}>
-          <Panel.Heading>
-            <Panel.Title toggle>{tx.title}</Panel.Title>
-          </Panel.Heading>
-          <Panel.Body>
-            <pre>{tx.body}</pre>
-          </Panel.Body>
-        </Panel>
+        <TransactionEntry key={index} index={index} tx={tx} />
       );
     });
 
@@ -271,7 +271,7 @@ export class Game extends React.Component {
       <div>
         <Panel>
           <Panel.Heading>
-            <Panel.Title>Current Game</Panel.Title>
+            <Panel.Title>Current Game {programIdLink}</Panel.Title>
           </Panel.Heading>
           <Panel.Body>
             <div align="center">
@@ -322,8 +322,50 @@ export class Game extends React.Component {
       </div>
     );
   }
+
+  getBlockexplorerLink() {
+    const maybeProgramId = this.state.transactions
+      && this.state.transactions[0]
+      && this.state.transactions[0].data
+      && this.state.transactions[0].data.instructions
+      && this.state.transactions[0].data.instructions[0]
+      && this.state.transactions[0].data.instructions[0].programId;
+
+    const programIdBlockexplorerLink = maybeProgramId
+      && this.blockExplorerUrl + 'txns-by-prgid/' + maybeProgramId;
+
+    const maybeShortProgramId = maybeProgramId && maybeProgramId.substring(0, 20) + '…';
+
+    const programIdLink = !programIdBlockexplorerLink ? (<span />) :
+      (<span title={maybeProgramId}>(<a href={programIdBlockexplorerLink}>{maybeShortProgramId}</a>)</span>);
+
+    return programIdLink;
+  }
 }
+
+class TransactionEntry extends React.Component {
+  render() {
+    const {index, tx} = this.props;
+
+    return (
+      <Panel eventKey={index}>
+        <Panel.Heading>
+          <Panel.Title toggle>{tx.title}</Panel.Title>
+        </Panel.Heading>
+        <Panel.Body>
+          <pre>{tx.body}</pre>
+        </Panel.Body>
+      </Panel>
+    );
+  }
+}
+
+TransactionEntry.propTypes = {
+  tx: PropTypes.object,
+  index: PropTypes.number,
+};
+
 Game.propTypes = {
   dashboard: PropTypes.object, // TicTacToeDashboard
-  reconnect: PropTypes.funciton,
+  reconnect: PropTypes.function,
 };
