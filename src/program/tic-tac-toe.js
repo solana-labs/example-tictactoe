@@ -138,7 +138,11 @@ export class TicTacToe {
       programId,
     );
     transaction.add({
-      keys: [gameAccount.publicKey, dashboard, playerXAccount.publicKey],
+      keys: [
+        {pubkey: gameAccount.publicKey, isSigner: true},
+        {pubkey: dashboard, isSigner: true},
+        {pubkey: playerXAccount.publicKey, isSigner: true},
+      ],
       programId,
       data: ProgramCommand.initGame(),
     });
@@ -184,7 +188,11 @@ export class TicTacToe {
     );
     {
       const transaction = new Transaction().add({
-        keys: [playerOAccount.publicKey, dashboard, gamePublicKey],
+        keys: [
+          {pubkey: playerOAccount.publicKey, isSigner: true},
+          {pubkey: dashboard, isSigner: false},
+          {pubkey: gamePublicKey, isSigner: false},
+        ],
         programId,
         data: ProgramCommand.joinGame(),
       });
@@ -215,7 +223,11 @@ export class TicTacToe {
    */
   async keepAlive(): Promise<void> {
     const transaction = new Transaction().add({
-      keys: [this.playerAccount.publicKey, this.dashboard, this.gamePublicKey],
+      keys: [
+        {pubkey: this.playerAccount.publicKey, isSigner: true},
+        {pubkey: this.dashboard, isSigner: false},
+        {pubkey: this.gamePublicKey, isSigner: false},
+      ],
       programId: this.programId,
       data: ProgramCommand.keepAlive(),
     });
@@ -239,7 +251,11 @@ export class TicTacToe {
    */
   async move(x: number, y: number): Promise<void> {
     const transaction = new Transaction().add({
-      keys: [this.playerAccount.publicKey, this.dashboard, this.gamePublicKey],
+      keys: [
+        {pubkey: this.playerAccount.publicKey, isSigner: true},
+        {pubkey: this.dashboard, isSigner: false},
+        {pubkey: this.gamePublicKey, isSigner: false},
+      ],
       programId: this.programId,
       data: ProgramCommand.move(x, y),
     });
