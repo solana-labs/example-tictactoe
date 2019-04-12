@@ -32,7 +32,7 @@ export async function sendAndConfirmTransaction(
     signature,
     instructions: transaction.instructions.map(i => {
       return {
-        keys: i.keys.map(key => key.toBase58()),
+        keys: i.keys.map(keyObj => keyObj.pubkey.toBase58()),
         programId: i.programId.toBase58(),
         data: '0x' + i.data.toString('hex'),
       };
