@@ -29,6 +29,7 @@ export class TicTacToe {
   myTurn: boolean;
   draw: boolean;
   winner: boolean;
+  keepAliveCache: [number, number];
   _keepAliveErrorCount: number;
 
   _ee: EventEmitter;
@@ -69,6 +70,7 @@ export class TicTacToe {
       dashboard,
       state,
       winner: false,
+      keepAliveCache: [0, 0],
       _keepAliveErrorCount: 0,
     });
   }
@@ -291,7 +293,19 @@ export class TicTacToe {
    * @private
    */
   _onAccountChange(accountInfo: AccountInfo) {
-    this.state = deserializeGameState(accountInfo);
+    let tempState = deserializeGameState(accountInfo);
+    if (
+      (tempState.keepAlive[0] > 0 &&
+        this.keepAliveCache[0] > tempState.keepAlive[0]) ||
+      (tempState.keepAlive[1] > 0 &&
+        this.keepAliveCache[1] > tempState.keepAlive[1])
+    ) {
+      return;
+    } else {
+      this.keepAliveCache = tempState.keepAlive;
+      this.state = tempState;
+    }
+
     this.inProgress = false;
     this.myTurn = false;
     this.draw = false;
