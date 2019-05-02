@@ -12,12 +12,12 @@ import {newSystemAccountWithAirdrop} from '../util/new-system-account-with-airdr
 /**
  * Obtain the Dashboard singleton object
  */
-export async function findDashboard(
-  connection: Connection,
-): Promise<TicTacToeDashboard> {
+export async function findDashboard(): Promise<Object> {
   const store = new Store();
   let native = !!process.env.NATIVE;
 
+  console.log('Using', url);
+  const connection = new Connection(url);
   try {
     const config = await store.load('../../../dist/config.json');
     if (config.native === native) {
@@ -25,7 +25,7 @@ export async function findDashboard(
         connection,
         new Account(Buffer.from(config.secretKey, 'hex')),
       );
-      return dashboard;
+      return {dashboard, connection};
     }
   } catch (err) {
     console.log('findDashboard:', err.message);
@@ -66,20 +66,19 @@ export async function findDashboard(
 
   const dashboard = await TicTacToeDashboard.create(connection, programId);
   await store.save('../../../dist/config.json', {
+    url,
     native,
     secretKey: Buffer.from(dashboard._dashboardAccount.secretKey).toString(
       'hex',
     ),
   });
-  return dashboard;
+  return {dashboard, connection};
 }
 
 if (require.main === module) {
-  console.log('Using', url);
-  const connection = new Connection(url);
-  findDashboard(connection)
-    .then(dashboard => {
-      console.log('Dashboard:', dashboard.publicKey.toBase58());
+  findDashboard()
+    .then(ret => {
+      console.log('Dashboard:', ret.dashboard.publicKey.toBase58());
     })
     .then(process.exit)
     .catch(console.error)

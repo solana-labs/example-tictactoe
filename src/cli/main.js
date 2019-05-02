@@ -4,9 +4,7 @@
  * @flow
  */
 import readline from 'readline-promise';
-import {Connection} from '@solana/web3.js';
 
-import {url} from '../../url';
 import {sleep} from '../util/sleep';
 import {TicTacToe} from '../program/tic-tac-toe';
 import type {Board} from '../program/program-state';
@@ -22,18 +20,17 @@ function renderBoard(board: Board): string {
   ].join('\n');
 }
 
-async function main(url: string) {
+async function main() {
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
     terminal: true,
   });
 
-  rl.write(`Connecting to network: ${url}...\n`);
-  const connection = new Connection(url);
+  rl.write(`Connecting to network...\n`);
 
   // Create/load the game dashboard
-  const dashboard = await findDashboard(connection);
+  const {dashboard, connection} = await findDashboard();
   rl.write(`Dashboard: ${dashboard.publicKey.toBase58()}\n`);
 
   rl.write(`Total games played: ${dashboard.state.totalGames}\n\n`);
@@ -119,7 +116,7 @@ async function main(url: string) {
   }
 }
 
-main(url)
+main()
   .catch(err => {
     console.error(err);
   })

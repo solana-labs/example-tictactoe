@@ -8,7 +8,6 @@ import bodyParser from 'body-parser';
 import express from 'express';
 import jayson from 'jayson';
 import path from 'path';
-import {Connection} from '@solana/web3.js';
 import {struct} from 'superstruct';
 
 import {findDashboard} from './config';
@@ -19,9 +18,8 @@ const port = process.env.PORT || 8080;
 const app = express();
 
 async function getDashboard() {
-  console.log('Using', url);
-  const connection = new Connection(url);
-  return await findDashboard(connection);
+  const ret = await findDashboard();
+  return ret.dashboard;
 }
 
 app.get('/config.json', async (req, res) => {
@@ -31,6 +29,7 @@ app.get('/config.json', async (req, res) => {
     res
       .send(
         JSON.stringify({
+          url,
           secretKey: Buffer.from(
             dashboard._dashboardAccount.secretKey,
           ).toString('hex'),

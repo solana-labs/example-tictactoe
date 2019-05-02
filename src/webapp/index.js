@@ -9,7 +9,6 @@ import {Connection, Account} from '@solana/web3.js';
 
 import {Game} from './Game';
 import {TicTacToeDashboard} from '../program/tic-tac-toe-dashboard';
-import {url} from '../../url';
 import {sleep} from '../util/sleep';
 
 class App extends React.Component {
@@ -30,13 +29,6 @@ class App extends React.Component {
 
     for (;;) {
       try {
-        this.setState({
-          initMessage:
-            `Connecting to ${url}... ` + (attempt === 0 ? '' : `(#${attempt})`),
-        });
-        connection = new Connection(url);
-        await connection.getRecentBlockhash();
-
         this.setState({initMessage: `Connecting to dashboard...`});
 
         // Load the dashboard account from the server so it remains the
@@ -44,6 +36,15 @@ class App extends React.Component {
         const configUrl = window.location.origin + '/config.json';
         const response = await fetch(configUrl);
         const config = await response.json();
+
+        const url = config.url;
+
+        this.setState({
+          initMessage:
+            `Connecting to ${url}... ` + (attempt === 0 ? '' : `(#${attempt})`),
+        });
+        connection = new Connection(url);
+        await connection.getRecentBlockhash();
 
         this.setState({initMessage: `Loading dashboard state...`});
         const dashboard = await TicTacToeDashboard.connect(
