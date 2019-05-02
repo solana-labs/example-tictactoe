@@ -2,15 +2,8 @@
  * Primary React component for the Game.
  */
 
-import moment from 'moment';
 import React from 'react';
-import {
-  Button,
-  ButtonGroup,
-  Carousel,
-  Panel,
-  PanelGroup,
-} from 'react-bootstrap';
+import {Button, ButtonGroup, Panel, PanelGroup} from 'react-bootstrap';
 import PropTypes from 'prop-types';
 
 import {TicTacToe} from '../program/tic-tac-toe';
@@ -22,11 +15,9 @@ export class Game extends React.Component {
     super(props);
     this.recentGameState = {};
     this.state = {
-      completedGames: [],
       currentGame: null,
       currentGameStatusMessage: '',
       pause: false,
-      totalGames: 0,
       transactions: [],
       totalTransactions: 0,
     };
@@ -180,13 +171,9 @@ export class Game extends React.Component {
   }
 
   render() {
-    const {
-      completedGames,
-      currentGame,
-      currentGameStatusMessage,
-      totalGames,
-    } = this.state;
+    const {currentGame, currentGameStatusMessage} = this.state;
 
+    /*
     const gameHistory =
       completedGames.length === 0 ? (
         <i>None</i>
@@ -235,6 +222,7 @@ export class Game extends React.Component {
           </Panel.Body>
         </Panel>
       );
+    */
 
     let playAgain = null;
     if (currentGame && !currentGame.inProgress) {
@@ -289,7 +277,6 @@ export class Game extends React.Component {
             {playAgain}
           </Panel.Body>
         </Panel>
-        {gameHistory}
         <Panel>
           <Panel.Heading>
             <Panel.Title>
