@@ -31,7 +31,7 @@ export async function findDashboard(): Promise<Object> {
     console.log('findDashboard:', err.message);
   }
 
-  const loaderAccount = await newSystemAccountWithAirdrop(connection, 123);
+  const loaderAccount = await newSystemAccountWithAirdrop(connection, 1000000);
 
   let programId;
   if (native) {

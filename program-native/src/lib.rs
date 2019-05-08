@@ -48,14 +48,21 @@ fn fund_next_move(
         if info[user_or_game_index].account.lamports != 0 {
             debug!("user_or_game still has lamports");
         } else {
-            info[user_or_game_index].account.lamports += 1;
-            info[dashboard_index].account.lamports -= 1;
+            // TODO: the fee to charge may be dynamic based on the FeeCalculator and
+            //       instead probably needs to be passed in as an argument somehow
+            let fee = 3;
+            info[user_or_game_index].account.lamports += fee;
+            info[dashboard_index].account.lamports -= fee;
         }
         Ok(())
     }
 }
 
-fn process_instruction(info: &mut [KeyedAccount], input: &[u8], tick_height: u64) -> ProgramResult<()> {
+fn process_instruction(
+    info: &mut [KeyedAccount],
+    input: &[u8],
+    tick_height: u64,
+) -> ProgramResult<()> {
     let command = Command::deserialize(input)?;
     debug!("entrypoint: command={:?}", command);
 

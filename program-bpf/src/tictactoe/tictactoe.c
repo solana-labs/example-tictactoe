@@ -220,8 +220,11 @@ SOL_FN_PREFIX bool fund_next_move(SolKeyedAccount *dashboard_ka, SolKeyedAccount
     sol_log("Dashboard is out of lamports");
     return false;
   } else {
-    *(ka->lamports) += 1;
-    *(dashboard_ka->lamports) -= 1;
+    // TODO: the fee to charge may be dynamic based on the FeeCalculator and
+    //       instead probably needs to be passed in as an argument somehow
+    int fee = 3;
+    *(ka->lamports) += fee;
+    *(dashboard_ka->lamports) -= fee;
     sol_log_64(*(dashboard_ka->lamports), *(ka->lamports), 0, 0, 0);
   }
   return true;
