@@ -226,7 +226,11 @@ export class TicTacToe {
   async keepAlive(): Promise<void> {
     const transaction = new Transaction().add({
       keys: [
-        {pubkey: this.playerAccount.publicKey, isSigner: true, isDebitable: true},
+        {
+          pubkey: this.playerAccount.publicKey,
+          isSigner: true,
+          isDebitable: true,
+        },
         {pubkey: this.dashboard, isSigner: false, isDebitable: true},
         {pubkey: this.gamePublicKey, isSigner: false, isDebitable: true},
       ],
@@ -254,7 +258,11 @@ export class TicTacToe {
   async move(x: number, y: number): Promise<void> {
     const transaction = new Transaction().add({
       keys: [
-        {pubkey: this.playerAccount.publicKey, isSigner: true, isDebitable: true},
+        {
+          pubkey: this.playerAccount.publicKey,
+          isSigner: true,
+          isDebitable: true,
+        },
         {pubkey: this.dashboard, isSigner: false, isDebitable: true},
         {pubkey: this.gamePublicKey, isSigner: false, isDebitable: true},
       ],

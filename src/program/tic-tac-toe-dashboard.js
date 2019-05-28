@@ -87,7 +87,9 @@ export class TicTacToeDashboard {
       programId,
     );
     transaction.add({
-      keys: [{pubkey: dashboardAccount.publicKey, isSigner: true, isDebitable: true}],
+      keys: [
+        {pubkey: dashboardAccount.publicKey, isSigner: true, isDebitable: true},
+      ],
       programId,
       data: ProgramCommand.initDashboard(),
     });
@@ -163,7 +165,11 @@ export class TicTacToeDashboard {
     let transaction = new Transaction({recentBlockhash});
     transaction.add(SystemProgram.assign(playerPublicKey, this.programId), {
       keys: [
-        {pubkey: this._dashboardAccount.publicKey, isSigner: true, isDebitable: true},
+        {
+          pubkey: this._dashboardAccount.publicKey,
+          isSigner: true,
+          isDebitable: true,
+        },
         {pubkey: playerPublicKey, isSigner: true, isDebitable: true},
       ],
       programId: this.programId,
@@ -261,7 +267,11 @@ export class TicTacToeDashboard {
         );
         const transaction = new Transaction().add({
           keys: [
-            {pubkey: playerAccount.publicKey, isSigner: true, isDebitable: true},
+            {
+              pubkey: playerAccount.publicKey,
+              isSigner: true,
+              isDebitable: true,
+            },
             {pubkey: this.publicKey, isSigner: false, isDebitable: true},
             {pubkey: myGame.gamePublicKey, isSigner: false, isDebitable: true},
           ],
