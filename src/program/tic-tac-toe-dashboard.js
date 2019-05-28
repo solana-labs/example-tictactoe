@@ -72,7 +72,10 @@ export class TicTacToeDashboard {
   ): Promise<TicTacToeDashboard> {
     const lamports = 10000;
     const fee = 10; // TODO: use FeeCalculator to properly account for the transaction fee
-    const tempAccount = await newSystemAccountWithAirdrop(connection, lamports + fee);
+    const tempAccount = await newSystemAccountWithAirdrop(
+      connection,
+      lamports + fee,
+    );
 
     const dashboardAccount = new Account();
 
@@ -166,7 +169,17 @@ export class TicTacToeDashboard {
       programId: this.programId,
       data: ProgramCommand.initPlayer(),
     });
-    transaction.signPartial(this._dashboardAccount, playerPublicKey);
+
+    const payerAccount = await newSystemAccountWithAirdrop(
+      this.connection,
+      10, // TODO: use FeeCalculator to properly account for the transaction fee
+    );
+
+    transaction.signPartial(
+      payerAccount,
+      this._dashboardAccount,
+      playerPublicKey,
+    );
     return transaction;
   }
 
