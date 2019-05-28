@@ -72,7 +72,10 @@ export class TicTacToeDashboard {
   ): Promise<TicTacToeDashboard> {
     const lamports = 10000;
     const fee = 10; // TODO: use FeeCalculator to properly account for the transaction fee
-    const tempAccount = await newSystemAccountWithAirdrop(connection, lamports + fee);
+    const tempAccount = await newSystemAccountWithAirdrop(
+      connection,
+      lamports + fee,
+    );
 
     const dashboardAccount = new Account();
 
@@ -84,7 +87,7 @@ export class TicTacToeDashboard {
       programId,
     );
     transaction.add({
-      keys: [{pubkey: dashboardAccount.publicKey, isSigner: true}],
+      keys: [{pubkey: dashboardAccount.publicKey, isSigner: true, isDebitable: true}],
       programId,
       data: ProgramCommand.initDashboard(),
     });
@@ -160,13 +163,23 @@ export class TicTacToeDashboard {
     let transaction = new Transaction({recentBlockhash});
     transaction.add(SystemProgram.assign(playerPublicKey, this.programId), {
       keys: [
-        {pubkey: this._dashboardAccount.publicKey, isSigner: true},
-        {pubkey: playerPublicKey, isSigner: true},
+        {pubkey: this._dashboardAccount.publicKey, isSigner: true, isDebitable: true},
+        {pubkey: playerPublicKey, isSigner: true, isDebitable: true},
       ],
       programId: this.programId,
       data: ProgramCommand.initPlayer(),
     });
-    transaction.signPartial(this._dashboardAccount, playerPublicKey);
+
+    const payerAccount = await newSystemAccountWithAirdrop(
+      this.connection,
+      10, // TODO: use FeeCalculator to properly account for the transaction fee
+    );
+
+    transaction.signPartial(
+      payerAccount,
+      this._dashboardAccount,
+      playerPublicKey,
+    );
     return transaction;
   }
 
@@ -248,9 +261,9 @@ export class TicTacToeDashboard {
         );
         const transaction = new Transaction().add({
           keys: [
-            {pubkey: playerAccount.publicKey, isSigner: true},
-            {pubkey: this.publicKey, isSigner: false},
-            {pubkey: myGame.gamePublicKey, isSigner: false},
+            {pubkey: playerAccount.publicKey, isSigner: true, isDebitable: true},
+            {pubkey: this.publicKey, isSigner: false, isDebitable: true},
+            {pubkey: myGame.gamePublicKey, isSigner: false, isDebitable: true},
           ],
           programId: this.programId,
           data: ProgramCommand.advertiseGame(),

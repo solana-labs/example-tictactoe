@@ -24,20 +24,20 @@ $ npm install
 ```
 
 ### Select a Network
-The example connects to a local Solana network by default.
+The example connects to a local Solana cluster by default.
 
-To start a local Solana network run:
+To start a local Solana cluster run:
 ```bash
 $ npx solana-localnet update
 $ npm run localnet:up
 ```
 
-Solana network logs are available with:
+Solana cluster logs are available with:
 ```bash
-$ npx solana-localnet logs -f
+$ npm run localnet:logs
 ```
 
-For more details on working with a local network, see the [full instructions](https://github.com/solana-labs/solana-web3.js#local-network).
+For more details on working with a local cluster, see the [full instructions](https://github.com/solana-labs/solana-web3.js#local-network).
 
 Alternatively to connect to the public testnet, `export LIVE=1` in your
 environment.  By default `LIVE=1` will connect to the
