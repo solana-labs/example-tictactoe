@@ -141,9 +141,9 @@ export class TicTacToe {
     );
     transaction.add({
       keys: [
-        {pubkey: gameAccount.publicKey, isSigner: true},
-        {pubkey: dashboard, isSigner: true},
-        {pubkey: playerXAccount.publicKey, isSigner: true},
+        {pubkey: gameAccount.publicKey, isSigner: true, isDebitable: true},
+        {pubkey: dashboard, isSigner: true, isDebitable: true},
+        {pubkey: playerXAccount.publicKey, isSigner: true, isDebitable: true},
       ],
       programId,
       data: ProgramCommand.initGame(),
@@ -191,9 +191,9 @@ export class TicTacToe {
     {
       const transaction = new Transaction().add({
         keys: [
-          {pubkey: playerOAccount.publicKey, isSigner: true},
-          {pubkey: dashboard, isSigner: false},
-          {pubkey: gamePublicKey, isSigner: false},
+          {pubkey: playerOAccount.publicKey, isSigner: true, isDebitable: true},
+          {pubkey: dashboard, isSigner: false, isDebitable: true},
+          {pubkey: gamePublicKey, isSigner: false, isDebitable: true},
         ],
         programId,
         data: ProgramCommand.joinGame(),
@@ -226,9 +226,9 @@ export class TicTacToe {
   async keepAlive(): Promise<void> {
     const transaction = new Transaction().add({
       keys: [
-        {pubkey: this.playerAccount.publicKey, isSigner: true},
-        {pubkey: this.dashboard, isSigner: false},
-        {pubkey: this.gamePublicKey, isSigner: false},
+        {pubkey: this.playerAccount.publicKey, isSigner: true, isDebitable: true},
+        {pubkey: this.dashboard, isSigner: false, isDebitable: true},
+        {pubkey: this.gamePublicKey, isSigner: false, isDebitable: true},
       ],
       programId: this.programId,
       data: ProgramCommand.keepAlive(),
@@ -254,9 +254,9 @@ export class TicTacToe {
   async move(x: number, y: number): Promise<void> {
     const transaction = new Transaction().add({
       keys: [
-        {pubkey: this.playerAccount.publicKey, isSigner: true},
-        {pubkey: this.dashboard, isSigner: false},
-        {pubkey: this.gamePublicKey, isSigner: false},
+        {pubkey: this.playerAccount.publicKey, isSigner: true, isDebitable: true},
+        {pubkey: this.dashboard, isSigner: false, isDebitable: true},
+        {pubkey: this.gamePublicKey, isSigner: false, isDebitable: true},
       ],
       programId: this.programId,
       data: ProgramCommand.move(x, y),
