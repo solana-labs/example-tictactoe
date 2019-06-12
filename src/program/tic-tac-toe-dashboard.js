@@ -161,7 +161,9 @@ export class TicTacToeDashboard {
   async _requestPlayerAccountTransaction(
     playerPublicKey: PublicKey,
   ): Promise<Transaction> {
-    const recentBlockhash = await this.connection.getRecentBlockhash();
+    const [
+      recentBlockhash /*, *feeCalculator*/,
+    ] = await this.connection.getRecentBlockhash();
     let transaction = new Transaction({recentBlockhash});
     transaction.add(SystemProgram.assign(playerPublicKey, this.programId), {
       keys: [
