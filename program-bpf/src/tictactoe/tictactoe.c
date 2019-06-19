@@ -152,7 +152,7 @@ SOL_FN_PREFIX bool game_keep_alive(
           sol_log_64(tick_height, self->keep_alive[1], 0, 0, 0);
           return false;
         }
-        sol_log("Player y keep_alive");
+        sol_log("Player o keep_alive");
         sol_log_64(tick_height, 0, 0, 0, 0);
         self->keep_alive[1] = tick_height;
       } else {
