@@ -276,6 +276,11 @@ export class TicTacToeDashboard {
             },
             {pubkey: this.publicKey, isSigner: false, isDebitable: true},
             {pubkey: myGame.gamePublicKey, isSigner: false, isDebitable: true},
+            {
+              pubkey: ProgramCommand.getTickHeightPublicKey(),
+              isSigner: false,
+              isDebitable: false,
+            },
           ],
           programId: this.programId,
           data: ProgramCommand.advertiseGame(),

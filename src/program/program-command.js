@@ -6,6 +6,7 @@
  */
 
 import * as BufferLayout from 'buffer-layout';
+import {PublicKey} from '@solana/web3.js';
 
 const COMMAND_LENGTH = 6;
 
@@ -71,4 +72,11 @@ export function move(x: number, y: number): Buffer {
   const buffer = Buffer.alloc(layout.span);
   layout.encode({command: Command.Move, x, y}, buffer);
   return zeroPad(buffer);
+}
+
+/**
+ * Public key that identifies the Tick Height SysCall Account Public Key
+ */
+export function getTickHeightPublicKey(): PublicKey {
+  return new PublicKey('Sysca11TickHeight11111111111111111111111111');
 }

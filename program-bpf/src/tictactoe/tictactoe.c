@@ -231,7 +231,7 @@ SOL_FN_PREFIX bool fund_next_move(SolKeyedAccount *dashboard_ka, SolKeyedAccount
 }
 
 extern bool entrypoint(const uint8_t *input) {
-  SolKeyedAccount ka[3];
+  SolKeyedAccount ka[4];
   SolParameters params = (SolParameters) { .ka = ka };
 
   sol_log("tic-tac-toe program entrypoint");
@@ -301,7 +301,7 @@ extern bool entrypoint(const uint8_t *input) {
     // Distribute funds to the player for their next transaction
     return fund_next_move(&params.ka[0], &params.ka[1]);
   }
-  if (params.ka_num != 3) {
+  if (params.ka_num != 4) {
     sol_log("Error: three keys expected");
     return false;
   }
@@ -325,6 +325,8 @@ extern bool entrypoint(const uint8_t *input) {
       return false;
     }
 
+    uint64_t tick_height = *(uint64_t*)params.ka[3].userdata;
+
     if (*game_state != State_Uninitialized) {
       sol_log("Account is already uninitialized");
       return false;
@@ -337,13 +339,13 @@ extern bool entrypoint(const uint8_t *input) {
 
     *game_state = State_Game;
     SolPubkey *player_x = params.ka[2].key;
-    game_create(&game_state_data->game, player_x, params.tick_height);
+    game_create(&game_state_data->game, player_x, tick_height);
 
     dashboard_update(
       &dashboard_state_data->dashboard,
       params.ka[0].key,
       &game_state_data->game,
-      params.tick_height
+      tick_height
     );
 
     // Distribute funds to the player for their next transaction, and to the
@@ -355,6 +357,8 @@ extern bool entrypoint(const uint8_t *input) {
     sol_log("game deserialize failed");
     return false;
   }
+
+  uint64_t tick_height = *(uint64_t*)params.ka[3].userdata;
 
   if (*game_state != State_Game) {
     sol_log("Invalid game account");
@@ -374,7 +378,7 @@ extern bool entrypoint(const uint8_t *input) {
     break;
   case Command_Join:
     sol_log("Command_Join");
-    game_join(&game_state_data->game, player, params.tick_height);
+    game_join(&game_state_data->game, player, tick_height);
     break;
   case Command_Move:
     sol_log("Command_Move");
@@ -385,7 +389,7 @@ extern bool entrypoint(const uint8_t *input) {
     break;
   case Command_KeepAlive:
     sol_log("Command_KeepAlive");
-    if (!game_keep_alive(&game_state_data->game, player, params.tick_height)) {
+    if (!game_keep_alive(&game_state_data->game, player, tick_height)) {
       return false;
     }
     break;
@@ -398,7 +402,7 @@ extern bool entrypoint(const uint8_t *input) {
     &dashboard_state_data->dashboard,
     params.ka[2].key,
     &game_state_data->game,
-    params.tick_height
+    tick_height
   );
 
   // Distribute funds to the player for their next transaction
