@@ -11,6 +11,7 @@
     "flow:watch": "watch 'flow' . --wait=1 --ignoreDirectoryPattern=/doc/",
     "lint:watch": "watch 'npm run lint:fix' . --wait=1",
     "test": "npm run lint && npm run flow",
+    "bpf-sdk:update": "node_modules/@solana/web3.js/bin/bpf-sdk-install.sh",
     "build": "webpack --mode=production",
     "builddev": "webpack --mode=development",
     "dev": "set -ex; babel-node src/server/config; webpack-dev-server --config ./webpack.config.js --mode development",
@@ -23,7 +24,7 @@
     "localnet:down": "solana-localnet down",
     "localnet:logs": "solana-localnet logs -f",
     "pretty": "prettier --write '{,src/**/}*.js'",
-    "postinstall": "npm run build"
+    "postinstall": "npm run build; npm run bpf-sdk:update"
   },
   "keywords": [],
   "author": "",
@@ -32,7 +33,7 @@
     "prettier": "^1.14.3"
   },
   "dependencies": {
-    "@solana/web3.js": "0.15.7",
+    "@solana/web3.js": "0.16.5",
     "babel-cli": "^6.26.0",
     "babel-core": "^6.26.3",
     "babel-eslint": "^10.0.1",
