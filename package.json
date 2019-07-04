@@ -19,6 +19,7 @@
     "clean:bpf": "make -C program-bpf clean",
     "build:native": "./program-native/build.sh",
     "clean:native": "rm -rf ./program-native/target",
+    "localnet:update": "solana-localnet update",
     "localnet:up": "set -x; solana-localnet down; set -e; solana-localnet up",
     "localnet:deploy": "./program-native/deploy.sh",
     "localnet:down": "solana-localnet down",

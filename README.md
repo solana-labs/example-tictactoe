@@ -28,7 +28,7 @@ The example connects to a local Solana cluster by default.
 
 To start a local Solana cluster run:
 ```bash
-$ npx solana-localnet update
+$ npm run localnet:update
 $ npm run localnet:up
 ```
 
