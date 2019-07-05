@@ -61,7 +61,7 @@ fn fund_next_move(
 fn process_instruction(
     info: &mut [KeyedAccount],
     input: &[u8],
-    tick_height: u64,
+    current_slot: u64,
 ) -> ProgramResult<()> {
     let command = Command::deserialize(input)?;
     debug!("entrypoint: command={:?}", command);
@@ -181,9 +181,9 @@ fn process_instruction(
             let player = info[0].signer_key().unwrap();
             match command {
                 Command::Advertise => Ok(()), // Nothing to do here beyond the dashboard_update() below
-                Command::Join => game.join(*player, tick_height),
+                Command::Join => game.join(*player, current_slot),
                 Command::Move(x, y) => game.next_move(*player, x as usize, y as usize),
-                Command::KeepAlive => game.keep_alive(*player, tick_height),
+                Command::KeepAlive => game.keep_alive(*player, current_slot),
                 _ => {
                     error!("invalid command for State::Game");
                     Err(ProgramError::InvalidInput)
@@ -217,7 +217,7 @@ fn entrypoint(
     _program_id: &Pubkey,
     keyed_accounts: &mut [KeyedAccount],
     data: &[u8],
-    tick_height: u64,
+    current_slot: u64,
 ) -> Result<(), ProgramError> {
     logger::setup();
 
@@ -226,7 +226,7 @@ fn entrypoint(
         return Err(ProgramError::InvalidInput);
     }
 
-    match process_instruction(keyed_accounts, data, tick_height) {
+    match process_instruction(keyed_accounts, data, current_slot) {
         Err(err) => {
             error!("{:?}", err);
             Err(err)

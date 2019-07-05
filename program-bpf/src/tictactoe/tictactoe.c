@@ -14,16 +14,16 @@ SOL_FN_PREFIX void game_dump_board(Game *self) {
   sol_log_64(0x9, 0x9, 0x9, 0x9, 0x9);
 }
 
-SOL_FN_PREFIX void game_create(Game *self, SolPubkey *player_x, uint64_t tick_height) {
+SOL_FN_PREFIX void game_create(Game *self, SolPubkey *player_x, uint64_t current_slot) {
   // account memory is zero-initialized
   sol_memcpy(&self->player_x, player_x, sizeof(*player_x));
-  self->keep_alive[0] = tick_height;
+  self->keep_alive[0] = current_slot;
 }
 
 SOL_FN_PREFIX void game_join(
   Game *self,
   SolPubkey *player_o,
-  uint64_t tick_height
+  uint64_t current_slot
 ) {
   if (self->game_state != GameState_Waiting) {
     sol_log("Unable to join, game is not in the waiting state");
@@ -33,7 +33,7 @@ SOL_FN_PREFIX void game_join(
     self->game_state = GameState_XMove;
 
     sol_log("Game joined");
-    self->keep_alive[1] = tick_height;
+    self->keep_alive[1] = current_slot;
   }
 }
 
@@ -131,30 +131,30 @@ SOL_FN_PREFIX bool game_move(
 SOL_FN_PREFIX bool game_keep_alive(
   Game *self,
   SolPubkey *player,
-  uint64_t tick_height
+  uint64_t current_slot
 ) {
   switch (self->game_state) {
     case GameState_Waiting:
     case GameState_XMove:
     case GameState_OMove:
       if (game_same_player(player, &self->player_x)) {
-        if (tick_height <= self->keep_alive[0]) {
+        if (current_slot <= self->keep_alive[0]) {
           sol_log("Invalid player x keep_alive");
-          sol_log_64(tick_height, self->keep_alive[0], 0, 0, 0);
+          sol_log_64(current_slot, self->keep_alive[0], 0, 0, 0);
           return false;
         }
         sol_log("Player x keep_alive");
-        sol_log_64(tick_height, 0, 0, 0, 0);
-        self->keep_alive[0] = tick_height;
+        sol_log_64(current_slot, 0, 0, 0, 0);
+        self->keep_alive[0] = current_slot;
       } else if (game_same_player(player, &self->player_o)) {
-        if (tick_height <= self->keep_alive[1]) {
+        if (current_slot <= self->keep_alive[1]) {
           sol_log("Invalid player o keep_alive");
-          sol_log_64(tick_height, self->keep_alive[1], 0, 0, 0);
+          sol_log_64(current_slot, self->keep_alive[1], 0, 0, 0);
           return false;
         }
         sol_log("Player o keep_alive");
-        sol_log_64(tick_height, 0, 0, 0, 0);
-        self->keep_alive[1] = tick_height;
+        sol_log_64(current_slot, 0, 0, 0, 0);
+        self->keep_alive[1] = current_slot;
       } else {
         sol_log("Unknown player");
         return false;
@@ -172,7 +172,7 @@ SOL_FN_PREFIX void dashboard_update(
   Dashboard *self,
   SolPubkey const *game_pubkey,
   Game const *game,
-  uint64_t tick_height
+  uint64_t current_slot
 ) {
   switch (game->game_state) {
   case GameState_Waiting:
@@ -194,7 +194,7 @@ SOL_FN_PREFIX void dashboard_update(
     }
     sol_log("Adding new completed game");
 
-    // NOTE: tick_height could be used here to ensure that old games are not
+    // NOTE: current_slot could be used here to ensure that old games are not
     // being re-added and causing total to increment incorrectly.
     self->total_games += 1;
     self->latest_completed_game_index =
@@ -325,7 +325,7 @@ extern bool entrypoint(const uint8_t *input) {
       return false;
     }
 
-    uint64_t tick_height = *(uint64_t*)params.ka[3].userdata;
+    uint64_t current_slot = *(uint64_t*)params.ka[3].userdata;
 
     if (*game_state != State_Uninitialized) {
       sol_log("Account is already uninitialized");
@@ -339,13 +339,13 @@ extern bool entrypoint(const uint8_t *input) {
 
     *game_state = State_Game;
     SolPubkey *player_x = params.ka[2].key;
-    game_create(&game_state_data->game, player_x, tick_height);
+    game_create(&game_state_data->game, player_x, current_slot);
 
     dashboard_update(
       &dashboard_state_data->dashboard,
       params.ka[0].key,
       &game_state_data->game,
-      tick_height
+      current_slot
     );
 
     // Distribute funds to the player for their next transaction, and to the
@@ -358,7 +358,7 @@ extern bool entrypoint(const uint8_t *input) {
     return false;
   }
 
-  uint64_t tick_height = *(uint64_t*)params.ka[3].userdata;
+  uint64_t current_slot = *(uint64_t*)params.ka[3].userdata;
 
   if (*game_state != State_Game) {
     sol_log("Invalid game account");
@@ -378,7 +378,7 @@ extern bool entrypoint(const uint8_t *input) {
     break;
   case Command_Join:
     sol_log("Command_Join");
-    game_join(&game_state_data->game, player, tick_height);
+    game_join(&game_state_data->game, player, current_slot);
     break;
   case Command_Move:
     sol_log("Command_Move");
@@ -389,7 +389,7 @@ extern bool entrypoint(const uint8_t *input) {
     break;
   case Command_KeepAlive:
     sol_log("Command_KeepAlive");
-    if (!game_keep_alive(&game_state_data->game, player, tick_height)) {
+    if (!game_keep_alive(&game_state_data->game, player, current_slot)) {
       return false;
     }
     break;
@@ -402,7 +402,7 @@ extern bool entrypoint(const uint8_t *input) {
     &dashboard_state_data->dashboard,
     params.ka[2].key,
     &game_state_data->game,
-    tick_height
+    current_slot
   );
 
   // Distribute funds to the player for their next transaction

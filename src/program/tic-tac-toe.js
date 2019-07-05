@@ -145,7 +145,7 @@ export class TicTacToe {
         {pubkey: dashboard, isSigner: true, isDebitable: true},
         {pubkey: playerXAccount.publicKey, isSigner: true, isDebitable: true},
         {
-          pubkey: ProgramCommand.getTickHeightPublicKey(),
+          pubkey: ProgramCommand.getSyscallCurrentPublicKey(),
           isSigner: false,
           isDebitable: false,
         },
@@ -200,7 +200,7 @@ export class TicTacToe {
           {pubkey: dashboard, isSigner: false, isDebitable: true},
           {pubkey: gamePublicKey, isSigner: false, isDebitable: true},
           {
-            pubkey: ProgramCommand.getTickHeightPublicKey(),
+            pubkey: ProgramCommand.getSyscallCurrentPublicKey(),
             isSigner: false,
             isDebitable: false,
           },
@@ -244,7 +244,7 @@ export class TicTacToe {
         {pubkey: this.dashboard, isSigner: false, isDebitable: true},
         {pubkey: this.gamePublicKey, isSigner: false, isDebitable: true},
         {
-          pubkey: ProgramCommand.getTickHeightPublicKey(),
+          pubkey: ProgramCommand.getSyscallCurrentPublicKey(),
           isSigner: false,
           isDebitable: false,
         },
@@ -281,7 +281,7 @@ export class TicTacToe {
         {pubkey: this.dashboard, isSigner: false, isDebitable: true},
         {pubkey: this.gamePublicKey, isSigner: false, isDebitable: true},
         {
-          pubkey: ProgramCommand.getTickHeightPublicKey(),
+          pubkey: ProgramCommand.getSyscallCurrentPublicKey(),
           isSigner: false,
           isDebitable: false,
         },

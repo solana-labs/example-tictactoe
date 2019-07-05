@@ -77,6 +77,6 @@ export function move(x: number, y: number): Buffer {
 /**
  * Public key that identifies the Tick Height SysCall Account Public Key
  */
-export function getTickHeightPublicKey(): PublicKey {
-  return new PublicKey('Sysca11TickHeight11111111111111111111111111');
+export function getSyscallCurrentPublicKey(): PublicKey {
+  return new PublicKey('Sysca11Current11111111111111111111111111111');
 }
