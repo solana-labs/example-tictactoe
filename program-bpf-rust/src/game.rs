@@ -1,11 +1,11 @@
-use result::{ProgramError, Result};
-use solana_sdk::pubkey::Pubkey;
+use crate::result::{ProgramError, Result};
+use solana_sdk_bpf_utils::entrypoint::*;
 
 const BOARD_ITEM_FREE: u8 = 0; // Free slot
 const BOARD_ITEM_X: u8 = 1; // Player X
 const BOARD_ITEM_O: u8 = 2; // Player O
 
-#[derive(Copy, Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub enum GameState {
     Waiting,
     XMove,
@@ -21,17 +21,22 @@ impl Default for GameState {
 }
 
 #[repr(C)]
-#[derive(Debug, Default, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Game {
-    keep_alive: [u64; 2],      // Keep alive timestamp for each player
-    pub game_state: GameState, // Current state of the game
-    player_x: Pubkey,          // Player who initialized the game
-    player_o: Pubkey,          // Player who joined the game
-    board: [u8; 9],            // Tracks the player moves (BOARD_ITEM_xyz)
+    /// Keep alive timestamp for each player
+    keep_alive: [u64; 2],
+    /// Current state of the game
+    pub game_state: GameState,
+    /// Player who initialized the game
+    player_x: SolPubkey,
+    /// Player who joined the game
+    player_o: SolPubkey,
+    /// Tracks the player moves (BOARD_ITEM_xyz)
+    board: [u8; 9],
 }
 
 impl Game {
-    pub fn create(player_x: &Pubkey) -> Game {
+    pub fn create(player_x: &SolPubkey) -> Game {
         let mut game = Game::default();
         game.player_x = *player_x;
         assert_eq!(game.game_state, GameState::Waiting);
@@ -39,13 +44,13 @@ impl Game {
     }
 
     #[cfg(test)]
-    pub fn new(player_x: Pubkey, player_o: Pubkey) -> Game {
+    pub fn new(player_x: SolPubkey, player_o: SolPubkey) -> Game {
         let mut game = Game::create(&player_x);
         game.join(player_o, 1).unwrap();
         game
     }
 
-    pub fn join(self: &mut Game, player_o: Pubkey, timestamp: u64) -> Result<()> {
+    pub fn join(self: &mut Game, player_o: SolPubkey, timestamp: u64) -> Result<()> {
         if self.game_state == GameState::Waiting {
             self.player_o = player_o;
             self.game_state = GameState::XMove;
@@ -65,7 +70,7 @@ impl Game {
         triple.iter().all(|&i| i == x_or_o)
     }
 
-    pub fn next_move(self: &mut Game, player: Pubkey, x: usize, y: usize) -> Result<()> {
+    pub fn next_move(self: &mut Game, player: SolPubkey, x: usize, y: usize) -> Result<()> {
         let board_index = y * 3 + x;
         if board_index >= self.board.len() || self.board[board_index] != BOARD_ITEM_FREE {
             Err(ProgramError::InvalidMove)?;
@@ -114,7 +119,7 @@ impl Game {
         Ok(())
     }
 
-    pub fn keep_alive(self: &mut Game, player: Pubkey, timestamp: u64) -> Result<()> {
+    pub fn keep_alive(self: &mut Game, player: SolPubkey, timestamp: u64) -> Result<()> {
         match self.game_state {
             GameState::Waiting | GameState::XMove | GameState::OMove => {
                 if player == self.player_x {
@@ -140,7 +145,16 @@ impl Game {
 
 #[cfg(test)]
 mod test {
+    extern crate std;
     use super::*;
+
+    #[no_mangle]
+    pub fn sol_log_(message: *const u8, length: u64) {
+        std::println!("sol_log_");
+        let slice = unsafe { std::slice::from_raw_parts(message, length as usize) };
+        let string = std::str::from_utf8(&slice).unwrap();
+        std::println!("{}", string);
+    }
 
     #[test]
     pub fn column_1_x_wins() {
@@ -152,8 +166,8 @@ mod test {
             X| |
         */
 
-        let player_x = Pubkey::new(&[1; 32]);
-        let player_o = Pubkey::new(&[2; 32]);
+        let player_x: SolPubkey = [1; 32];
+        let player_o: SolPubkey = [1; 32];
 
         let mut g = Game::new(player_x, player_o);
         assert_eq!(g.game_state, GameState::XMove);
@@ -180,8 +194,8 @@ mod test {
             X| |
         */
 
-        let player_x = Pubkey::new(&[1; 32]);
-        let player_o = Pubkey::new(&[2; 32]);
+        let player_x: SolPubkey = [1; 32];
+        let player_o: SolPubkey = [1; 32];
         let mut g = Game::new(player_x, player_o);
 
         g.next_move(player_x, 0, 0).unwrap();
@@ -206,8 +220,8 @@ mod test {
             O|O|O
         */
 
-        let player_x = Pubkey::new(&[1; 32]);
-        let player_o = Pubkey::new(&[2; 32]);
+        let player_x: SolPubkey = [1; 32];
+        let player_o: SolPubkey = [1; 32];
         let mut g = Game::new(player_x, player_o);
 
         g.next_move(player_x, 0, 0).unwrap();
@@ -231,8 +245,8 @@ mod test {
             O|X|X
         */
 
-        let player_x = Pubkey::new(&[1; 32]);
-        let player_o = Pubkey::new(&[2; 32]);
+        let player_x: SolPubkey = [1; 32];
+        let player_o: SolPubkey = [1; 32];
         let mut g = Game::new(player_x, player_o);
 
         g.next_move(player_x, 0, 0).unwrap();
@@ -257,8 +271,8 @@ mod test {
             X|X|O
         */
 
-        let player_x = Pubkey::new(&[1; 32]);
-        let player_o = Pubkey::new(&[2; 32]);
+        let player_x: SolPubkey = [1; 32];
+        let player_o: SolPubkey = [1; 32];
         let mut g = Game::new(player_x, player_o);
 
         g.next_move(player_x, 0, 0).unwrap();
@@ -284,7 +298,7 @@ mod test {
              | |
         */
 
-        let player_x = Pubkey::new(&[1; 32]);
+        let player_x: SolPubkey = [1; 32];
 
         let mut g = Game::new(player_x, player_x);
         assert_eq!(g.game_state, GameState::XMove);

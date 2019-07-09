@@ -8,7 +8,7 @@
 import * as BufferLayout from 'buffer-layout';
 import {PublicKey} from '@solana/web3.js';
 
-const COMMAND_LENGTH = 6;
+const COMMAND_LENGTH = 8;
 
 const Command = {
   InitDashboard: 0, // Initialize a dashboard account

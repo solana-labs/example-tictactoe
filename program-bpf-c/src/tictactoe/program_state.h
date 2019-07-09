@@ -9,6 +9,7 @@ typedef enum {
   State_Uninitialized = 0, /* State is not initialized yet */
   State_Dashboard,         /* State holds dashboard state */
   State_Game,              /* State holds game state */
+  State_MakeEnum64Bits = 0xffffffffffffffff,
 } State;
 
 typedef enum {
@@ -18,6 +19,7 @@ typedef enum {
   GameState_XWon,
   GameState_OWon,
   GameState_Draw,
+  GameState_MakeEnum64Bits = 0xffffffffffffffff,
 } GameState;
 
 typedef enum {
@@ -36,7 +38,7 @@ typedef enum {
  */
 typedef struct {
   uint64_t keep_alive[2];  /* Keep alive current_slot for each player (0 == x, 1 == y) */
-  uint32_t game_state;     /* Current state of the game (GameState) */
+  uint8_t game_state;      /* Current state of the game (GameState) */
   SolPubkey player_x;      /* Player who initialized the game */
   SolPubkey player_o;      /* Player who joined the game */
   uint8_t board[9];        /* Tracks the player moves (BoardItem) */
@@ -67,7 +69,7 @@ SOL_FN_PREFIX bool state_deserialize(SolKeyedAccount *ka, State **state, StateDa
     sol_log_64(ka->userdata_len, sizeof(uint32_t) + sizeof(StateData), 0, 0, 0);
     return false;
   }
-  *state = (uint32_t *) ka->userdata;
-  *state_data = (StateData *) (ka->userdata + sizeof(uint32_t));
+  *state = (uint64_t *) ka->userdata;
+  *state_data = (StateData *) (ka->userdata + sizeof(uint64_t));
   return true;
 }

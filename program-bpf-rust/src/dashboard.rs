@@ -1,20 +1,24 @@
-use game::{Game, GameState};
-use result::Result;
-use solana_sdk::pubkey::Pubkey;
+use crate::game::{Game, GameState};
+use crate::result::Result;
+use solana_sdk_bpf_utils::entrypoint::*;
 
 const MAX_COMPLETED_GAMES: usize = 5;
 
 #[repr(C)]
-#[derive(Debug, Default, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Dashboard {
-    total_games: u64,                               // Total number of completed games
-    pending_game: Pubkey,                           // Latest pending game
-    completed_games: [Pubkey; MAX_COMPLETED_GAMES], // Last N completed games
-    latest_completed_game_index: u8,                // Index of the latest completed game
+    /// Total number of completed games
+    total_games: u64,
+    /// Latest pending game                        
+    pending_game: SolPubkey,
+    /// Last N completed games
+    completed_games: [SolPubkey; MAX_COMPLETED_GAMES],
+    /// Index of the latest completed game
+    latest_completed_game_index: u8,
 }
 
 impl Dashboard {
-    pub fn update(self: &mut Dashboard, game_pubkey: &Pubkey, game: &Game) -> Result<()> {
+    pub fn update(self: &mut Dashboard, game_pubkey: &SolPubkey, game: &Game) -> Result<()> {
         match game.game_state {
             GameState::Waiting => {
                 self.pending_game = *game_pubkey;

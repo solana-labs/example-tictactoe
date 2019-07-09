@@ -32,9 +32,9 @@ export type GameState = {
 
 export function deserializeGameState(accountInfo: AccountInfo): GameState {
   const gameLayout = BufferLayout.struct([
-    BufferLayout.u32('stateType'),
+    BufferLayout.nu64('stateType'),
     BufferLayout.seq(BufferLayout.nu64(), 2, 'keepAlive'),
-    BufferLayout.u32('gameState'),
+    BufferLayout.u8('gameState'),
     publicKeyLayout('playerX'),
     publicKeyLayout('playerO'),
     BufferLayout.seq(BufferLayout.u8(), 9, 'board'),
@@ -63,7 +63,7 @@ export function deserializeDashboardState(
   accountInfo: AccountInfo,
 ): DashboardState {
   const dashboardLayout = BufferLayout.struct([
-    BufferLayout.u32('stateType'),
+    BufferLayout.nu64('stateType'),
     BufferLayout.nu64('totalGames'),
     publicKeyLayout('pendingGame'),
     BufferLayout.seq(

@@ -80,6 +80,12 @@ typedef enum {
    * CommandData: move
    */
   Command_Move,
+
+  /*
+  * Force the enum to be 64 bits
+  */
+  Command_MakeEnum64Bits = 0xffffffffffffffff,
+
 } Command;
 
 typedef union {

@@ -23,7 +23,8 @@ install:
   - npm install
 
 script:
-  - npm run build:bpf
+  - npm run build:bpf-c
+  - npm run build:bpf-rust
   - npm run test
 
 before_deploy:
