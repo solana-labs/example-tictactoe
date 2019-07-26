@@ -4,7 +4,7 @@ import {BpfLoader, Connection, Account} from '@solana/web3.js';
 import fs from 'mz/fs';
 import path from 'path';
 
-import {url} from '../../url';
+import {url, urlTls} from '../../url';
 import {Store} from './store';
 import {TicTacToeDashboard} from '../program/tic-tac-toe-dashboard';
 import {newSystemAccountWithAirdrop} from '../util/new-system-account-with-airdrop';
@@ -15,7 +15,7 @@ import {newSystemAccountWithAirdrop} from '../util/new-system-account-with-airdr
 export async function findDashboard(): Promise<Object> {
   const store = new Store();
 
-  console.log('Using', url);
+  console.log(`Using ${url} (${urlTls})`);
   const connection = new Connection(url);
   try {
     const config = await store.load('../../../dist/config.json');
@@ -59,7 +59,7 @@ export async function findDashboard(): Promise<Object> {
 
   const dashboard = await TicTacToeDashboard.create(connection, programId);
   await store.save('../../../dist/config.json', {
-    url,
+    url: urlTls,
     secretKey: Buffer.from(dashboard._dashboardAccount.secretKey).toString(
       'hex',
     ),
