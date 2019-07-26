@@ -12,7 +12,7 @@ import {struct} from 'superstruct';
 
 import {findDashboard} from './config';
 import {sleep} from '../util/sleep';
-import {url} from '../../url';
+import {urlTls} from '../../url';
 
 const port = process.env.PORT || 8080;
 const app = express();
@@ -29,7 +29,7 @@ app.get('/config.json', async (req, res) => {
     res
       .send(
         JSON.stringify({
-          url,
+          url: urlTls,
           secretKey: Buffer.from(
             dashboard._dashboardAccount.secretKey,
           ).toString('hex'),
