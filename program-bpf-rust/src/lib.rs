@@ -55,7 +55,7 @@ fn fund_next_move(
             info!("User or Game still has lamports");
         } else {
             // TODO: the fee to charge may be dynamic based on the FeeCalculator and
-            //       should be obtained via the Syscall `Sysca11Fees11111111111111111111111111111111`
+            //       should be obtained via the Sysvar `SysvarFees111111111111111111111111111111111`
             let fee = 3;
             *info[user_or_game_index].lamports += fee;
             *info[dashboard_index].lamports -= fee;
@@ -171,7 +171,7 @@ fn process_instruction(
 
     const PLAYER_INDEX: usize = 0;
     const GAME_INDEX: usize = 2;
-    const SYSCALL_INDEX: usize = 3;
+    const SYSVAR_INDEX: usize = 3;
 
     expect_n_accounts(info, 4)?;
 
@@ -190,7 +190,7 @@ fn process_instruction(
     match game_state {
         State::Game(ref mut game) => {
             let player = info[PLAYER_INDEX].key;
-            let current_slot = get_current_slot(&info[SYSCALL_INDEX]);
+            let current_slot = get_current_slot(&info[SYSVAR_INDEX]);
 
             match command {
                 Command::Advertise => Ok(()), // Nothing to do here beyond the dashboard_update() below
