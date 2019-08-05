@@ -19,7 +19,7 @@ solana-sdk-bpf-utils = { path = "../node_modules/@solana/web3.js/bpf-sdk/rust/ru
 solana-sdk-bpf-no-std = { path = "../node_modules/@solana/web3.js/bpf-sdk/rust/rust-no-std" }
 
 [dev_dependencies]
-solana-sdk-bpf-test = { path = "../node_modules/@solana/web3.js/bpf-sdk/rust/rust-test", version = "0.17.0" }
+solana-sdk-bpf-test = { path = "../node_modules/@solana/web3.js/bpf-sdk/rust/rust-test" }
 
 [workspace]
 members = []
