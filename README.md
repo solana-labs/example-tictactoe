@@ -45,13 +45,13 @@ beta testnet.  To use the edge testnet instead define `export CHANNEL=edge' in
 your environment (see [url.js](https://github.com/solana-labs/solana/tree/master/urj.js) for more)
 
 
-### Build the BPF C program
+### Build the BPF program
 ```sh
-$ V=1 make -C program-bpf
+$ npm run build:bpf-rust
 ```
 or
 ```
-$ npm run build:bpf
+$ npm run build:bpf-c
 ```
 
 Compiled files can be found in `dist/program`. Compiler settings are configured in the [Solana SDK](https://github.com/solana-labs/solana/tree/master/sdk/bpf/bpf.mk)
