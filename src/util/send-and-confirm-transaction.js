@@ -15,7 +15,6 @@ export function onTransaction(callback: TransactionNotification) {
 }
 
 let payerAccount: Account | null = null;
-
 export async function sendAndConfirmTransaction(
   title: string,
   connection: Connection,
@@ -24,8 +23,10 @@ export async function sendAndConfirmTransaction(
 ): Promise<void> {
   const when = Date.now();
 
-  if (payerAccount === null) {
-    payerAccount = await newSystemAccountWithAirdrop(connection, 1000);
+  if (!payerAccount) {
+    const newPayerAccount = await newSystemAccountWithAirdrop(connection, 1000);
+    // eslint-disable-next-line require-atomic-updates
+    payerAccount = payerAccount || newPayerAccount;
   }
 
   const signature = await realSendAndConfirmTransaction(
