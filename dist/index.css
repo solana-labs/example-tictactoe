@@ -17,6 +17,10 @@ h2 {
   margin-bottom: 24px;
 }
 
+.well {
+  text-align: center;
+}
+
 .well, .panel, .alert {
   background-color: #1e1e1e;
   border-color: #000;
