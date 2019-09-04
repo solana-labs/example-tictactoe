@@ -44,6 +44,7 @@ class App extends React.Component {
         config = await response.json();
       } catch (err) {
         console.error(err);
+        await sleep(1000);
         continue;
       }
 

@@ -72,6 +72,7 @@ fn process_instruction(
     let command = Command::deserialize(data)?;
 
     if command == Command::InitDashboard {
+        info!("init dashboard");
         const DASHBOARD_INDEX: usize = 0;
         expect_n_accounts(info, 1)?;
         let mut dashboard_state = State::deserialize(&info[DASHBOARD_INDEX].data)?;
@@ -92,6 +93,7 @@ fn process_instruction(
     }
 
     if command == Command::InitPlayer {
+        info!("init player");
         const DASHBOARD_INDEX: usize = 0;
         const PLAYER_INDEX: usize = 1;
         expect_n_accounts(info, 2)?;
@@ -127,6 +129,7 @@ fn process_instruction(
     }?;
 
     if command == Command::InitGame {
+        info!("init game");
         const GAME_INDEX: usize = 0;
         const PLAYER_INDEX: usize = 2;
         expect_n_accounts(info, 3)?;
@@ -193,10 +196,22 @@ fn process_instruction(
             let current_slot = get_current_slot(&info[SYSVAR_INDEX]);
 
             match command {
-                Command::Advertise => Ok(()), // Nothing to do here beyond the dashboard_update() below
-                Command::Join => game.join(*player, current_slot),
-                Command::Move(x, y) => game.next_move(*player, x as usize, y as usize),
-                Command::KeepAlive => game.keep_alive(*player, current_slot),
+                Command::Advertise => {
+                    info!("advertise game");
+                    Ok(())
+                }, // Nothing to do here beyond the dashboard_update() below
+                Command::Join => {
+                    info!("join game");
+                    game.join(*player, current_slot)
+                }
+                Command::Move(x, y) => {
+                    info!("move");
+                    game.next_move(*player, x as usize, y as usize)
+                }
+                Command::KeepAlive => {
+                    info!("keep alive");
+                    game.keep_alive(*player, current_slot)
+                }
                 _ => {
                     info!("invalid command for State::Game");
                     Err(ProgramError::InvalidInput)

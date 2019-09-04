@@ -24,7 +24,10 @@ export async function sendAndConfirmTransaction(
   const when = Date.now();
 
   if (!payerAccount) {
-    const newPayerAccount = await newSystemAccountWithAirdrop(connection, 1000);
+    const newPayerAccount = await newSystemAccountWithAirdrop(
+      connection,
+      100000,
+    );
     // eslint-disable-next-line require-atomic-updates
     payerAccount = payerAccount || newPayerAccount;
   }

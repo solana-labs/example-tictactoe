@@ -142,7 +142,7 @@ export class TicTacToe {
     transaction.add({
       keys: [
         {pubkey: gameAccount.publicKey, isSigner: true, isDebitable: true},
-        {pubkey: dashboard, isSigner: true, isDebitable: true},
+        {pubkey: dashboard, isSigner: false, isDebitable: true},
         {pubkey: playerXAccount.publicKey, isSigner: true, isDebitable: true},
         {
           pubkey: ProgramCommand.getSysvarClockPublicKey(),
