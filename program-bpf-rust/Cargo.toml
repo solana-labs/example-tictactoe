@@ -12,14 +12,13 @@ homepage = "https://solana.com/"
 edition = "2018"
 
 [dependencies]
-arrayref = "0.3.5"
-serde = { version = "1.0", default-features = false, features = ["alloc", "derive"] }
+serde = { version = "1.0.100", default-features = false, features = ["alloc", "derive"] }
 serde_derive = "1.0"
-solana-sdk-bpf-utils = { path = "../node_modules/@solana/web3.js/bpf-sdk/rust/rust-utils" }
-solana-sdk-bpf-no-std = { path = "../node_modules/@solana/web3.js/bpf-sdk/rust/rust-no-std" }
+solana-sdk = { git = "https://github.com/solana-labs/solana", default-features = false }
 
-[dev_dependencies]
-solana-sdk-bpf-test = { path = "../node_modules/@solana/web3.js/bpf-sdk/rust/rust-test" }
+[features]
+program = ["solana-sdk/program"]
+default = ["program"]
 
 [workspace]
 members = []

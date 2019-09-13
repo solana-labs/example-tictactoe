@@ -1,4 +1,4 @@
-use solana_sdk_bpf_utils::info;
+use solana_sdk::info;
 
 #[derive(Debug)]
 pub enum ProgramError {
@@ -11,7 +11,7 @@ pub enum ProgramError {
     PlayerNotFound,
 }
 
-pub type Result<T> = core::result::Result<T, ProgramError>;
+pub type Result<T> = std::result::Result<T, ProgramError>;
 
 impl ProgramError {
     pub fn print(&self) {

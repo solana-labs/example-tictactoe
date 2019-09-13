@@ -1,7 +1,7 @@
 use crate::result::{ProgramError, Result};
-use core::mem::size_of;
 use serde;
-use solana_sdk_bpf_utils::info;
+use solana_sdk::info;
+use std::mem::size_of;
 
 pub trait SimpleSerde: Clone {
     fn deserialize<'a>(input: &'a [u8]) -> Result<Self>
@@ -21,7 +21,7 @@ pub trait SimpleSerde: Clone {
 
     fn serialize(self: &Self, output: &mut [u8]) -> Result<()>
     where
-        Self: core::marker::Sized + serde::Serialize,
+        Self: std::marker::Sized + serde::Serialize,
     {
         if output.len() < size_of::<Self>() {
             info!("serialize fail: output too small");

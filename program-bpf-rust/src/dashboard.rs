@@ -1,6 +1,6 @@
 use crate::game::{Game, GameState};
 use crate::result::Result;
-use solana_sdk_bpf_utils::entrypoint::*;
+use solana_sdk::pubkey::Pubkey;
 
 const MAX_COMPLETED_GAMES: usize = 5;
 
@@ -10,15 +10,15 @@ pub struct Dashboard {
     /// Total number of completed games
     total_games: u64,
     /// Latest pending game                        
-    pending_game: SolPubkey,
+    pending_game: Pubkey,
     /// Last N completed games
-    completed_games: [SolPubkey; MAX_COMPLETED_GAMES],
+    completed_games: [Pubkey; MAX_COMPLETED_GAMES],
     /// Index of the latest completed game
     latest_completed_game_index: u8,
 }
 
 impl Dashboard {
-    pub fn update(self: &mut Dashboard, game_pubkey: &SolPubkey, game: &Game) -> Result<()> {
+    pub fn update(self: &mut Dashboard, game_pubkey: &Pubkey, game: &Game) -> Result<()> {
         match game.game_state {
             GameState::Waiting => {
                 self.pending_game = *game_pubkey;

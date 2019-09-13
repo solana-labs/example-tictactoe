@@ -6,6 +6,8 @@
 #include "program_command.h"
 #include "program_state.h"
 
+#define FAILURE 1
+
 SOL_FN_PREFIX void game_dump_board(Game *self) {
   sol_log_64(0x9, 0x9, 0x9, 0x9, 0x9);
   sol_log_64(0, 0, self->board[0], self->board[1], self->board[2]);
@@ -211,14 +213,14 @@ SOL_FN_PREFIX void dashboard_update(
   }
 }
 
-SOL_FN_PREFIX bool fund_next_move(SolKeyedAccount *dashboard_ka, SolKeyedAccount *ka) {
+SOL_FN_PREFIX uint32_t fund_next_move(SolKeyedAccount *dashboard_ka, SolKeyedAccount *ka) {
   sol_log("fund_next_move");
   sol_log_64(*(dashboard_ka->lamports), *(ka->lamports), 0, 0, 0);
   if (*ka->lamports != 0) {
     sol_log("Player still has lamports");
   } else if (*dashboard_ka->lamports <= 1) {
     sol_log("Dashboard is out of lamports");
-    return false;
+    return FAILURE;
   } else {
     // TODO: the fee to charge may be dynamic based on the FeeCalculator and
     //       instead probably needs to be passed in as an argument somehow
@@ -227,10 +229,10 @@ SOL_FN_PREFIX bool fund_next_move(SolKeyedAccount *dashboard_ka, SolKeyedAccount
     *(dashboard_ka->lamports) -= fee;
     sol_log_64(*(dashboard_ka->lamports), *(ka->lamports), 0, 0, 0);
   }
-  return true;
+  return SUCCESS;
 }
 
-extern bool entrypoint(const uint8_t *input) {
+extern uint32_t entrypoint(const uint8_t *input) {
   SolKeyedAccount ka[4];
   SolParameters params = (SolParameters) { .ka = ka };
 
@@ -238,18 +240,18 @@ extern bool entrypoint(const uint8_t *input) {
 
   if (!sol_deserialize(input, &params, SOL_ARRAY_SIZE(ka))) {
     sol_log("Error: deserialize failed");
-    return false;
+    return FAILURE;
   }
 
   if (!params.ka[0].is_signer) {
     sol_log("Transaction not signed by key 0");
-    return false;
+    return FAILURE;
   }
 
   if (params.data_len < sizeof(uint32_t) + sizeof(CommandData)) {
     sol_log("Error: invalid instruction_data_len");
     sol_log_64(params.data_len, sizeof(uint32_t) + sizeof(CommandData), 0, 0, 0);
-    return false;
+    return FAILURE;
   }
   Command const cmd = *(uint32_t *) params.data;
   CommandData const *cmd_data = (CommandData *) (params.data + sizeof(uint32_t));
@@ -262,58 +264,58 @@ extern bool entrypoint(const uint8_t *input) {
     sol_log("Command_InitDashboard");
     if (params.ka_num != 1) {
       sol_log("Error: one key expected");
-      return false;
+      return FAILURE;
     }
 
     if (!state_deserialize(&params.ka[0], &dashboard_state, &dashboard_state_data)) {
-      return false;
+      return FAILURE;
     }
 
     if (*dashboard_state != State_Uninitialized) {
       sol_log("Dashboard is already uninitialized");
-      return false;
+      return FAILURE;
     }
 
     *dashboard_state = State_Dashboard;
-    return true;
+    return SUCCESS;
   }
 
   if (cmd == Command_InitPlayer) {
     sol_log("Command_InitPlayer");
     if (params.ka_num != 2) {
       sol_log("Error: two keys expected");
-      return false;
+      return FAILURE;
     }
 
     if (!state_deserialize(&params.ka[0], &dashboard_state, &dashboard_state_data)) {
-      return false;
+      return FAILURE;
     }
 
     if (*dashboard_state != State_Dashboard) {
       sol_log("Invalid dashboard account");
-      return false;
+      return FAILURE;
     }
 
     if (!SolPubkey_same(params.ka[0].owner, params.ka[1].owner) || params.ka[1].userdata_len != 0) {
       sol_log("Invalid player account");
-      return false;
+      return FAILURE;
     }
     // Distribute funds to the player for their next transaction
     return fund_next_move(&params.ka[0], &params.ka[1]);
   }
   if (params.ka_num != 4) {
     sol_log("Error: three keys expected");
-    return false;
+    return FAILURE;
   }
 
   if (!state_deserialize(&params.ka[1], &dashboard_state, &dashboard_state_data)) {
     sol_log("dashboard deserialize failed");
-    return false;
+    return FAILURE;
   }
 
   if (*dashboard_state != State_Dashboard) {
     sol_log("Invalid dashboard account");
-    return false;
+    return FAILURE;
   }
 
   State *game_state = NULL;
@@ -322,19 +324,19 @@ extern bool entrypoint(const uint8_t *input) {
   if (cmd == Command_InitGame) {
     sol_log("Command_InitGame");
     if (!state_deserialize(&ka[0], &game_state, &game_state_data)) {
-      return false;
+      return FAILURE;
     }
 
     uint64_t current_slot = *(uint64_t*)params.ka[3].userdata;
 
     if (*game_state != State_Uninitialized) {
       sol_log("Account is already uninitialized");
-      return false;
+      return FAILURE;
     }
 
     if (!SolPubkey_same(ka[0].owner, params.ka[2].owner) ||params.ka[2].userdata_len != 0) {
       sol_log("Invalid player account");
-      return false;
+      return FAILURE;
     }
 
     *game_state = State_Game;
@@ -355,19 +357,19 @@ extern bool entrypoint(const uint8_t *input) {
 
   if (!state_deserialize(&params.ka[2], &game_state, &game_state_data)) {
     sol_log("game deserialize failed");
-    return false;
+    return FAILURE;
   }
 
   uint64_t current_slot = *(uint64_t*)params.ka[3].userdata;
 
   if (*game_state != State_Game) {
     sol_log("Invalid game account");
-    return false;
+    return FAILURE;
   }
 
   if (!SolPubkey_same(params.ka[0].owner, params.ka[1].owner) || params.ka[0].userdata_len != 0) {
     sol_log("Invalid player account");
-    return false;
+    return FAILURE;
   }
 
   SolPubkey *player = params.ka[0].key;
@@ -384,18 +386,18 @@ extern bool entrypoint(const uint8_t *input) {
     sol_log("Command_Move");
     sol_log_64(cmd_data->move.x, cmd_data->move.y, 0, 0, 0);
     if (!game_move(&game_state_data->game, player, cmd_data->move.x, cmd_data->move.y)) {
-      return false;
+      return FAILURE;
     }
     break;
   case Command_KeepAlive:
     sol_log("Command_KeepAlive");
     if (!game_keep_alive(&game_state_data->game, player, current_slot)) {
-      return false;
+      return FAILURE;
     }
     break;
   default:
     sol_log("Error: Invalid command");
-    return false;
+    return FAILURE;
   }
 
   dashboard_update(
