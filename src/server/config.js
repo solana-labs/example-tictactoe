@@ -9,6 +9,8 @@ import {Store} from './store';
 import {TicTacToeDashboard} from '../program/tic-tac-toe-dashboard';
 import {newSystemAccountWithAirdrop} from '../util/new-system-account-with-airdrop';
 
+const NUM_RETRIES = 100; /* allow some number of retries */
+
 /**
  * Obtain the Dashboard singleton object
  */
@@ -28,13 +30,18 @@ export async function findDashboard(): Promise<Object> {
     console.log('findDashboard:', err.message);
   }
 
-  const loaderAccount = await newSystemAccountWithAirdrop(connection, 1000000);
-
   let programId;
   console.log('Using BPF program');
   const elf = await fs.readFile(
     path.join(__dirname, '..', '..', 'dist', 'program', 'tictactoe.so'),
   );
+
+  const [, feeCalculator] = await connection.getRecentBlockhash();
+  const fees =
+    feeCalculator.lamportsPerSignature *
+    (BpfLoader.getMinNumSignatures(elf.length) + NUM_RETRIES);
+
+  const loaderAccount = await newSystemAccountWithAirdrop(connection, fees);
 
   let attempts = 5;
   while (attempts > 0) {
