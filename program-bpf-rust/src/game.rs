@@ -166,8 +166,8 @@ mod test {
             X| |
         */
 
-        let player_x: Pubkey = [1; 32];
-        let player_o: Pubkey = [1; 32];
+        let player_x: Pubkey = Pubkey::new(&[1; 32]);
+        let player_o: Pubkey = Pubkey::new(&[1; 32]);
 
         let mut g = Game::new(player_x, player_o);
         assert_eq!(g.game_state, GameState::XMove);
@@ -194,8 +194,8 @@ mod test {
             X| |
         */
 
-        let player_x: Pubkey = [1; 32];
-        let player_o: Pubkey = [1; 32];
+        let player_x: Pubkey = Pubkey::new(&[1; 32]);
+        let player_o: Pubkey = Pubkey::new(&[1; 32]);
         let mut g = Game::new(player_x, player_o);
 
         g.next_move(player_x, 0, 0).unwrap();
@@ -220,8 +220,8 @@ mod test {
             O|O|O
         */
 
-        let player_x: Pubkey = [1; 32];
-        let player_o: Pubkey = [1; 32];
+        let player_x: Pubkey = Pubkey::new(&[1; 32]);
+        let player_o: Pubkey = Pubkey::new(&[1; 32]);
         let mut g = Game::new(player_x, player_o);
 
         g.next_move(player_x, 0, 0).unwrap();
@@ -245,8 +245,8 @@ mod test {
             O|X|X
         */
 
-        let player_x: Pubkey = [1; 32];
-        let player_o: Pubkey = [1; 32];
+        let player_x: Pubkey = Pubkey::new(&[1; 32]);
+        let player_o: Pubkey = Pubkey::new(&[1; 32]);
         let mut g = Game::new(player_x, player_o);
 
         g.next_move(player_x, 0, 0).unwrap();
@@ -271,8 +271,8 @@ mod test {
             X|X|O
         */
 
-        let player_x: Pubkey = [1; 32];
-        let player_o: Pubkey = [1; 32];
+        let player_x: Pubkey = Pubkey::new(&[1; 32]);
+        let player_o: Pubkey = Pubkey::new(&[1; 32]);
         let mut g = Game::new(player_x, player_o);
 
         g.next_move(player_x, 0, 0).unwrap();
@@ -298,7 +298,7 @@ mod test {
              | |
         */
 
-        let player_x: Pubkey = [1; 32];
+        let player_x: Pubkey = Pubkey::new(&[1; 32]);
 
         let mut g = Game::new(player_x, player_x);
         assert_eq!(g.game_state, GameState::XMove);
