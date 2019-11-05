@@ -9,7 +9,7 @@ import {Store} from './store';
 import {TicTacToeDashboard} from '../program/tic-tac-toe-dashboard';
 import {newSystemAccountWithAirdrop} from '../util/new-system-account-with-airdrop';
 
-const NUM_RETRIES = 100; /* allow some number of retries */
+const NUM_RETRIES = 500; /* allow some number of retries */
 
 /**
  * Obtain the Dashboard singleton object
