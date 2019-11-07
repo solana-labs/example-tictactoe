@@ -10,7 +10,7 @@ import jayson from 'jayson';
 import path from 'path';
 import {struct} from 'superstruct';
 
-import {findDashboard} from './config';
+import {createDashboard, findDashboard} from './config';
 import {sleep} from '../util/sleep';
 import {urlTls} from '../../url';
 
@@ -18,12 +18,28 @@ const port = process.env.PORT || 8080;
 const app = express();
 
 async function getDashboard() {
-  const ret = await findDashboard();
-  return ret.dashboard;
+  try {
+    const ret = await findDashboard();
+    return ret.dashboard;
+  } catch (err) {
+    // ignore
+  }
+
+  if (app.locals.creating) {
+    throw new Error('Dashboard is being created');
+  }
+
+  try {
+    app.locals.creating = true;
+    const ret = await createDashboard();
+    return ret.dashboard;
+  } finally {
+    // eslint-disable-next-line require-atomic-updates
+    app.locals.creating = false;
+  }
 }
 
 app.get('/config.json', async (req, res) => {
-  console.log('findDashboard request');
   try {
     const dashboard = await getDashboard();
     res

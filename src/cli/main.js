@@ -8,7 +8,7 @@ import readline from 'readline-promise';
 import {sleep} from '../util/sleep';
 import {TicTacToe} from '../program/tic-tac-toe';
 import type {Board} from '../program/program-state';
-import {findDashboard} from '../server/config';
+import {fetchDashboard} from '../server/config';
 
 function renderBoard(board: Board): string {
   return [
@@ -30,7 +30,7 @@ async function main() {
   rl.write(`Connecting to network...\n`);
 
   // Create/load the game dashboard
-  const {dashboard, connection} = await findDashboard();
+  const {dashboard, connection} = await fetchDashboard();
   rl.write(`Dashboard: ${dashboard.publicKey.toBase58()}\n`);
 
   rl.write(`Total games played: ${dashboard.state.totalGames}\n\n`);

@@ -16,22 +16,22 @@ const NUM_RETRIES = 500; /* allow some number of retries */
  */
 export async function findDashboard(): Promise<Object> {
   const store = new Store();
-
-  console.log(`Using ${url} (${urlTls})`);
   const connection = new Connection(url);
-  try {
-    const config = await store.load('../../../dist/config.json');
-    const dashboard = await TicTacToeDashboard.connect(
-      connection,
-      new Account(Buffer.from(config.secretKey, 'hex')),
-    );
-    return {dashboard, connection};
-  } catch (err) {
-    console.log('findDashboard:', err.message);
-  }
+  const config = await store.load('../../../dist/config.json');
+  const dashboard = await TicTacToeDashboard.connect(
+    connection,
+    new Account(Buffer.from(config.secretKey, 'hex')),
+  );
+  return {dashboard, connection};
+}
 
-  let programId;
-  console.log('Using BPF program');
+/**
+ * Load the TTT program and then create the Dashboard singleton object
+ */
+export async function createDashboard(): Promise<Object> {
+  const store = new Store();
+  const connection = new Connection(url);
+
   const elf = await fs.readFile(
     path.join(__dirname, '..', '..', 'dist', 'program', 'tictactoe.so'),
   );
@@ -40,9 +40,9 @@ export async function findDashboard(): Promise<Object> {
   const fees =
     feeCalculator.lamportsPerSignature *
     (BpfLoader.getMinNumSignatures(elf.length) + NUM_RETRIES);
-
   const loaderAccount = await newSystemAccountWithAirdrop(connection, fees);
 
+  let programId;
   let attempts = 5;
   while (attempts > 0) {
     try {
@@ -62,8 +62,7 @@ export async function findDashboard(): Promise<Object> {
     throw new Error('Unable to load program');
   }
 
-  console.log('Dashboard programId:', programId.toString());
-
+  console.log('Creating dashboard for programId:', programId.toString());
   const dashboard = await TicTacToeDashboard.create(connection, programId);
   await store.save('../../../dist/config.json', {
     url: urlTls,
@@ -74,13 +73,29 @@ export async function findDashboard(): Promise<Object> {
   return {dashboard, connection};
 }
 
+/**
+ * Used when invoking from the command line. First checks for existing dashboard,
+ * if that fails, attempts to create a new one.
+ */
+export async function fetchDashboard() {
+  try {
+    let ret = await findDashboard();
+    console.log('Dashboard:', ret.dashboard.publicKey.toBase58());
+    process.exit();
+  } catch (err) {
+    // ignore error, try to create instead
+  }
+
+  try {
+    let ret = await createDashboard();
+    console.log('Dashboard:', ret.dashboard.publicKey.toBase58());
+    process.exit();
+  } catch (err) {
+    console.error('Failed to create dashboard: ', err);
+    process.exit(1);
+  }
+}
+
 if (require.main === module) {
-  findDashboard()
-    .then(ret => {
-      console.log('Dashboard:', ret.dashboard.publicKey.toBase58());
-    })
-    .then(process.exit)
-    .catch(console.error)
-    .then(() => 1)
-    .then(process.exit);
+  fetchDashboard();
 }

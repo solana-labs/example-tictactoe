@@ -162,8 +162,10 @@ export class TicTacToeDashboard {
   async _requestPlayerAccountTransaction(
     playerPublicKey: PublicKey,
   ): Promise<Transaction> {
-    const [recentBlockhash, feeCalculator]
-      = await this.connection.getRecentBlockhash();
+    const [
+      recentBlockhash,
+      feeCalculator,
+    ] = await this.connection.getRecentBlockhash();
     let transaction = new Transaction({recentBlockhash});
     transaction.add(SystemProgram.assign(playerPublicKey, this.programId), {
       keys: [
@@ -179,7 +181,7 @@ export class TicTacToeDashboard {
     });
     const payerAccount = await newSystemAccountWithAirdrop(
       this.connection,
-      feeCalculator.lamportsPerSignature * 3 // payer + 2 signer keys,
+      feeCalculator.lamportsPerSignature * 3, // payer + 2 signer keys,
     );
 
     transaction.signPartial(
