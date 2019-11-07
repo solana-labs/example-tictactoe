@@ -77,7 +77,7 @@ export async function createDashboard(): Promise<Object> {
  * Used when invoking from the command line. First checks for existing dashboard,
  * if that fails, attempts to create a new one.
  */
-export async function fetchDashboard() {
+export async function fetchDashboard(): Promise<Object> {
   try {
     let ret = await findDashboard();
     console.log('Dashboard:', ret.dashboard.publicKey.toBase58());
