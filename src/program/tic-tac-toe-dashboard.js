@@ -71,7 +71,7 @@ export class TicTacToeDashboard {
     programId: PublicKey,
   ): Promise<TicTacToeDashboard> {
     const [, feeCalculator] = await connection.getRecentBlockhash();
-    const lamports = 10000;
+    const lamports = 1000000000;
     const fee = feeCalculator.lamportsPerSignature * 3; // payer + 2 signers
     const tempAccount = await newSystemAccountWithAirdrop(
       connection,
