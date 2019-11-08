@@ -141,13 +141,13 @@ export class TicTacToe {
     );
     transaction.add({
       keys: [
-        {pubkey: gameAccount.publicKey, isSigner: true, isDebitable: true},
-        {pubkey: dashboard, isSigner: false, isDebitable: true},
-        {pubkey: playerXAccount.publicKey, isSigner: true, isDebitable: true},
+        {pubkey: gameAccount.publicKey, isSigner: true, isWritable: true},
+        {pubkey: dashboard, isSigner: false, isWritable: true},
+        {pubkey: playerXAccount.publicKey, isSigner: true, isWritable: true},
         {
           pubkey: ProgramCommand.getSysvarClockPublicKey(),
           isSigner: false,
-          isDebitable: false,
+          isWritable: false,
         },
       ],
       programId,
@@ -196,13 +196,13 @@ export class TicTacToe {
     {
       const transaction = new Transaction().add({
         keys: [
-          {pubkey: playerOAccount.publicKey, isSigner: true, isDebitable: true},
-          {pubkey: dashboard, isSigner: false, isDebitable: true},
-          {pubkey: gamePublicKey, isSigner: false, isDebitable: true},
+          {pubkey: playerOAccount.publicKey, isSigner: true, isWritable: true},
+          {pubkey: dashboard, isSigner: false, isWritable: true},
+          {pubkey: gamePublicKey, isSigner: false, isWritable: true},
           {
             pubkey: ProgramCommand.getSysvarClockPublicKey(),
             isSigner: false,
-            isDebitable: false,
+            isWritable: false,
           },
         ],
         programId,
@@ -239,14 +239,14 @@ export class TicTacToe {
         {
           pubkey: this.playerAccount.publicKey,
           isSigner: true,
-          isDebitable: true,
+          isWritable: true,
         },
-        {pubkey: this.dashboard, isSigner: false, isDebitable: true},
-        {pubkey: this.gamePublicKey, isSigner: false, isDebitable: true},
+        {pubkey: this.dashboard, isSigner: false, isWritable: true},
+        {pubkey: this.gamePublicKey, isSigner: false, isWritable: true},
         {
           pubkey: ProgramCommand.getSysvarClockPublicKey(),
           isSigner: false,
-          isDebitable: false,
+          isWritable: false,
         },
       ],
       programId: this.programId,
@@ -276,14 +276,14 @@ export class TicTacToe {
         {
           pubkey: this.playerAccount.publicKey,
           isSigner: true,
-          isDebitable: true,
+          isWritable: true,
         },
-        {pubkey: this.dashboard, isSigner: false, isDebitable: true},
-        {pubkey: this.gamePublicKey, isSigner: false, isDebitable: true},
+        {pubkey: this.dashboard, isSigner: false, isWritable: true},
+        {pubkey: this.gamePublicKey, isSigner: false, isWritable: true},
         {
           pubkey: ProgramCommand.getSysvarClockPublicKey(),
           isSigner: false,
-          isDebitable: false,
+          isWritable: false,
         },
       ],
       programId: this.programId,

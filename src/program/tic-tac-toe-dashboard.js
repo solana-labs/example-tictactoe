@@ -89,7 +89,7 @@ export class TicTacToeDashboard {
     );
     transaction.add({
       keys: [
-        {pubkey: dashboardAccount.publicKey, isSigner: true, isDebitable: true},
+        {pubkey: dashboardAccount.publicKey, isSigner: true, isWritable: true},
       ],
       programId,
       data: ProgramCommand.initDashboard(),
@@ -172,9 +172,9 @@ export class TicTacToeDashboard {
         {
           pubkey: this._dashboardAccount.publicKey,
           isSigner: true,
-          isDebitable: true,
+          isWritable: true,
         },
-        {pubkey: playerPublicKey, isSigner: true, isDebitable: true},
+        {pubkey: playerPublicKey, isSigner: true, isWritable: true},
       ],
       programId: this.programId,
       data: ProgramCommand.initPlayer(),
@@ -273,14 +273,14 @@ export class TicTacToeDashboard {
             {
               pubkey: playerAccount.publicKey,
               isSigner: true,
-              isDebitable: true,
+              isWritable: true,
             },
-            {pubkey: this.publicKey, isSigner: false, isDebitable: true},
-            {pubkey: myGame.gamePublicKey, isSigner: false, isDebitable: true},
+            {pubkey: this.publicKey, isSigner: false, isWritable: true},
+            {pubkey: myGame.gamePublicKey, isSigner: false, isWritable: true},
             {
               pubkey: ProgramCommand.getSysvarClockPublicKey(),
               isSigner: false,
-              isDebitable: false,
+              isWritable: false,
             },
           ],
           programId: this.programId,
