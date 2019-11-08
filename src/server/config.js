@@ -32,9 +32,16 @@ export async function createDashboard(): Promise<Object> {
   const store = new Store();
   const connection = new Connection(url);
 
-  const elf = await fs.readFile(
-    path.join(__dirname, '..', '..', 'dist', 'program', 'tictactoe.so'),
-  );
+  let elf;
+  try {
+    elf = await fs.readFile(
+      path.join(__dirname, '..', '..', 'dist', 'program', 'tictactoe.so'),
+    );
+  } catch (err) {
+    console.error(err);
+    process.exit(1);
+    return;
+  }
 
   const [, feeCalculator] = await connection.getRecentBlockhash();
   const fees =

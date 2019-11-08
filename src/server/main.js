@@ -17,7 +17,7 @@ import {urlTls} from '../../url';
 const port = process.env.PORT || 8080;
 const app = express();
 
-async function getDashboard() {
+async function getDashboard(): Promise<Object> {
   try {
     const ret = await findDashboard();
     return ret.dashboard;
@@ -26,7 +26,7 @@ async function getDashboard() {
   }
 
   if (app.locals.creating) {
-    throw new Error('Dashboard is being created');
+    return null;
   }
 
   try {
@@ -42,16 +42,20 @@ async function getDashboard() {
 app.get('/config.json', async (req, res) => {
   try {
     const dashboard = await getDashboard();
-    res
-      .send(
-        JSON.stringify({
-          url: urlTls,
-          secretKey: Buffer.from(
-            dashboard._dashboardAccount.secretKey,
-          ).toString('hex'),
-        }),
-      )
-      .end();
+    let response = {
+      creating: true,
+    };
+
+    if (dashboard) {
+      response = {
+        url: urlTls,
+        secretKey: Buffer.from(dashboard._dashboardAccount.secretKey).toString(
+          'hex',
+        ),
+      };
+    }
+
+    res.send(JSON.stringify(response)).end();
   } catch (err) {
     console.log('findDashboard failed:', err);
     res.status(500).end();

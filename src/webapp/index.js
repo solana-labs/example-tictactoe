@@ -21,6 +21,7 @@ class App extends React.Component {
     await sleep(0); // Exit caller's stack frame
 
     let attempt = 0;
+    let initMessage = 'Fetching configuration...';
 
     for (;;) {
       let config;
@@ -28,7 +29,7 @@ class App extends React.Component {
       try {
         this.setState({
           initialized: false,
-          initMessage: 'Fetching configuration...',
+          initMessage,
         });
 
         // Load the dashboard account from the server so it remains the
@@ -41,7 +42,14 @@ class App extends React.Component {
           );
         }
 
-        config = await response.json();
+        let jsonResponse = await response.json();
+        if (jsonResponse.creating) {
+          initMessage = 'Waiting for app to initialize...';
+          await sleep(1000);
+          continue;
+        } else {
+          config = jsonResponse;
+        }
       } catch (err) {
         console.error(err);
         await sleep(1000);
