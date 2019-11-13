@@ -95,6 +95,7 @@ export async function createDashboard(): Promise<Object> {
   const dashboard = await TicTacToeDashboard.create(connection, programId);
   await store.save('../../../dist/config.json', {
     url: urlTls,
+    commitment,
     secretKey: Buffer.from(dashboard._dashboardAccount.secretKey).toString(
       'hex',
     ),
