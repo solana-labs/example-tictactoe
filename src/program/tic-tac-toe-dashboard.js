@@ -299,4 +299,16 @@ export class TicTacToeDashboard {
     }
     invariant(false); //eslint-disable-line no-unreachable
   }
+
+  async disconnect() {
+    const {_changeSubscriptionId} = this;
+    if (_changeSubscriptionId !== null) {
+      this._changeSubscriptionId = null;
+      try {
+        await this.connection.removeAccountChangeListener(_changeSubscriptionId);
+      } catch (err) {
+        console.error('Failed to remove account change listener', err);
+      }
+    }
+  }
 }

@@ -26,6 +26,10 @@ class App extends React.Component {
     for (;;) {
       let config;
 
+      if (this.state.dashboard) {
+        this.state.dashboard.disconnect();
+      }
+
       try {
         this.setState({
           initialized: false,
