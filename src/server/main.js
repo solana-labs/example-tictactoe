@@ -19,8 +19,7 @@ const app = express();
 
 async function getDashboard(): Promise<Object> {
   try {
-    const ret = await findDashboard();
-    return ret.dashboard;
+    return await findDashboard();
   } catch (err) {
     // ignore
   }
@@ -31,8 +30,7 @@ async function getDashboard(): Promise<Object> {
 
   try {
     app.locals.creating = true;
-    const ret = await createDashboard();
-    return ret.dashboard;
+    return await createDashboard();
   } finally {
     // eslint-disable-next-line require-atomic-updates
     app.locals.creating = false;
@@ -41,14 +39,16 @@ async function getDashboard(): Promise<Object> {
 
 app.get('/config.json', async (req, res) => {
   try {
-    const dashboard = await getDashboard();
+    const ret = await getDashboard();
     let response = {
       creating: true,
     };
 
-    if (dashboard) {
+    if (ret) {
+      const {dashboard, commitment} = ret;
       response = {
         url: urlTls,
+        commitment,
         secretKey: Buffer.from(dashboard._dashboardAccount.secretKey).toString(
           'hex',
         ),
@@ -68,7 +68,7 @@ async function loadDashboard() {
   for (;;) {
     try {
       console.log('loading dashboard');
-      const dashboard = await getDashboard();
+      const {dashboard} = await getDashboard();
       const publicKey = dashboard.publicKey.toBase58();
       console.log('dashboard loaded:', publicKey);
       return;

@@ -58,11 +58,12 @@ class App extends React.Component {
 
       try {
         const url = config.url;
+        const commitment = config.commitment;
         this.setState({
           initMessage:
             `Connecting to ${url}... ` + (attempt === 0 ? '' : `(#${attempt})`),
         });
-        const connection = new Connection(url);
+        const connection = new Connection(url, commitment);
         await connection.getRecentBlockhash();
 
         this.setState({initMessage: `Loading dashboard state...`});
