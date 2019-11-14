@@ -31,12 +31,20 @@ export async function sendAndConfirmTransaction(
     payerAccount = payerAccount || newPayerAccount;
   }
 
-  const signature = await realSendAndConfirmTransaction(
-    connection,
-    transaction,
-    payerAccount,
-    ...signers,
-  );
+  let signature;
+  try {
+    signature = await realSendAndConfirmTransaction(
+      connection,
+      transaction,
+      payerAccount,
+      ...signers,
+    );
+  } catch (err) {
+    // Transaction failed to confirm, it's possible the network restarted
+    // eslint-disable-next-line require-atomic-updates
+    payerAccount = null;
+    throw err;
+  }
 
   const body = {
     time: new Date(when).toString(),

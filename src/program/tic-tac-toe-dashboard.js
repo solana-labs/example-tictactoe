@@ -305,7 +305,9 @@ export class TicTacToeDashboard {
     if (_changeSubscriptionId !== null) {
       this._changeSubscriptionId = null;
       try {
-        await this.connection.removeAccountChangeListener(_changeSubscriptionId);
+        await this.connection.removeAccountChangeListener(
+          _changeSubscriptionId,
+        );
       } catch (err) {
         console.error('Failed to remove account change listener', err);
       }
