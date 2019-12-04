@@ -111,7 +111,7 @@ export async function fetchDashboard(): Promise<Object> {
   try {
     let ret = await findDashboard();
     console.log('Dashboard:', ret.dashboard.publicKey.toBase58());
-    process.exit();
+    return ret;
   } catch (err) {
     // ignore error, try to create instead
   }
@@ -119,13 +119,17 @@ export async function fetchDashboard(): Promise<Object> {
   try {
     let ret = await createDashboard();
     console.log('Dashboard:', ret.dashboard.publicKey.toBase58());
-    process.exit();
+    return ret;
   } catch (err) {
     console.error('Failed to create dashboard: ', err);
-    process.exit(1);
+    throw err;
   }
 }
 
 if (require.main === module) {
-  fetchDashboard();
+  fetchDashboard()
+    .then(process.exit)
+    .catch(console.error)
+    .then(() => 1)
+    .then(process.exit);
 }
