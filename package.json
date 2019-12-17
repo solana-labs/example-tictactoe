@@ -5,7 +5,7 @@
   "testnetDefaultChannel": "beta",
   "scripts": {
     "start": "npm run build:bpf-rust && babel-node src/cli/main.js",
-    "start-server": "npm run build:bpf-rust && babel-node src/server/main.js",
+    "start-server": "babel-node src/server/main.js",
     "lint": "npm run pretty && eslint .",
     "lint:fix": "npm run lint -- --fix",
     "flow": "flow",
@@ -15,7 +15,7 @@
     "bpf-sdk:update": "node_modules/@solana/web3.js/bin/bpf-sdk-install.sh",
     "build": "webpack --mode=production",
     "builddev": "webpack --mode=development",
-    "dev": "set -ex; babel-node src/server/config; webpack-dev-server --config ./webpack.config.js --mode development",
+    "dev": "set -ex; npm run build:bpf-rust && babel-node src/server/config; webpack-dev-server --config ./webpack.config.js --mode development",
     "build:bpf-c": "V=1 make -C program-bpf-c",
     "clean:bpf-c": "make -C program-bpf-c clean",
     "build:bpf-rust": "./program-bpf-rust/do.sh build",
