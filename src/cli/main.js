@@ -20,6 +20,13 @@ function renderBoard(board: Board): string {
   ].join('\n');
 }
 
+function checkCoords(board: Board, x: number, y: number): boolean {
+  if (board[(x, y)] == ' ') {
+    return true;
+  }
+  return false;
+}
+
 async function main() {
   const rl = readline.createInterface({
     input: process.stdin,
@@ -31,7 +38,6 @@ async function main() {
 
   // Create/load the game dashboard
   const {dashboard, connection} = await fetchDashboard();
-  rl.write(`Dashboard: ${dashboard.publicKey.toBase58()}\n`);
 
   rl.write(`Total games played: ${dashboard.state.totalGames}\n\n`);
   try {
@@ -77,17 +83,23 @@ async function main() {
     }
     rl.write(`\nYour turn.\n${renderBoard(ttt.state.board)}\n`);
 
-    let coords = '?x?';
+    let x = 0;
+    let y = 0;
     for (;;) {
-      coords = await rl.questionAsync('Enter column and row (eg. 1x3): ');
-      if (/^[123]x[123]$/.test(coords)) {
+      const coords = await rl.questionAsync('Enter column and row (eg. 1x3): ');
+      if (!/^[123]x[123]$/.test(coords)) {
+        rl.write(`Invalid response: ${coords}\n`);
+      }
+      x = Number(coords[0]) - 1;
+      y = Number(coords[2]) - 1;
+      if (checkCoords(ttt.state.board, x, y)) {
         break;
       }
-      rl.write(`Invalid response: ${coords}\n`);
+      rl.write(`That move has already been made, try again\n\n`);
     }
 
     const currentGameUpdateCounter = gameUpdateCounter;
-    await ttt.move(Number(coords[0]) - 1, Number(coords[2]) - 1);
+    await ttt.move(x, y);
     while (currentGameUpdateCounter === gameUpdateCounter) {
       rl.write('.');
       await sleep(250);
