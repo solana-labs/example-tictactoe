@@ -21,7 +21,7 @@ function renderBoard(board: Board): string {
 }
 
 function checkCoords(board: Board, x: number, y: number): boolean {
-  if (board[(x, y)] == ' ') {
+  if (board[x + y * 3] == ' ') {
     return true;
   }
   return false;
