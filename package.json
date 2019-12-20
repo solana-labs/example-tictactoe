@@ -2,7 +2,7 @@
   "name": "tictactoe",
   "version": "0.0.1",
   "description": "",
-  "testnetDefaultChannel": "beta",
+  "testnetDefaultChannel": "v0.21.5",
   "scripts": {
     "start": "npm run build:bpf-rust && babel-node src/cli/main.js",
     "start-server": "babel-node src/server/main.js",
