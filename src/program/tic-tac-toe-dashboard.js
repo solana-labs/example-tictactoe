@@ -70,12 +70,15 @@ export class TicTacToeDashboard {
     connection: Connection,
     programId: PublicKey,
   ): Promise<TicTacToeDashboard> {
+    const SizeOfDashBoardData = 255;
     const [, feeCalculator] = await connection.getRecentBlockhash();
-    const lamports = 1000000000;
-    const fee = feeCalculator.lamportsPerSignature * 3; // payer + 2 signers
+    const lamports = 1000000000; // enough to cover rent for game and player accounts
+    const balanceNeeded =
+      feeCalculator.lamportsPerSignature * 3 /* payer + 2 signers */ +
+      (await connection.getMinimumBalanceForRentExemption(SizeOfDashBoardData));
     const tempAccount = await newSystemAccountWithAirdrop(
       connection,
-      lamports + fee,
+      lamports + balanceNeeded,
     );
 
     const dashboardAccount = new Account();
@@ -84,7 +87,7 @@ export class TicTacToeDashboard {
       tempAccount.publicKey,
       dashboardAccount.publicKey,
       lamports,
-      255, // data space
+      SizeOfDashBoardData,
       programId,
     );
     transaction.add({
@@ -179,9 +182,15 @@ export class TicTacToeDashboard {
       programId: this.programId,
       data: ProgramCommand.initPlayer(),
     });
+    const accountStorageOverhead = 128;
+    const balanceNeeded =
+      feeCalculator.lamportsPerSignature * 3 /* payer + 2 signer keys */ +
+      (await this.connection.getMinimumBalanceForRentExemption(
+        accountStorageOverhead,
+      ));
     const payerAccount = await newSystemAccountWithAirdrop(
       this.connection,
-      feeCalculator.lamportsPerSignature * 3, // payer + 2 signer keys,
+      balanceNeeded,
     );
 
     transaction.signPartial(

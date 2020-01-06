@@ -66,10 +66,14 @@ export async function createDashboard(): Promise<Object> {
   }
 
   const [, feeCalculator] = await connection.getRecentBlockhash();
-  const fees =
+  const balanceNeeded =
     feeCalculator.lamportsPerSignature *
-    (BpfLoader.getMinNumSignatures(elf.length) + NUM_RETRIES);
-  const loaderAccount = await newSystemAccountWithAirdrop(connection, fees);
+      (BpfLoader.getMinNumSignatures(elf.length) + NUM_RETRIES) +
+    (await connection.getMinimumBalanceForRentExemption(elf.length));
+  const loaderAccount = await newSystemAccountWithAirdrop(
+    connection,
+    balanceNeeded,
+  );
 
   let programId;
   let attempts = 5;

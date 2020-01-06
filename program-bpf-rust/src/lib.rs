@@ -33,7 +33,7 @@ fn expect_n_accounts(accounts: &mut [AccountInfo], n: usize) -> ProgramResult<()
     }
 }
 
-fn fund_next_move(
+fn fund_to_cover_rent(
     accounts: &mut [AccountInfo],
     dashboard_index: usize,
     user_or_game_index: usize,
@@ -42,14 +42,11 @@ fn fund_next_move(
         info!("Dashboard is out of lamports");
         Err(ProgramError::InvalidInput)
     } else {
-        if *accounts[user_or_game_index].lamports != 0 {
-            info!("User or Game still has lamports");
-        } else {
-            // TODO: the fee to charge may be dynamic based on the FeeCalculator and
-            //       should be obtained via the Sysvar `SysvarFees111111111111111111111111111111111`
-            let fee = 3;
-            *accounts[user_or_game_index].lamports += fee;
-            *accounts[dashboard_index].lamports -= fee;
+        if *accounts[user_or_game_index].lamports < 100 {
+            // Fund the player or game account with enought lamports to pay for rent
+            let to_fund = 100 - *accounts[user_or_game_index].lamports;  // TODO calculate one day's worth
+            *accounts[user_or_game_index].lamports += to_fund;
+            *accounts[dashboard_index].lamports -= to_fund;
         }
         Ok(())
     }
@@ -105,7 +102,7 @@ fn process_instruction(
                 return Err(ProgramError::InvalidInput);
             }
         }
-        return fund_next_move(accounts, 0, 1);
+        return fund_to_cover_rent(accounts, 0, 1);
     }
 
     const DASHBOARD_INDEX: usize = 1;
@@ -160,8 +157,8 @@ fn process_instruction(
 
         dashboard_state.serialize(&mut accounts[DASHBOARD_INDEX].data)?;
         game_state.serialize(&mut accounts[GAME_INDEX].data)?;
-        fund_next_move(accounts, 1, 0)?;
-        return fund_next_move(accounts, 1, 2);
+        fund_to_cover_rent(accounts, 1, 0)?;
+        return fund_to_cover_rent(accounts, 1, 2);
     }
 
     const PLAYER_INDEX: usize = 0;
@@ -228,8 +225,8 @@ fn process_instruction(
 
     dashboard_state.serialize(&mut accounts[DASHBOARD_INDEX].data)?;
     game_state.serialize(&mut accounts[GAME_INDEX].data)?;
-    // Distribute funds to the player for their next transaction
-    fund_next_move(accounts, 1, 0)
+    fund_to_cover_rent(accounts, 1, 0)?;
+    fund_to_cover_rent(accounts, 1, 2)
 }
 
 entrypoint!(_entrypoint);

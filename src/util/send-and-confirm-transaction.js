@@ -23,12 +23,24 @@ export async function sendAndConfirmTransaction(
 ): Promise<void> {
   const when = Date.now();
 
+  const [, feeCalculator] = await connection.getRecentBlockhash();
+  const high_lamport_watermark = feeCalculator.lamportsPerSignature * 100; // wag
+  const low_lamport_watermark = feeCalculator.lamportsPerSignature * 10; // enough to cover any transaction
   if (!payerAccount) {
-    const [, feeCalculator] = await connection.getRecentBlockhash();
-    const fees = feeCalculator.lamportsPerSignature * 100; // wag
-    const newPayerAccount = await newSystemAccountWithAirdrop(connection, fees);
+    const newPayerAccount = await newSystemAccountWithAirdrop(
+      connection,
+      high_lamport_watermark,
+    );
     // eslint-disable-next-line require-atomic-updates
     payerAccount = payerAccount || newPayerAccount;
+  }
+  const payerBalance = await connection.getBalance(payerAccount.publicKey);
+  // Top off payer if necessary
+  if (payerBalance < low_lamport_watermark) {
+    await connection.requestAirdrop(
+      payerAccount.publicKey,
+      high_lamport_watermark - payerBalance,
+    );
   }
 
   let signature;
