@@ -2,7 +2,7 @@
   "name": "tictactoe",
   "version": "0.0.1",
   "description": "",
-  "testnetDefaultChannel": "beta",
+  "testnetDefaultChannel": "v0.22.2",
   "scripts": {
     "start": "babel-node src/cli/main.js",
     "start-server": "babel-node src/server/main.js",
@@ -12,7 +12,7 @@
     "flow:watch": "watch 'flow' . --wait=1 --ignoreDirectoryPattern=/doc/",
     "lint:watch": "watch 'npm run lint:fix' . --wait=1",
     "test": "npm run lint && npm run flow",
-    "bpf-sdk:update": "node_modules/@solana/web3.js/bin/bpf-sdk-install.sh",
+    "bpf-sdk:update": "solana-bpf-sdk-install",
     "build": "webpack --mode=production",
     "builddev": "webpack --mode=development",
     "dev": "set -ex; npm run build:bpf-rust && babel-node src/server/config; webpack-dev-server --config ./webpack.config.js --mode development",
