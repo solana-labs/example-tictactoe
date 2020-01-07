@@ -1,5 +1,5 @@
 use crate::result::{ProgramError, Result};
-use solana_sdk::pubkey::Pubkey;
+use solana_sdk::{info, pubkey::Pubkey};
 
 const BOARD_ITEM_FREE: u8 = 0; // Free slot
 const BOARD_ITEM_X: u8 = 1; // Player X
@@ -123,11 +123,15 @@ impl Game {
         match self.game_state {
             GameState::Waiting | GameState::XMove | GameState::OMove => {
                 if player == self.player_x {
+                    info!("Player x keep_alive");
+                    info!(timestamp, 0, 0, 0, 0);
                     if timestamp <= self.keep_alive[0] {
                         return Err(ProgramError::InvalidTimestamp);
                     }
                     self.keep_alive[0] = timestamp;
                 } else if player == self.player_o {
+                    info!("Player o keep_alive");
+                    info!(timestamp, 0, 0, 0, 0);
                     if timestamp <= self.keep_alive[1] {
                         return Err(ProgramError::InvalidTimestamp);
                     }

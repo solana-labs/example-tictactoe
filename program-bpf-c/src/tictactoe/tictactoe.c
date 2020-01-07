@@ -178,7 +178,6 @@ SOL_FN_PREFIX void dashboard_update(
 ) {
   switch (game->game_state) {
   case GameState_Waiting:
-    sol_log("Replacing dashboard pending game");
     sol_memcpy(&self->pending_game, game_pubkey, sizeof(*game_pubkey));
     break;
   case GameState_XMove:
@@ -213,21 +212,16 @@ SOL_FN_PREFIX void dashboard_update(
   }
 }
 
-SOL_FN_PREFIX uint32_t fund_next_move(SolKeyedAccount *dashboard_ka, SolKeyedAccount *ka) {
-  sol_log("fund_next_move");
-  sol_log_64(*(dashboard_ka->lamports), *(ka->lamports), 0, 0, 0);
-  if (*ka->lamports != 0) {
-    sol_log("Player still has lamports");
-  } else if (*dashboard_ka->lamports <= 1) {
+SOL_FN_PREFIX uint32_t fund_to_cover_rent(SolKeyedAccount *dashboard_ka, SolKeyedAccount *ka) {
+  #define HIGH_LAMPORT_WATERMARK 100
+  if (*dashboard_ka->lamports <= 1) {
     sol_log("Dashboard is out of lamports");
     return FAILURE;
-  } else {
-    // TODO: the fee to charge may be dynamic based on the FeeCalculator and
-    //       instead probably needs to be passed in as an argument somehow
-    int fee = 3;
-    *(ka->lamports) += fee;
-    *(dashboard_ka->lamports) -= fee;
-    sol_log_64(*(dashboard_ka->lamports), *(ka->lamports), 0, 0, 0);
+  } else if (*ka->lamports < HIGH_LAMPORT_WATERMARK) {
+    // Fund the player or game account with enough lamports to pay for rent
+    int to_fund = HIGH_LAMPORT_WATERMARK - *(ka->lamports);
+    *(ka->lamports) += to_fund;
+    *(dashboard_ka->lamports) -= to_fund;
   }
   return SUCCESS;
 }
@@ -301,7 +295,7 @@ extern uint32_t entrypoint(const uint8_t *input) {
       return FAILURE;
     }
     // Distribute funds to the player for their next transaction
-    return fund_next_move(&params.ka[0], &params.ka[1]);
+    return fund_to_cover_rent(&params.ka[0], &params.ka[1]);
   }
   if (params.ka_num != 4) {
     sol_log("Error: three keys expected");
@@ -352,7 +346,7 @@ extern uint32_t entrypoint(const uint8_t *input) {
 
     // Distribute funds to the player for their next transaction, and to the
     // game account to keep it's state loaded
-    return fund_next_move(&params.ka[1], &params.ka[0]) && fund_next_move(&ka[1], &params.ka[2]);
+    return fund_to_cover_rent(&params.ka[1], &params.ka[0]) && fund_to_cover_rent(&ka[1], &params.ka[2]);
   }
 
   if (!state_deserialize(&params.ka[2], &game_state, &game_state_data)) {
@@ -408,5 +402,5 @@ extern uint32_t entrypoint(const uint8_t *input) {
   );
 
   // Distribute funds to the player for their next transaction
-  return fund_next_move(&params.ka[1], &params.ka[0]);
+  return fund_to_cover_rent(&params.ka[1], &params.ka[0]);
 }

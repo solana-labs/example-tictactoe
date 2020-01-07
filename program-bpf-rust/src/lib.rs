@@ -38,13 +38,14 @@ fn fund_to_cover_rent(
     dashboard_index: usize,
     user_or_game_index: usize,
 ) -> ProgramResult<()> {
+    static HIGH_LAMPORT_WATERMARK: u64 = 100;
     if *accounts[dashboard_index].lamports <= 1 {
         info!("Dashboard is out of lamports");
         Err(ProgramError::InvalidInput)
     } else {
-        if *accounts[user_or_game_index].lamports < 100 {
-            // Fund the player or game account with enought lamports to pay for rent
-            let to_fund = 100 - *accounts[user_or_game_index].lamports;  // TODO calculate one day's worth
+        if *accounts[user_or_game_index].lamports < HIGH_LAMPORT_WATERMARK {
+            // Fund the player or game account with enough lamports to pay for rent
+            let to_fund = HIGH_LAMPORT_WATERMARK - *accounts[user_or_game_index].lamports;
             *accounts[user_or_game_index].lamports += to_fund;
             *accounts[dashboard_index].lamports -= to_fund;
         }
@@ -57,6 +58,8 @@ fn process_instruction(
     accounts: &mut [AccountInfo],
     data: &[u8],
 ) -> ProgramResult<()> {
+    info!("tic-tac-toe program entrypoint");
+
     let command = Command::deserialize(data)?;
 
     if command == Command::InitDashboard {
