@@ -24,6 +24,9 @@ module.exports = {
   resolve: {
     extensions: ['*', '.js', '.jsx'],
   },
+  node: {
+    fs: "empty"
+  },
   output: {
     path: __dirname + '/dist',
     publicPath: '/',
