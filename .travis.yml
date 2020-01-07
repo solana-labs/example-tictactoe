@@ -4,6 +4,7 @@ language: rust
 services:
 - docker
 cache:
+  cargo: true
   directories:
   - "~/.npm"
 notifications:
