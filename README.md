@@ -53,9 +53,6 @@ $ npm run localnet:down
 
 For more details on working with a local cluster, see the [full instructions](https://github.com/solana-labs/solana-web3.js#local-network).
 
-Alternatively, to connect to a public testnet, set `export LIVE=1` in your
-environment. By default, `LIVE=1` will connect to the beta testnet.
-
 ### Build the BPF program
 ```sh
 $ npm run build:bpf-rust
