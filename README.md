@@ -23,7 +23,7 @@ More information about how Solana works is available in the [Book](https://docs.
 ## Getting Started
 
 First fetch the npm dependencies, including `@solana/web3.js`, by running:
-```bash
+```sh
 $ npm install
 ```
 
@@ -31,23 +31,23 @@ $ npm install
 The example connects to a local Solana cluster by default.
 
 To enable on-chain program logs, set the `RUST_LOG` environment variable:
-```bash
+```sh
 $ export RUST_LOG=solana_runtime=info,solana_bpf_loader=debug,solana_rbpf=debug
 ```
 
 To start a local Solana cluster run:
-```bash
+```sh
 $ npm run localnet:update
 $ npm run localnet:up
 ```
 
 Solana cluster logs are available with:
-```bash
+```sh
 $ npm run localnet:logs
 ```
 
 To stop the local solana cluster run:
-```bash
+```sh
 $ npm run localnet:down
 ```
 
