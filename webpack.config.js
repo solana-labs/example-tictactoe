@@ -25,7 +25,7 @@ module.exports = {
     extensions: ['*', '.js', '.jsx'],
   },
   node: {
-    fs: "empty"
+    fs: 'empty',
   },
   output: {
     path: __dirname + '/dist',

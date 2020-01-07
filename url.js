@@ -1,6 +1,5 @@
 // @noflow
 
-
 // To connect to a public testnet, set `export LIVE=1` in your
 // environment. By default, `LIVE=1` will connect to the beta testnet.
 

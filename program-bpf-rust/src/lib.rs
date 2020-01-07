@@ -15,8 +15,12 @@ use program_state::State;
 use result::{ProgramError, Result as ProgramResult};
 use simple_serde::SimpleSerde;
 use solana_sdk::{
-    account_info::AccountInfo, entrypoint, entrypoint::SUCCESS, info, pubkey::Pubkey,
-    sysvar::{Sysvar, clock::Clock},
+    account_info::AccountInfo,
+    entrypoint,
+    entrypoint::SUCCESS,
+    info,
+    pubkey::Pubkey,
+    sysvar::{clock::Clock, Sysvar},
 };
 
 fn get_current_slot(account: &AccountInfo) -> u64 {
