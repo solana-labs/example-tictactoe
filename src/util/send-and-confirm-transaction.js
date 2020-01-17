@@ -23,7 +23,7 @@ export async function sendAndConfirmTransaction(
 ): Promise<void> {
   const when = Date.now();
 
-  const [, feeCalculator] = await connection.getRecentBlockhash();
+  const {feeCalculator} = await connection.getRecentBlockhash();
   const high_lamport_watermark = feeCalculator.lamportsPerSignature * 100; // wag
   const low_lamport_watermark = feeCalculator.lamportsPerSignature * 10; // enough to cover any transaction
   if (!payerAccount) {
