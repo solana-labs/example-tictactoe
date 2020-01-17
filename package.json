@@ -2,7 +2,7 @@
   "name": "tictactoe",
   "version": "0.0.1",
   "description": "",
-  "testnetDefaultChannel": "v0.22.2",
+  "testnetDefaultChannel": "v0.22.3",
   "scripts": {
     "start": "babel-node src/cli/main.js",
     "start-server": "babel-node src/server/main.js",
