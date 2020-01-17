@@ -71,7 +71,7 @@ export class TicTacToeDashboard {
     programId: PublicKey,
   ): Promise<TicTacToeDashboard> {
     const SizeOfDashBoardData = 255;
-    const [, feeCalculator] = await connection.getRecentBlockhash();
+    const {feeCalculator} = await connection.getRecentBlockhash();
     const lamports = 1000000000; // enough to cover rent for game and player accounts
     const balanceNeeded =
       feeCalculator.lamportsPerSignature * 3 /* payer + 2 signers */ +
@@ -165,10 +165,10 @@ export class TicTacToeDashboard {
   async _requestPlayerAccountTransaction(
     playerPublicKey: PublicKey,
   ): Promise<Transaction> {
-    const [
+    const {
       recentBlockhash,
       feeCalculator,
-    ] = await this.connection.getRecentBlockhash();
+    } = await this.connection.getRecentBlockhash();
     let transaction = new Transaction({recentBlockhash});
     transaction.add(SystemProgram.assign(playerPublicKey, this.programId), {
       keys: [

@@ -68,7 +68,6 @@ class App extends React.Component {
             `Connecting to ${url}... ` + (attempt === 0 ? '' : `(#${attempt})`),
         });
         const connection = new Connection(url, commitment);
-        await connection.getRecentBlockhash();
 
         this.setState({initMessage: `Loading dashboard state...`});
         const dashboard = await TicTacToeDashboard.connect(
