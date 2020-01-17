@@ -65,7 +65,7 @@ export async function createDashboard(): Promise<Object> {
     return;
   }
 
-  const [, feeCalculator] = await connection.getRecentBlockhash();
+  const {feeCalculator} = await connection.getRecentBlockhash();
   const balanceNeeded =
     feeCalculator.lamportsPerSignature *
       (BpfLoader.getMinNumSignatures(elf.length) + NUM_RETRIES) +
