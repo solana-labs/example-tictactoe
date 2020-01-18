@@ -1,13 +1,11 @@
 {
   "presets": [
-    "env",
-    "flow",
-    "react",
-    "stage-2",
+    "@babel/preset-env",
+    "@babel/preset-flow",
+    "@babel/preset-react"
   ],
   "plugins": [
-    "transform-class-properties",
-    "transform-function-bind",
-    "transform-runtime",
+    "@babel/plugin-proposal-class-properties",
+    "@babel/transform-runtime"
   ]
 }
