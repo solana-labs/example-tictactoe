@@ -42,14 +42,16 @@ fn fund_to_cover_rent(
     dashboard_index: usize,
     user_or_game_index: usize,
 ) -> ProgramResult<()> {
-    static HIGH_LAMPORT_WATERMARK: u64 = 100;
+    static LOW_LAMPORT_WATERMARK: u64 = 300;
     if *accounts[dashboard_index].lamports <= 1 {
         info!("Dashboard is out of lamports");
         Err(ProgramError::InvalidInput)
     } else {
-        if *accounts[user_or_game_index].lamports < HIGH_LAMPORT_WATERMARK {
+        if *accounts[user_or_game_index].lamports < LOW_LAMPORT_WATERMARK {
+            info!("Fund account");
+            info!(0, 0, 0, *accounts[user_or_game_index].lamports, *accounts[dashboard_index].lamports);
             // Fund the player or game account with enough lamports to pay for rent
-            let to_fund = HIGH_LAMPORT_WATERMARK - *accounts[user_or_game_index].lamports;
+            let to_fund = LOW_LAMPORT_WATERMARK - *accounts[user_or_game_index].lamports;
             *accounts[user_or_game_index].lamports += to_fund;
             *accounts[dashboard_index].lamports -= to_fund;
         }
