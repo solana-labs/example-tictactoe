@@ -43,17 +43,23 @@ fn fund_to_cover_rent(
     user_or_game_index: usize,
 ) -> ProgramResult<()> {
     static LOW_LAMPORT_WATERMARK: u64 = 300;
-    if *accounts[dashboard_index].lamports <= 1 {
+    if accounts[dashboard_index].lamports() <= 1 {
         info!("Dashboard is out of lamports");
         Err(ProgramError::InvalidInput)
     } else {
-        if *accounts[user_or_game_index].lamports < LOW_LAMPORT_WATERMARK {
+        if accounts[user_or_game_index].lamports() < LOW_LAMPORT_WATERMARK {
             info!("Fund account");
-            info!(0, 0, 0, *accounts[user_or_game_index].lamports, *accounts[dashboard_index].lamports);
+            info!(
+                0,
+                0,
+                0,
+                accounts[user_or_game_index].lamports(),
+                accounts[dashboard_index].lamports()
+            );
             // Fund the player or game account with enough lamports to pay for rent
-            let to_fund = LOW_LAMPORT_WATERMARK - *accounts[user_or_game_index].lamports;
-            *accounts[user_or_game_index].lamports += to_fund;
-            *accounts[dashboard_index].lamports -= to_fund;
+            let to_fund = LOW_LAMPORT_WATERMARK - accounts[user_or_game_index].lamports();
+            *accounts[user_or_game_index].borrow_mut().lamports += to_fund;
+            *accounts[dashboard_index].borrow_mut().lamports -= to_fund;
         }
         Ok(())
     }
@@ -73,7 +79,7 @@ fn process_instruction(
         const DASHBOARD_INDEX: usize = 0;
         expect_n_accounts(accounts, 1)?;
 
-        let mut dashboard_state = State::deserialize(&accounts[DASHBOARD_INDEX].data)?;
+        let mut dashboard_state = State::deserialize(&accounts[DASHBOARD_INDEX].borrow().data)?;
         match dashboard_state {
             State::Uninitialized => {
                 dashboard_state = State::Dashboard(Default::default());
@@ -85,7 +91,7 @@ fn process_instruction(
             }
         }?;
 
-        dashboard_state.serialize(&mut accounts[DASHBOARD_INDEX].data)?;
+        dashboard_state.serialize(&mut accounts[DASHBOARD_INDEX].borrow_mut().data)?;
         return Ok(());
     }
 
@@ -95,7 +101,7 @@ fn process_instruction(
         const PLAYER_INDEX: usize = 1;
         expect_n_accounts(accounts, 2)?;
         {
-            let dashboard_state = State::deserialize(&accounts[DASHBOARD_INDEX].data)?;
+            let dashboard_state = State::deserialize(&accounts[DASHBOARD_INDEX].borrow().data)?;
             match dashboard_state {
                 State::Dashboard(_) => Ok(()),
                 _ => {
@@ -105,7 +111,7 @@ fn process_instruction(
             }?;
 
             if accounts[DASHBOARD_INDEX].owner != accounts[PLAYER_INDEX].owner
-                || !accounts[PLAYER_INDEX].data.is_empty()
+                || !accounts[PLAYER_INDEX].data_is_empty()
             {
                 info!("Invalid player account for InitPlayer");
                 return Err(ProgramError::InvalidInput);
@@ -116,7 +122,7 @@ fn process_instruction(
 
     const DASHBOARD_INDEX: usize = 1;
     expect_n_accounts(accounts, 3)?;
-    let mut dashboard_state = State::deserialize(&accounts[DASHBOARD_INDEX].data)?;
+    let mut dashboard_state = State::deserialize(&accounts[DASHBOARD_INDEX].borrow().data)?;
     match dashboard_state {
         State::Dashboard(_) => Ok(()),
         _ => {
@@ -130,14 +136,14 @@ fn process_instruction(
         const GAME_INDEX: usize = 0;
         const PLAYER_INDEX: usize = 2;
         expect_n_accounts(accounts, 3)?;
-        let mut game_state = State::deserialize(&accounts[GAME_INDEX].data)?;
+        let mut game_state = State::deserialize(&accounts[GAME_INDEX].borrow().data)?;
 
         if accounts[GAME_INDEX].owner != accounts[DASHBOARD_INDEX].owner {
             info!("Invalid game account for InitGame");
             return Err(ProgramError::InvalidInput);
         }
         if accounts[GAME_INDEX].owner != accounts[PLAYER_INDEX].owner
-            || !accounts[PLAYER_INDEX].data.is_empty()
+            || !accounts[PLAYER_INDEX].data_is_empty()
         {
             info!("Invalid player account for InitGame");
             return Err(ProgramError::InvalidInput);
@@ -164,8 +170,8 @@ fn process_instruction(
             }
         }?;
 
-        dashboard_state.serialize(&mut accounts[DASHBOARD_INDEX].data)?;
-        game_state.serialize(&mut accounts[GAME_INDEX].data)?;
+        dashboard_state.serialize(&mut accounts[DASHBOARD_INDEX].borrow_mut().data)?;
+        game_state.serialize(&mut accounts[GAME_INDEX].borrow_mut().data)?;
         fund_to_cover_rent(accounts, 1, 0)?;
         return fund_to_cover_rent(accounts, 1, 2);
     }
@@ -176,9 +182,9 @@ fn process_instruction(
 
     expect_n_accounts(accounts, 4)?;
 
-    let mut game_state = State::deserialize(&accounts[GAME_INDEX].data)?;
+    let mut game_state = State::deserialize(&accounts[GAME_INDEX].borrow().data)?;
     if accounts[PLAYER_INDEX].owner != accounts[DASHBOARD_INDEX].owner
-        || !accounts[PLAYER_INDEX].data.is_empty()
+        || !accounts[PLAYER_INDEX].data_is_empty()
     {
         info!("Invalid player account");
         return Err(ProgramError::InvalidInput);
@@ -232,8 +238,8 @@ fn process_instruction(
         }
     }?;
 
-    dashboard_state.serialize(&mut accounts[DASHBOARD_INDEX].data)?;
-    game_state.serialize(&mut accounts[GAME_INDEX].data)?;
+    dashboard_state.serialize(&mut accounts[DASHBOARD_INDEX].borrow_mut().data)?;
+    game_state.serialize(&mut accounts[GAME_INDEX].borrow_mut().data)?;
     fund_to_cover_rent(accounts, 1, 0)?;
     fund_to_cover_rent(accounts, 1, 2)
 }
