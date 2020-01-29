@@ -28,7 +28,7 @@ fn get_current_slot(account: &AccountInfo) -> u64 {
     clock.slot
 }
 
-fn expect_n_accounts(accounts: &mut [AccountInfo], n: usize) -> ProgramResult<()> {
+fn expect_n_accounts(accounts: &[AccountInfo], n: usize) -> ProgramResult<()> {
     if accounts.len() < n {
         info!("Incorrect number of accounts");
         Err(ProgramError::InvalidInput)
@@ -38,7 +38,7 @@ fn expect_n_accounts(accounts: &mut [AccountInfo], n: usize) -> ProgramResult<()
 }
 
 fn fund_to_cover_rent(
-    accounts: &mut [AccountInfo],
+    accounts: &[AccountInfo],
     dashboard_index: usize,
     user_or_game_index: usize,
 ) -> ProgramResult<()> {
@@ -67,7 +67,7 @@ fn fund_to_cover_rent(
 
 fn process_instruction(
     _program_id: &Pubkey,
-    accounts: &mut [AccountInfo],
+    accounts: &[AccountInfo],
     data: &[u8],
 ) -> ProgramResult<()> {
     info!("tic-tac-toe program entrypoint");
@@ -245,7 +245,7 @@ fn process_instruction(
 }
 
 entrypoint!(_entrypoint);
-fn _entrypoint(program_id: &Pubkey, accounts: &mut [AccountInfo], data: &[u8]) -> u32 {
+fn _entrypoint(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> u32 {
     const FAILURE: u32 = 1;
 
     if !accounts[0].is_signer {
