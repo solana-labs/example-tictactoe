@@ -1,4 +1,4 @@
-use crate::result::TicTacToeError;
+use crate::error::TicTacToeError;
 use solana_sdk::{entrypoint::ProgramResult, info, pubkey::Pubkey};
 
 const BOARD_ITEM_FREE: u8 = 0; // Free slot

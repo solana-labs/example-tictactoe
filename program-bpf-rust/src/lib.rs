@@ -4,13 +4,13 @@ extern crate serde_derive;
 extern crate solana_sdk;
 
 mod dashboard;
+mod error;
 mod game;
 mod program_command;
 mod program_state;
-mod result;
 mod simple_serde;
 
-use crate::result::TicTacToeError;
+use crate::error::TicTacToeError;
 use program_command::Command;
 use program_state::State;
 use simple_serde::SimpleSerde;

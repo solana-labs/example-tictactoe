@@ -1,5 +1,4 @@
-use crate::result::TicTacToeError;
-use serde;
+use crate::error::TicTacToeError;
 use solana_sdk::{entrypoint::ProgramResult, info, program_error::ProgramError};
 use std::mem::size_of;
 
