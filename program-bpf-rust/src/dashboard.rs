@@ -1,6 +1,5 @@
 use crate::game::{Game, GameState};
-use crate::result::Result;
-use solana_sdk::pubkey::Pubkey;
+use solana_sdk::{entrypoint::ProgramResult, pubkey::Pubkey};
 
 const MAX_COMPLETED_GAMES: usize = 5;
 
@@ -18,7 +17,7 @@ pub struct Dashboard {
 }
 
 impl Dashboard {
-    pub fn update(self: &mut Dashboard, game_pubkey: &Pubkey, game: &Game) -> Result<()> {
+    pub fn update(self: &mut Dashboard, game_pubkey: &Pubkey, game: &Game) -> ProgramResult {
         match game.game_state {
             GameState::Waiting => {
                 self.pending_game = *game_pubkey;
@@ -38,7 +37,7 @@ impl Dashboard {
                     self.completed_games[self.latest_completed_game_index as usize] = *game_pubkey;
                 }
             }
-        };
+        }
         Ok(())
     }
 }

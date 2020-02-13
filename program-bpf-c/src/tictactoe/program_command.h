@@ -2,7 +2,7 @@
  * Transactions sent to the tic-tac-toe program contain commands that are
  * defined in this file:
  * - keys will vary by the specified Command
- * - userdata is a Command enum (as a 32 bit value) followed by a CommandData union.
+ * - instruction data is a Command enum (as a 32 bit value) followed by a CommandData union.
  */
 #pragma once
 

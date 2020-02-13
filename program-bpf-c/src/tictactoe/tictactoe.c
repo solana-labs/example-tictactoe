@@ -213,24 +213,24 @@ SOL_FN_PREFIX void dashboard_update(
 }
 
 SOL_FN_PREFIX uint32_t fund_to_cover_rent(SolKeyedAccount *dashboard_ka, SolKeyedAccount *ka) {
-  #define HIGH_LAMPORT_WATERMARK 100
+  #define LOW_LAMPORT_WATERMARK 300
   if (*dashboard_ka->lamports <= 1) {
     sol_log("Dashboard is out of lamports");
     return FAILURE;
-  } else if (*ka->lamports < HIGH_LAMPORT_WATERMARK) {
+  } else if (*ka->lamports < LOW_LAMPORT_WATERMARK) {
     // Fund the player or game account with enough lamports to pay for rent
-    int to_fund = HIGH_LAMPORT_WATERMARK - *(ka->lamports);
+    int to_fund = LOW_LAMPORT_WATERMARK - *(ka->lamports);
     *(ka->lamports) += to_fund;
     *(dashboard_ka->lamports) -= to_fund;
   }
   return SUCCESS;
 }
 
-extern uint32_t entrypoint(const uint8_t *input) {
+extern uint64_t entrypoint(const uint8_t *input) {
   SolKeyedAccount ka[4];
   SolParameters params = (SolParameters) { .ka = ka };
 
-  sol_log("tic-tac-toe program entrypoint");
+  sol_log("tic-tac-toe C program entrypoint");
 
   if (!sol_deserialize(input, &params, SOL_ARRAY_SIZE(ka))) {
     sol_log("Error: deserialize failed");
@@ -290,7 +290,7 @@ extern uint32_t entrypoint(const uint8_t *input) {
       return FAILURE;
     }
 
-    if (!SolPubkey_same(params.ka[0].owner, params.ka[1].owner) || params.ka[1].userdata_len != 0) {
+    if (!SolPubkey_same(params.ka[0].owner, params.ka[1].owner) || params.ka[1].data_len != 0) {
       sol_log("Invalid player account");
       return FAILURE;
     }
@@ -321,14 +321,14 @@ extern uint32_t entrypoint(const uint8_t *input) {
       return FAILURE;
     }
 
-    uint64_t current_slot = *(uint64_t*)params.ka[3].userdata;
+    uint64_t current_slot = *(uint64_t*)params.ka[3].data;
 
     if (*game_state != State_Uninitialized) {
       sol_log("Account is already uninitialized");
       return FAILURE;
     }
 
-    if (!SolPubkey_same(ka[0].owner, params.ka[2].owner) ||params.ka[2].userdata_len != 0) {
+    if (!SolPubkey_same(ka[0].owner, params.ka[2].owner) ||params.ka[2].data_len != 0) {
       sol_log("Invalid player account");
       return FAILURE;
     }
@@ -354,14 +354,14 @@ extern uint32_t entrypoint(const uint8_t *input) {
     return FAILURE;
   }
 
-  uint64_t current_slot = *(uint64_t*)params.ka[3].userdata;
+  uint64_t current_slot = *(uint64_t*)params.ka[3].data;
 
   if (*game_state != State_Game) {
     sol_log("Invalid game account");
     return FAILURE;
   }
 
-  if (!SolPubkey_same(params.ka[0].owner, params.ka[1].owner) || params.ka[0].userdata_len != 0) {
+  if (!SolPubkey_same(params.ka[0].owner, params.ka[1].owner) || params.ka[0].data_len != 0) {
     sol_log("Invalid player account");
     return FAILURE;
   }

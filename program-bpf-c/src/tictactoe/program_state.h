@@ -1,5 +1,5 @@
 /**
- * Tic-tac-toe account userdata contains a State enum (as a 32 bit value) followed by a StateData union
+ * Tic-tac-toe account data contains a State enum (as a 32 bit value) followed by a StateData union
  */
 
 #pragma once
@@ -64,12 +64,12 @@ typedef union {
 
 
 SOL_FN_PREFIX bool state_deserialize(SolKeyedAccount *ka, State **state, StateData **state_data) {
-  if (ka->userdata_len < sizeof(uint32_t) + sizeof(StateData)) {
-    sol_log("Error: invalid userdata_len");
-    sol_log_64(ka->userdata_len, sizeof(uint32_t) + sizeof(StateData), 0, 0, 0);
+  if (ka->data_len < sizeof(uint32_t) + sizeof(StateData)) {
+    sol_log("Error: invalid data_len");
+    sol_log_64(ka->data_len, sizeof(uint32_t) + sizeof(StateData), 0, 0, 0);
     return false;
   }
-  *state = (uint64_t *) ka->userdata;
-  *state_data = (StateData *) (ka->userdata + sizeof(uint64_t));
+  *state = (uint64_t *) ka->data;
+  *state_data = (StateData *) (ka->data + sizeof(uint64_t));
   return true;
 }

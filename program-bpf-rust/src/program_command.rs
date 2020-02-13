@@ -2,16 +2,21 @@ use crate::simple_serde::SimpleSerde;
 
 #[repr(C)]
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-#[allow(dead_code)]
 pub enum Command {
-    InitDashboard, // Initialize a dashboard account
-    InitPlayer,    // Initialize a player account
-    InitGame,      // Initialize a game account
-
-    Advertise,    // Used by Player X to advertise their game
-    Join,         // Player O wants to join
-    KeepAlive,    // Player X/O keep alive
-    Move(u8, u8), // Player X/O mark board position (x, y)
+    /// Initialize a dashboard account
+    InitDashboard,
+    /// Initialize a player account
+    InitPlayer,
+    /// Initialize a game account
+    InitGame,
+    /// Used by Player X to advertise their game
+    Advertise,
+    /// Player O wants to join
+    Join,
+    /// Player X/O keep alive
+    KeepAlive,
+    /// Player X/O mark board position (x, y)
+    Move(u8, u8),
 }
 impl SimpleSerde for Command {}
 

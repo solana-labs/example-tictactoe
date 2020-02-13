@@ -5,10 +5,7 @@ cd "$(dirname "$0")"
 usage() {
     cat <<EOF
 
-Usage: do.sh action <project>
-
-If relative_project_path is ommitted then action will
-be performed on all projects
+Usage: do.sh action
 
 Supported actions:
     build
@@ -45,7 +42,8 @@ perform_action() {
         ;;
     test)
         echo "test"
-        cargo +nightly test
+        shift
+        cargo +nightly test $@
         ;;
     clippy)
         echo "clippy"
@@ -107,4 +105,4 @@ perform_action() {
 
 set -e
 
-perform_action "$1"
+perform_action "$@"

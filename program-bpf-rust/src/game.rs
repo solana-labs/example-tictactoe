@@ -1,5 +1,5 @@
-use crate::result::{ProgramError, Result};
-use solana_sdk::{info, pubkey::Pubkey};
+use crate::result::TicTacToeError;
+use solana_sdk::{entrypoint::ProgramResult, info, pubkey::Pubkey};
 
 const BOARD_ITEM_FREE: u8 = 0; // Free slot
 const BOARD_ITEM_X: u8 = 1; // Player X
@@ -50,19 +50,19 @@ impl Game {
         game
     }
 
-    pub fn join(self: &mut Game, player_o: Pubkey, timestamp: u64) -> Result<()> {
+    pub fn join(self: &mut Game, player_o: Pubkey, timestamp: u64) -> ProgramResult {
         if self.game_state == GameState::Waiting {
             self.player_o = player_o;
             self.game_state = GameState::XMove;
 
             if timestamp <= self.keep_alive[1] {
-                Err(ProgramError::InvalidTimestamp)
+                Err(TicTacToeError::InvalidTimestamp.into())
             } else {
                 self.keep_alive[1] = timestamp;
                 Ok(())
             }
         } else {
-            Err(ProgramError::GameInProgress)
+            Err(TicTacToeError::GameInProgress.into())
         }
     }
 
@@ -70,29 +70,29 @@ impl Game {
         triple.iter().all(|&i| i == x_or_o)
     }
 
-    pub fn next_move(self: &mut Game, player: Pubkey, x: usize, y: usize) -> Result<()> {
+    pub fn next_move(self: &mut Game, player: Pubkey, x: usize, y: usize) -> ProgramResult {
         let board_index = y * 3 + x;
         if board_index >= self.board.len() || self.board[board_index] != BOARD_ITEM_FREE {
-            return Err(ProgramError::InvalidMove);
+            return Err(TicTacToeError::InvalidMove.into());
         }
 
         let (x_or_o, won_state) = match self.game_state {
             GameState::XMove => {
                 if player != self.player_x {
-                    return Err(ProgramError::PlayerNotFound);
+                    return Err(TicTacToeError::PlayerNotFound.into());
                 }
                 self.game_state = GameState::OMove;
                 (BOARD_ITEM_X, GameState::XWon)
             }
             GameState::OMove => {
                 if player != self.player_o {
-                    return Err(ProgramError::PlayerNotFound);
+                    return Err(TicTacToeError::PlayerNotFound.into());
                 }
                 self.game_state = GameState::XMove;
                 (BOARD_ITEM_O, GameState::OWon)
             }
             _ => {
-                return Err(ProgramError::NotYourTurn);
+                return Err(TicTacToeError::NotYourTurn.into());
             }
         };
         self.board[board_index] = x_or_o;
@@ -119,25 +119,25 @@ impl Game {
         Ok(())
     }
 
-    pub fn keep_alive(self: &mut Game, player: Pubkey, timestamp: u64) -> Result<()> {
+    pub fn keep_alive(self: &mut Game, player: Pubkey, timestamp: u64) -> ProgramResult {
         match self.game_state {
             GameState::Waiting | GameState::XMove | GameState::OMove => {
                 if player == self.player_x {
                     info!("Player x keep_alive");
                     info!(timestamp, 0, 0, 0, 0);
                     if timestamp <= self.keep_alive[0] {
-                        return Err(ProgramError::InvalidTimestamp);
+                        return Err(TicTacToeError::InvalidTimestamp.into());
                     }
                     self.keep_alive[0] = timestamp;
                 } else if player == self.player_o {
                     info!("Player o keep_alive");
                     info!(timestamp, 0, 0, 0, 0);
                     if timestamp <= self.keep_alive[1] {
-                        return Err(ProgramError::InvalidTimestamp);
+                        return Err(TicTacToeError::InvalidTimestamp.into());
                     }
                     self.keep_alive[1] = timestamp;
                 } else {
-                    return Err(ProgramError::PlayerNotFound);
+                    return Err(TicTacToeError::PlayerNotFound.into());
                 }
             }
             // Ignore keep_alive when game is no longer in progress
@@ -149,7 +149,6 @@ impl Game {
 
 #[cfg(test)]
 mod test {
-    extern crate std;
     use super::*;
 
     #[no_mangle]
