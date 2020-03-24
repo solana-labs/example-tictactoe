@@ -83,13 +83,13 @@ export class TicTacToeDashboard {
 
     const dashboardAccount = new Account();
 
-    const transaction = SystemProgram.createAccount(
-      tempAccount.publicKey,
-      dashboardAccount.publicKey,
+    const transaction = SystemProgram.createAccount({
+      fromPubkey: tempAccount.publicKey,
+      newAccountPubkey: dashboardAccount.publicKey,
       lamports,
-      SizeOfDashBoardData,
+      space: SizeOfDashBoardData,
       programId,
-    );
+    });
     transaction.add({
       keys: [
         {pubkey: dashboardAccount.publicKey, isSigner: true, isWritable: true},
@@ -170,18 +170,24 @@ export class TicTacToeDashboard {
       feeCalculator,
     } = await this.connection.getRecentBlockhash();
     let transaction = new Transaction({recentBlockhash});
-    transaction.add(SystemProgram.assign(playerPublicKey, this.programId), {
-      keys: [
-        {
-          pubkey: this._dashboardAccount.publicKey,
-          isSigner: true,
-          isWritable: true,
-        },
-        {pubkey: playerPublicKey, isSigner: true, isWritable: true},
-      ],
-      programId: this.programId,
-      data: ProgramCommand.initPlayer(),
-    });
+    transaction.add(
+      SystemProgram.assign({
+        fromPubkey: playerPublicKey,
+        programId: this.programId,
+      }),
+      {
+        keys: [
+          {
+            pubkey: this._dashboardAccount.publicKey,
+            isSigner: true,
+            isWritable: true,
+          },
+          {pubkey: playerPublicKey, isSigner: true, isWritable: true},
+        ],
+        programId: this.programId,
+        data: ProgramCommand.initPlayer(),
+      },
+    );
     const accountStorageOverhead = 128;
     const balanceNeeded =
       feeCalculator.lamportsPerSignature * 3 /* payer + 2 signer keys */ +
