@@ -83,13 +83,13 @@ export class TicTacToeDashboard {
 
     const dashboardAccount = new Account();
 
-    const transaction = SystemProgram.createAccount(
-      tempAccount.publicKey,
-      dashboardAccount.publicKey,
-      lamports,
-      SizeOfDashBoardData,
+    const transaction = SystemProgram.createAccount({
+      fromPubkey: tempAccount.publicKey,
+      newAccountPubkey: dashboardAccount.publicKey,
+      lamports: lamports,
+      space: SizeOfDashBoardData,
       programId,
-    );
+    });
     transaction.add({
       keys: [
         {pubkey: dashboardAccount.publicKey, isSigner: true, isWritable: true},
@@ -118,6 +118,9 @@ export class TicTacToeDashboard {
     const accountInfo = await connection.getAccountInfo(
       dashboardAccount.publicKey,
     );
+    if (accountInfo === null) {
+      throw new Error('Failed to get dashboard account information');
+    }
     const {owner} = accountInfo;
 
     const dashboard = new TicTacToeDashboard(
@@ -170,18 +173,24 @@ export class TicTacToeDashboard {
       feeCalculator,
     } = await this.connection.getRecentBlockhash();
     let transaction = new Transaction({recentBlockhash});
-    transaction.add(SystemProgram.assign(playerPublicKey, this.programId), {
-      keys: [
-        {
-          pubkey: this._dashboardAccount.publicKey,
-          isSigner: true,
-          isWritable: true,
-        },
-        {pubkey: playerPublicKey, isSigner: true, isWritable: true},
-      ],
-      programId: this.programId,
-      data: ProgramCommand.initPlayer(),
-    });
+    transaction.add(
+      SystemProgram.assign({
+        fromPubkey: playerPublicKey,
+        programId: this.programId,
+      }),
+      {
+        keys: [
+          {
+            pubkey: this._dashboardAccount.publicKey,
+            isSigner: true,
+            isWritable: true,
+          },
+          {pubkey: playerPublicKey, isSigner: true, isWritable: true},
+        ],
+        programId: this.programId,
+        data: ProgramCommand.initPlayer(),
+      },
+    );
     const accountStorageOverhead = 128;
     const balanceNeeded =
       feeCalculator.lamportsPerSignature * 3 /* payer + 2 signer keys */ +

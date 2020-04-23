@@ -212,7 +212,7 @@ SOL_FN_PREFIX void dashboard_update(
   }
 }
 
-SOL_FN_PREFIX uint32_t fund_to_cover_rent(SolKeyedAccount *dashboard_ka, SolKeyedAccount *ka) {
+SOL_FN_PREFIX uint32_t fund_to_cover_rent(SolAccountInfo *dashboard_ka, SolAccountInfo *ka) {
   #define LOW_LAMPORT_WATERMARK 300
   if (*dashboard_ka->lamports <= 1) {
     sol_log("Dashboard is out of lamports");
@@ -227,7 +227,7 @@ SOL_FN_PREFIX uint32_t fund_to_cover_rent(SolKeyedAccount *dashboard_ka, SolKeye
 }
 
 extern uint64_t entrypoint(const uint8_t *input) {
-  SolKeyedAccount ka[4];
+  SolAccountInfo ka[4];
   SolParameters params = (SolParameters) { .ka = ka };
 
   sol_log("tic-tac-toe C program entrypoint");

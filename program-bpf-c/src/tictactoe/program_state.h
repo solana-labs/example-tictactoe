@@ -63,7 +63,7 @@ typedef union {
 } StateData;
 
 
-SOL_FN_PREFIX bool state_deserialize(SolKeyedAccount *ka, State **state, StateData **state_data) {
+SOL_FN_PREFIX bool state_deserialize(SolAccountInfo *ka, State **state, StateData **state_data) {
   if (ka->data_len < sizeof(uint32_t) + sizeof(StateData)) {
     sol_log("Error: invalid data_len");
     sol_log_64(ka->data_len, sizeof(uint32_t) + sizeof(StateData), 0, 0, 0);

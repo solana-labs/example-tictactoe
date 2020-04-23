@@ -1,14 +1,26 @@
-// @noflow
+// To connect to a public cluster, set `export LIVE=1` in your
+// environment. By default, `LIVE=1` will connect to the devnet cluster.
 
-// To connect to a public testnet, set `export LIVE=1` in your
-// environment. By default, `LIVE=1` will connect to the beta testnet.
+import {clusterApiUrl, Cluster} from '@solana/web3.js';
 
-import {testnetChannelEndpoint} from '@solana/web3.js';
+function chooseCluster(): Cluster | undefined {
+  if (!process.env.LIVE) return;
+  switch (process.env.CLUSTER) {
+    case 'devnet':
+    case 'testnet':
+    case 'mainnet-beta': {
+      return process.env.CLUSTER;
+    }
+  }
+  return 'devnet';
+}
 
-export let url = process.env.LIVE
-  ? testnetChannelEndpoint(process.env.CHANNEL || 'beta', false)
-  : 'http://localhost:8899';
+export const cluster = chooseCluster();
 
-export let urlTls = process.env.LIVE
-  ? testnetChannelEndpoint(process.env.CHANNEL || 'beta', true)
-  : 'http://localhost:8899';
+export const url =
+  process.env.RPC_URL ||
+  (process.env.LIVE ? clusterApiUrl(cluster, false) : 'http://localhost:8899');
+
+export const urlTls =
+  process.env.RPC_URL ||
+  (process.env.LIVE ? clusterApiUrl(cluster, true) : 'http://localhost:8899');

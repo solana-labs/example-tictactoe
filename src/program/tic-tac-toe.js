@@ -130,15 +130,15 @@ export class TicTacToe {
     const invalidAccount = new Account();
     const gameAccount = new Account();
 
-    const transaction = SystemProgram.createAccount(
+    const transaction = SystemProgram.createAccount({
       // The initGame instruction funds `gameAccount`, so the account here can
       // be one with zero lamports (an invalid account)
-      invalidAccount.publicKey,
-      gameAccount.publicKey,
-      0,
-      255, // data space
+      fromPubkey: invalidAccount.publicKey,
+      newAccountPubkey: gameAccount.publicKey,
+      lamports: 0,
+      space: 255, // data space
       programId,
-    );
+    });
     transaction.add({
       keys: [
         {pubkey: gameAccount.publicKey, isSigner: true, isWritable: true},
@@ -216,7 +216,12 @@ export class TicTacToe {
       );
     }
 
-    ttt._onAccountChange(await connection.getAccountInfo(gamePublicKey));
+    const accountInfo = await connection.getAccountInfo(gamePublicKey);
+    if (accountInfo === null) {
+      return null;
+    }
+
+    ttt._onAccountChange(accountInfo);
     if (!ttt.inProgress) {
       return null;
     }
@@ -305,6 +310,9 @@ export class TicTacToe {
     gamePublicKey: PublicKey,
   ): Promise<GameState> {
     const accountInfo = await connection.getAccountInfo(gamePublicKey);
+    if (accountInfo === null) {
+      throw new Error('Failed to get game state');
+    }
     return deserializeGameState(accountInfo);
   }
 
