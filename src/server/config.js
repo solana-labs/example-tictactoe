@@ -75,15 +75,15 @@ export async function createDashboard(): Promise<Object> {
     balanceNeeded,
   );
 
-  let program;
+  let program = new Account();
   let attempts = 5;
   while (attempts > 0) {
-    program = new Account();
     try {
       console.log('Loading BPF program...');
       await BpfLoader.load(connection, loaderAccount, program, elf);
       break;
     } catch (err) {
+      program = new Account();
       attempts--;
       console.log(
         `Error loading BPF program, ${attempts} attempts remaining:`,
