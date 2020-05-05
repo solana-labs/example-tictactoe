@@ -2,7 +2,7 @@
   "name": "tictactoe",
   "version": "0.0.1",
   "description": "",
-  "testnetDefaultChannel": "v1.1.1",
+  "testnetDefaultChannel": "v1.1.8",
   "scripts": {
     "start": "babel-node src/cli/main.js",
     "start-server": "babel-node src/server/main.js",
@@ -34,7 +34,7 @@
     "prettier": "^1.14.3"
   },
   "dependencies": {
-    "@solana/web3.js": "0.42.2",
+    "@solana/web3.js": "0.47.1",
     "babel-cli": "^6.26.0",
     "babel-core": "^6.26.3",
     "babel-eslint": "^10.0.1",

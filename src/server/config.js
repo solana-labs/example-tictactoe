@@ -75,12 +75,13 @@ export async function createDashboard(): Promise<Object> {
     balanceNeeded,
   );
 
-  let programId;
+  let program;
   let attempts = 5;
   while (attempts > 0) {
+    program = new Account();
     try {
       console.log('Loading BPF program...');
-      programId = await BpfLoader.load(connection, loaderAccount, elf);
+      await BpfLoader.load(connection, loaderAccount, program, elf);
       break;
     } catch (err) {
       attempts--;
@@ -91,10 +92,11 @@ export async function createDashboard(): Promise<Object> {
     }
   }
 
-  if (!programId) {
+  if (attempts === 0) {
     throw new Error('Unable to load program');
   }
 
+  const programId = program.publicKey;
   console.log('Creating dashboard for programId:', programId.toString());
   const dashboard = await TicTacToeDashboard.create(connection, programId);
   await store.save('../../../dist/config.json', {
