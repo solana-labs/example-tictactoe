@@ -30,6 +30,7 @@ async function getConnection(): Promise<Object> {
 
   // eslint-disable-next-line require-atomic-updates
   connection = newConnection;
+  console.log('Connection to cluster established:', url, version);
   return {connection, commitment};
 }
 

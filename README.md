@@ -109,3 +109,22 @@ To customize Tic-Tac-Toe, make changes to the program in `program-bpf-rust/src`,
 Now when you run `npm run start`, you should see your changes.
 
 To deploy a program with a different name, edit `src/server/config.js`.
+
+## Pointing to a public Solana cluster
+
+Solana maintains three public clusters:
+- `devnet` - Development cluster with airdrops enabled
+- `testnet` - Tour De Sol test cluster without airdrops enabled
+- `mainnet-beta` -  Main cluster
+  
+Use npm scripts to configure which cluster.
+
+To point to `devnet`:
+```bash
+$ npm run cluster:devnet
+```
+
+To point back to the local cluster:
+```bash
+$ npm run cluster:localnet
+```
